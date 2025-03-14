@@ -1,0 +1,9 @@
+version: '3'
+
+services:
+  socket-local:
+    build: .
+    volumes:
+      - .:/src
+    ports:
+      - 3002:3002
