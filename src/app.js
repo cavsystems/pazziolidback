@@ -2,34 +2,37 @@
 require('dotenv').config();
 const http= require('http');
 const path = require('path');
-const io = require('socket.io');
 const db = require(path.join(__dirname,'config/db'));
 const indexServicio = require(path.join(__dirname,'servicios/index-servicio'));
 const express=require("express");
 const cors        = require('cors');
 const { Http2ServerRequest } = require('http2');
+const routerauth=require('./routes/auth.routes')
+const { Server } = require("socket.io"); 
 // hace la conexión al socket servidor en la nube
 
 const app=express()
-app.use(cors())
+app.use(cors({ origin: "*" }))
+app.use(express.json())
 
-const server=http.Server(app, {
+  app.use(routerauth)
+
+
+  const server=http.createServer(app)
+  const io = new Server(server, {
     cors: {
-      origin: "*", // Ajusta según sea necesario
+      origin: "*",
       methods: ["GET", "POST"]
     }
-  })
-  server.listen(4000,()=>{
-    console.log("escuchando en el puerto 4000")
-  })
-const socket = io(server);
-socket.on('connection', (socket) => {
+  });
+io.on('connection', (socket) => {
   // Crea el canal al cual escucha
   socket.on("connect", () => {
     console.log("✅ Socket conectado correctamente");
   });
 socket.on(process.env.CANAL, (data) => {
-    
+  const token = socket.handshake.auth?.token;
+     console.log("token",socket.handshake.auth.token)
     //Recibe la data y valida que proceso requieren
    
     switch (data.metodo) {
@@ -51,3 +54,6 @@ socket.on(process.env.CANAL, (data) => {
         io.emit(process.env.CANALEMAIL, datos);
     });*/
 });
+server.listen(process.env.PORT || 3000,()=>{
+  console.log("escuchando en puerto 3000")
+})

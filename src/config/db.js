@@ -1,12 +1,12 @@
-const Sequelize = require('sequelize');
+const {Sequelize,DataTypes} = require('sequelize');
 
 const db = {};
 
 // Opciones de conexión a la base de datos con Sequelize
 const opciones = {
     host: process.env.HOST,
-    dialect: process.env.DIALECT,
-    port: process.env.PORTDB
+    dialect: process.env.DIALECT || 'mysql',
+    port: process.env.PORTDB || 3306
 }
 
 //Conexion a la base de datos por ORM Sequelize
@@ -19,5 +19,6 @@ const sequelize = new Sequelize(
 
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
+db.DataType=DataTypes
 
 module.exports = db;
