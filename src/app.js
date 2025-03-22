@@ -5,23 +5,28 @@ const path = require('path');
 const db = require(path.join(__dirname,'config/db'));
 const indexServicio = require(path.join(__dirname,'servicios/index-servicio'));
 const express=require("express");
-
+const fs = require('fs');
 const cors= require('cors');
-
+const https = require('https');
 const { Http2ServerRequest } = require('http2');
 const routerauth=require('./routes/auth.routes')
+const bdyparse=require('body-parser')
 const { Server } = require("socket.io"); 
+const bodyParser = require('body-parser');
 // hace la conexión al socket servidor en la nube
 app=express()
 
 
 app.use(cors({ origin: "*" }))
-app.use(express.json())
+app.use(bodyParser.json())
 app.get("/", (req, res) => {
   res.send("Servidor funcionando en Vercel 🚀");
 });
   app.use(routerauth)
-
+  const options = {
+    key: fs.readFileSync('./miapp.local-key.pem'),
+    cert: fs.readFileSync('./miapp.local.pem')
+  };
 
   const server=http.createServer(app)
   const io = new Server(server, {

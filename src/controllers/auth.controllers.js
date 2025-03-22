@@ -26,6 +26,8 @@ class Useraccioneauth{
     }
 
     verificarauth(req,res){
+      console.log(req.headers)
+      
        const token=req.headers['authorization'].split(' ')[1]
          jwt.verify(token,process.env.SECRET_TOKEN,async (err,vendedor)=>{
          if(err){
