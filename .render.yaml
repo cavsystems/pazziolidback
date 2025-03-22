@@ -1,0 +1,12 @@
+services:
+  - type: private
+    name: mysql-db
+    env: docker
+    dockerfilePath: ./Dockerfile
+    autoDeploy: true
+    plan: free
+    envVars:
+      - key: MYSQL_ROOT_PASSWORD
+        value: "12345"
+      - key: MYSQL_DATABASE
+        value: "pruebas"
