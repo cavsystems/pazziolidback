@@ -15,5 +15,20 @@ services:
     volumes:
       - ./backup/bdpazzioli.sql:/docker-entrypoint-initdb.d/backup.sql
       - mysql_data:/var/lib/mysql
+  app:
+    build: .
+    container_name: toma_pedidos_app
+    restart: always
+    depends_on:
+      - db
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/usr/src/app
+    environment:
+      DB_HOST: db
+      DB_USER: root
+      DB_PASS: 12345
+      DB_NAME: pruebas
 volumes:
   mysql_data:
