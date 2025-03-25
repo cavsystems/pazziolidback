@@ -40,10 +40,11 @@ app.use(seccion({
     sameSite: 'None'
   }
 }));
+app.use(routerauth)
 app.get("/", (req, res) => {
   res.send("Servidor funcionando en Vercel 🚀");
 });
-  app.use(routerauth)
+ 
   const options = {
     key: fs.readFileSync('./miapp.local-key.pem'),
     cert: fs.readFileSync('./miapp.local.pem')
