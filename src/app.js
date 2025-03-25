@@ -36,7 +36,7 @@ app.use(seccion({
   cookie: {
 
     maxAge: 1000 * 60 * 60, // 1 hora
-    secure: false, // true si usas HTTPS
+    secure: true, // true si usas HTTPS
     sameSite: 'None',
   }
 }));
