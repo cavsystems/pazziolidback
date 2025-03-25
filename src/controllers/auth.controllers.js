@@ -41,11 +41,17 @@ class Useraccioneauth{
         
           if(usuar.length>0){
             
+            
             req.session.usuario = {
                documento:usuar[0]. vendedor.identificacion,
                almacen:usuar[0].almacen.almacen,
                codigo:usuar[0].vendedor.codigo
             };
+            res.cookie('token', token, {
+              httpOnly: true,
+              sameSite: 'None',
+              secure: true
+            });
            console.log(req.session.usuario)
             res.status(200).json({atenticado:true})
  

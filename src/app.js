@@ -19,7 +19,8 @@ const MySQLStore = require('express-mysql-session')(seccion)
 app=express()
 
 
-app.use(cors({ origin: "https://pazzioli-web-90bed.web.app", // 👈 origen exacto del frontend
+app.use(cors({
+  origin: "https://pazzioli-web-90bed.web.app", // 👈 origen exacto del frontend
   credentials: true } ))
 app.use(bodyParser.json())
 app.use(seccion({
