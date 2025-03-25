@@ -47,7 +47,7 @@ class Useraccioneauth{
                almacen:usuar[0].almacen.almacen,
                codigo:usuar[0].vendedor.codigo
             };
-          
+            console.log(req.session)
          
             res.status(200).json({atenticado:true})
  
