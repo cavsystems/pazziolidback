@@ -11,29 +11,40 @@ class Useraccioneauth{
     async login(req,res){
       //  const {user,documento}=req.body
       const {user,documento}=req.body
-       let usuari=await usuarioaliasalmacen.findAll({
+       
+      
+       const usuari=await usuarioaliasalmacen.findAll({
         include:[
           {model:vendedor,
           attributes:['identificacion','codigo'],
-          where: {
-            identificacion:documento// <-- Aquí va tu filtro
-          }
+         
+          required: true 
+
         }
         ,
           {model:almacen,
-          attributes:['almacen']
+          attributes:['almacen'],
+          required: true 
         }
 
-      ]
+      ],
+      where: {
+        '$vendedor.identificacion$':documento// <-- Aquí va tu filtro
+      },
+      
     }
+   
        );
-      usuari=usuari.map(u=>u.toJSON())
-          if(usuari.length>0){
-             console.log(usuari[0])
+       console.log(JSON.stringify(usuari));
+       console.log('Documento recibido:', documento, typeof documento);
+     const usuar=usuari.map(u=>u.toJSON())
+        
+          if(usuar.length>0){
+            
             req.session.usuario = {
-               documento:usuari[0]. vendedor.identificacion,
-               almacen:usuari[0].almacen.almacen,
-               codigo:usuari[0].vendedor.codigo
+               documento:usuar[0]. vendedor.identificacion,
+               almacen:usuar[0].almacen.almacen,
+               codigo:usuar[0].vendedor.codigo
             };
             res.status(200).json({atenticado:true})
  
