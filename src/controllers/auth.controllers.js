@@ -46,6 +46,7 @@ class Useraccioneauth{
                almacen:usuar[0].almacen.almacen,
                codigo:usuar[0].vendedor.codigo
             };
+           console.log(req.session.usuario)
             res.status(200).json({atenticado:true})
  
           }else{
@@ -56,6 +57,7 @@ class Useraccioneauth{
     verificarauth(req,res){
      
       const {usuario}=req.session
+      console.log(usuario)
         console.log(req.session)
       if(usuario){
         res.json({response:true})
