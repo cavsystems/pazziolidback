@@ -39,13 +39,13 @@ class Useraccioneauth{
       
       usuari=usuari.map(u=>u.toJSON())
         
-          if(usuar.length>0){
+          if(usuari.length>0){
             
             
             req.session.usuario = {
-               documento:usuar[0]. vendedor.identificacion,
-               almacen:usuar[0].almacen.almacen,
-               codigo:usuar[0].vendedor.codigo
+               documento:usuari[0]. vendedor.identificacion,
+               almacen:usuari[0].almacen.almacen,
+               codigo:usuari[0].vendedor.codigo
             };
             req.session.save(err => {
               if (err) {
