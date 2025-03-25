@@ -55,7 +55,7 @@ app.get("/", (req, res) => {
     cors: {
       origin: "https://pazzioli-web-90bed.web.app",
       methods: ["GET", "POST"],
-      credentials: true
+      credentials: true,
     }
   });
   const wrap = middleware => (socket, next) => middleware(socket.request, {}, next);

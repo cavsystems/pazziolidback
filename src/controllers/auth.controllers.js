@@ -13,7 +13,7 @@ class Useraccioneauth{
       const {user,documento}=req.body
        
       
-       const usuari=await usuarioaliasalmacen.findAll({
+      let usuari=await usuarioaliasalmacen.findAll({
         include:[
           {model:vendedor,
           attributes:['identificacion','codigo'],
@@ -35,9 +35,9 @@ class Useraccioneauth{
     }
    
        );
-       console.log(JSON.stringify(usuari));
-       console.log('Documento recibido:', documento, typeof documento);
-     const usuar=usuari.map(u=>u.toJSON())
+     
+      
+      usuari=usuari.map(u=>u.toJSON())
         
           if(usuar.length>0){
             
@@ -47,9 +47,15 @@ class Useraccioneauth{
                almacen:usuar[0].almacen.almacen,
                codigo:usuar[0].vendedor.codigo
             };
-            console.log(req.session)
-         
-            res.status(200).json({atenticado:true})
+            req.session.save(err => {
+              if (err) {
+                console.error("❌ Error al guardar la sesión:", err);
+                return res.status(500).json({ error: 'Error guardando sesión' });
+              }
+            
+              console.log("✅ Sesión guardada correctamente");
+              res.status(200).json({ atenticado: true });
+            });
  
           }else{
             res.status(404).json({error:"vendedor no existente"})
