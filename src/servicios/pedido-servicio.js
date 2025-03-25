@@ -71,7 +71,8 @@ pedidoServicio.crear = (io, db, datoCrear) => {
  * @param {*} pedido es la variable que envia el cliente Dashboard de la data del pedido
  */
 function crearPedido(io, db, canalUsuario, pedido, itemsPedido, modificaInventario,canalserver,sede) {
-
+     const sesion = io.request.session;
+    const usuario = sesion?.usuario;
     const {
         codigoVendedor,
         codigoTercero,
@@ -89,10 +90,10 @@ function crearPedido(io, db, canalUsuario, pedido, itemsPedido, modificaInventar
     } = pedido;
 
     var queryInsert = "INSERT INTO pedido(";
-    queryInsert += "codigo,codigoVendedor,codigoTercero,fechaCreacion,horaCreacion,codigoFactura,codigoUsuarioAnulo,";
+    queryInsert += "codigoVendedor,codigoTercero,fechaCreacion,horaCreacion,codigoFactura,codigoUsuarioAnulo,";
     queryInsert += "fechaAnulo,estado,ubicacion,codigoUsuario,descuento,totalPedido,tipoFactura,observacion)";
     queryInsert += "VALUES(";
-    queryInsert += `0,${codigoVendedor},${codigoTercero},'${fechaCreacion}','${horaCreacion}',${codigoFactura},${codigoUsuarioAnulo},`;
+    queryInsert += `${usuario.codigo},${codigoUsuario},'${fechaCreacion}','${horaCreacion}',${codigoFactura},${codigoUsuarioAnulo},`;
     queryInsert += `'1970-01-01','${estado}','${ubicacion}',${codigoUsuario},${descuento},${totalPedido},'${tipoFactura}','${observacion}')`;
 
     db.sequelize.query(queryInsert, { type: db.sequelize.QueryTypes.INSERT })

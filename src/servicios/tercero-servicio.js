@@ -42,7 +42,7 @@ terceroServicio.consultar = (io, db, datoConsulta) => {
                     tipoConsulta: 'TERCERO',
                     canalUsuario: canalUsuario
                 }
-                console.log(respuesta)
+               
                 io.emit(datoConsulta.canalserver,JSON.stringify(respuesta));
             } else {
                 respuesta = {

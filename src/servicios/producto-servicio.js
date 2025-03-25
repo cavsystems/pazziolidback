@@ -10,8 +10,11 @@ var respuesta = {};
  * @param {*} datoConsulta es la variable que envia el cliente Dashboard de la data para consultar el producto
  */
 productoServicio.consultar = (io, db, datoConsulta) => {
-    var consulta = `SELECT SELECT ${"cantidad"+datoConsulta.sede.slice(-1)},codigo,descripcion
-            ,codigocontable,referencia,precio1 FROM productos`;
+    const sesion = io.request.session;
+    const usuario = sesion?.usuario;
+    console.log(usuario)
+    var consulta = `SELECT SELECT ${"cantidad"+(Number(usuario.almacen.slice(-1))+1).toString()},codigo,descripcion
+            ,codigocontable,codigoBarra,referencia,precio1 FROM productos`;
   
     switch (datoConsulta.condicion.trim().toUpperCase()) {
         case 'CODIGOBARRA':
@@ -24,7 +27,7 @@ productoServicio.consultar = (io, db, datoConsulta) => {
             consulta += ` WHERE codigo = '${parseInt(datoConsulta.datoCondicion.trim())}'`;
             break;
         case 'DESCRIPCION':
-            consulta += ` WHERE descripcion LIKE '%${datoConsulta.datoCondicion.trim()}%'`;
+            consulta += ` WHERE descripcion LIKE '%${datoConsulta.datoCondicion.trim()}%' OR  referencia LIKE ${datoConsulta.datoCondicion.trim()}`;
             break;
         case 'CODIGO':
             consulta += ` WHERE codigoBarra LIKE '%${datoConsulta.datoCondicion.trim()}%' OR codigo LIKE '%${datoConsulta.datoCondicion.trim()}%' OR referencia LIKE '%${datoConsulta.datoCondicion.trim()}%'`;
@@ -34,8 +37,8 @@ productoServicio.consultar = (io, db, datoConsulta) => {
             break;
         default:
             console.log(datoConsulta.sede.slice(-1))
-            consulta=`SELECT ${"cantidad"+datoConsulta.sede.slice(-1)},codigo,descripcion
-            ,codigocontable,referencia,precio1 FROM productos`
+            consulta=`SELECT ${"cantidad"+(Number(usuario.almacen.slice(-1))+1).toString()},codigo,descripcion
+            ,codigocontable,codigoBarra,referencia,precio1 FROM productos`
           
             break;
     }
@@ -64,6 +67,7 @@ productoServicio.consultar = (io, db, datoConsulta) => {
                     tipoConsulta: 'PRODUCTO',
                     canalUsuario: canalUsuario
                 }
+                console.log(respuesta)
                 io.emit(process.env.CANALSERVIDOR,respuesta);
             }
         }).catch((err) => {

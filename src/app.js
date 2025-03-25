@@ -9,16 +9,35 @@ const fs = require('fs');
 const cors= require('cors');
 const https = require('https');
 const { Http2ServerRequest } = require('http2');
+const seccion=require('express-session')
 const routerauth=require('./routes/auth.routes')
 const bdyparse=require('body-parser')
 const { Server } = require("socket.io"); 
 const bodyParser = require('body-parser');
+const MySQLStore = require('express-mysql-session')(seccion)
 // hace la conexión al socket servidor en la nube
 app=express()
 
 
-app.use(cors({ origin: "*" }))
+app.use(cors({ origin: "http://localhost:4200", // 👈 origen exacto del frontend
+  credentials: true } ))
 app.use(bodyParser.json())
+app.use(seccion({
+  secret: 'fazt',// como va empezar a guardar las secciones
+  resave: false,//para que no se empiense a rrenoar la seccion
+  saveUninitialized: false,//para que se vuelva a establecer la seccion
+  store: new MySQLStore({
+    host:process.env.HOST,
+    port:process.env.PORTDB,
+    user:process.env.USUARIO,
+    password:process.env.PASSWORD,
+    database: process.env.DATABASE
+  })  ,//endonde guardar la seccion
+  cookie: {
+    maxAge: 1000 * 60 * 60, // 1 hora
+    secure: false // true si usas HTTPS
+  }
+}));
 app.get("/", (req, res) => {
   res.send("Servidor funcionando en Vercel 🚀");
 });
@@ -35,14 +54,35 @@ app.get("/", (req, res) => {
       methods: ["GET", "POST"]
     }
   });
+  const wrap = middleware => (socket, next) => middleware(socket.request, {}, next);
+  io.use(wrap(seccion({
+    secret: 'fazt',// como va empezar a guardar las secciones
+    resave: false,//para que no se empiense a rrenoar la seccion
+    saveUninitialized: false,//para que se vuelva a establecer la seccion
+    store: new MySQLStore({
+      host:process.env.HOST,
+      port:process.env.PORTDB,
+      user:process.env.USUARIO,
+      password:process.env.PASSWORD,
+      database: process.env.DATABASE
+    })  ,//endonde guardar la seccion
+    cookie: {
+      maxAge: 1000 * 60 * 60, // 1 hora
+      secure: false // true si usas HTTPS
+    }
+  })));
 io.on('connection', (socket) => {
   // Crea el canal al cual escucha
   socket.on("connect", () => {
     console.log("✅ Socket conectado correctamente");
   });
 socket.on(process.env.CANAL, (data) => {
-  const token = socket.handshake.auth?.token;
-   
+  const sesion = socket.request.session;
+  const usuario = sesion?.usuario;
+  if (!usuario) {
+    console.log("Usuario no autenticado");
+    return socket.disconnect();
+  }
      
     //Recibe la data y valida que proceso requieren
    
