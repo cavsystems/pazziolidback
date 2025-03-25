@@ -56,7 +56,7 @@ class Useraccioneauth{
     verificarauth(req,res){
      
       const {usuario}=req.session
-
+        console.log(req.session)
       if(usuario){
         res.json({response:true})
       }else{
