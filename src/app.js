@@ -34,7 +34,7 @@ app.use(seccion({
     database: process.env.DATABASE
   })  ,//endonde guardar la seccion
   cookie: {
-
+    httpOnly:false,
     maxAge: 1000 * 60 * 60, // 1 hora
     secure: true, // true si usas HTTPS
     sameSite: 'None',
