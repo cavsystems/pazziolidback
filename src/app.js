@@ -52,8 +52,9 @@ app.get("/", (req, res) => {
   const server=http.createServer(app)
   const io = new Server(server, {
     cors: {
-      origin: "*",
-      methods: ["GET", "POST"]
+      origin: "https://pazzioli-web-90bed.web.app",
+      methods: ["GET", "POST"],
+      credentials: true
     }
   });
   const wrap = middleware => (socket, next) => middleware(socket.request, {}, next);
