@@ -36,7 +36,8 @@ app.use(seccion({
   cookie: {
     httpOnly: true,
     maxAge: 1000 * 60 * 60, // 1 hora
-    secure: false // true si usas HTTPS
+    secure: false, // true si usas HTTPS
+    sameSite: 'None',
   }
 }));
 app.get("/", (req, res) => {
