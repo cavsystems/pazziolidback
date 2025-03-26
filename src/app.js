@@ -40,6 +40,7 @@ app.use(seccion({
     sameSite: 'None'
   }
 }));
+app.set('trust proxy', 1);
 app.use(routerauth)
 app.get("/", (req, res) => {
   res.send("Servidor funcionando en Vercel 🚀");
