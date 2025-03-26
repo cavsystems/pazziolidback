@@ -36,7 +36,7 @@ productoServicio.consultar = (io, db, datoConsulta) => {
             consulta += ` WHERE codigoBarra = '${datoConsulta.datoCondicion.trim()}' OR codigo = '${datoConsulta.datoCondicion.trim()}' OR referencia = '${datoConsulta.datoCondicion.trim()}'`;
             break;
         default:
-            console.log(datoConsulta.sede.slice(-1))
+         
             consulta=`SELECT ${"cantidad"+(Number(usuario.almacen.slice(-1))+1).toString()},codigo,descripcion
             ,codigocontable,codigoBarra,referencia,precio1 FROM productos`
           
