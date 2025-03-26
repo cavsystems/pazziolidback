@@ -195,7 +195,7 @@ function actualizarInventario(db,itemsPedido,sede) {
         } = itemPedido;
            console.log(codigoProducto)
            console.log(sede)
-        queryUpdate = `UPDATE productos SET cantidad${sede.slice(-1)} = (cantidad - ${cantidad}) WHERE codigo = ${codigoProducto};`;
+        queryUpdate = `UPDATE productos SET  ${"cantidad"+(Number(usuario.almacen.slice(-1))+1).toString()}= (cantidad - ${cantidad}) WHERE codigo = ${codigoProducto};`;
 
         db.sequelize.query(queryUpdate, { type: db.sequelize.QueryTypes.UPDATE })
             .then((idItemPedido) => {

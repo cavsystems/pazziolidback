@@ -54,7 +54,7 @@ class Useraccioneauth{
               }
             
               console.log("✅ Sesión guardada correctamente");
-              res.status(200).json({ atenticado: true });
+              res.status(200).json({ atenticado: true ,almacen:usuari[0].almacen.almacen});
             });
  
           }else{
