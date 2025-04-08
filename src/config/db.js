@@ -1,4 +1,5 @@
 const {Sequelize,DataTypes} = require('sequelize');
+const { getNombre } = require('../libs/nombredasedatos');
 
 const db = {};
 
@@ -6,7 +7,8 @@ const db = {};
 const opciones = {
     host: process.env.HOST,
     dialect: process.env.DIALECT || 'mysql',
-    port: process.env.PORTDB || 3306
+    port: process.env.PORTDB || 3306,
+  
 }
 
 //Conexion a la base de datos por ORM Sequelize

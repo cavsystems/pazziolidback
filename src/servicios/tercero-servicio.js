@@ -1,3 +1,5 @@
+const { crearConexionPorNombre } = require("../libs/dbhelpers");
+
 const terceroServicio = {};
 
 var respuesta = {};
@@ -11,7 +13,9 @@ var respuesta = {};
  */
 terceroServicio.consultar = (io, db, datoConsulta) => {
     var consulta = 'SELECT * FROM tercero';
-
+    const sesion = io.request.session;
+    const usuario = sesion?.usuario;
+     const { sequelize } =crearConexionPorNombre(usuario.db);
     switch (datoConsulta.condicion.toUpperCase()) {
         case 'CEL':
             consulta += ` WHERE celulares = ${datoConsulta.datoCondicion} OR telefonoFijo = ${datoConsulta.datoCondicion}`;
@@ -32,7 +36,7 @@ terceroServicio.consultar = (io, db, datoConsulta) => {
 
     const { canalUsuario } = datoConsulta;
 
-    db.sequelize.query(consulta, { type: db.sequelize.QueryTypes.SELECT})
+    sequelize.query(consulta, { type: sequelize.QueryTypes.SELECT})
         .then((tercero) => {
             if (tercero.length > 0) {
                 respuesta = {

@@ -1,31 +1,33 @@
-const {sequelize,DataType} =require("../config/db");
-const vendedor=sequelize.define('vendedor', {
-    codigo: {
-        type: DataType.INTEGER,
-        primaryKey: true,
-        autoIncrement: true,
-    },
-    identificacion: {
-        type: DataType.STRING,
+
+
+module.exports=(sequelize)=>{
+    const {DataTypes}=require('sequelize')
+    const vendedor=sequelize.define('vendedor', {
+        codigo: {
+            type: DataTypes.INTEGER,
+            primaryKey: true,
+            autoIncrement: true,
+        },
+        identificacion: {
+            type: DataTypes.STRING,
+           
+        },
+        nombre: {
+            type: DataTypes.STRING,
+           
+        },
+        direccion: {
+            type: DataTypes.STRING,
+           
+        },
+        telefono: {
+            type: DataTypes.INTEGER,
+           
+        }
        
-    },
-    nombre: {
-        type: DataType.STRING,
-       
-    },
-    direccion: {
-        type: DataType.STRING,
-       
-    },
-    telefono: {
-        type: DataType.INTEGER,
-       
-    }
-   
-},{
-    tableName: 'vendedores',
-    timestamps: false,
-});
-module.exports={
-    vendedor
+    },{
+        tableName: 'vendedores',
+        timestamps: false,
+    });
+    return vendedor 
 }

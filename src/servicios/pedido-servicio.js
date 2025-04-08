@@ -1,3 +1,5 @@
+const { crearConexionPorNombre } = require("../libs/dbhelpers");
+
 const pedidoServicio = {};
 
 var respuesta = {};
@@ -70,9 +72,18 @@ pedidoServicio.crear = (io, db, datoCrear) => {
  * @param {*} db es la variable que tiene la conexion a la bd del pos y ejecuta las consultas
  * @param {*} pedido es la variable que envia el cliente Dashboard de la data del pedido
  */
-function crearPedido(io, db, canalUsuario, pedido, itemsPedido, modificaInventario,canalserver,sede) {
+async function crearPedido (io, db, canalUsuario, pedido, itemsPedido, modificaInventario,canalserver,sede) {
      const sesion = io.request.session;
     const usuario = sesion?.usuario;
+      const { sequelize,usuarioaliasalmacen,vendedor,almacen
+       } =crearConexionPorNombre(usuario.db);
+      let codigousuario=await vendedor.findOne({
+        where:{
+            identificacion:usuario.documento
+        }
+   
+});
+       console.log(codigousuario.codigo)
     const {
         codigoVendedor,
         codigoTercero,
@@ -93,10 +104,10 @@ function crearPedido(io, db, canalUsuario, pedido, itemsPedido, modificaInventar
     queryInsert += "codigoVendedor,codigoTercero,fechaCreacion,horaCreacion,codigoFactura,codigoUsuarioAnulo,";
     queryInsert += "fechaAnulo,estado,ubicacion,codigoUsuario,descuento,totalPedido,tipoFactura,observacion)";
     queryInsert += "VALUES(";
-    queryInsert += `${usuario.codigo},${codigoUsuario},'${fechaCreacion}','${horaCreacion}',${codigoFactura},${codigoUsuarioAnulo},`;
+    queryInsert += `${codigousuario.codigo},${codigoUsuario},'${fechaCreacion}','${horaCreacion}',${codigoFactura},${codigoUsuarioAnulo},`;
     queryInsert += `'1970-01-01','${estado}','${ubicacion}',${codigoUsuario},${descuento},${totalPedido},'${tipoFactura}','${observacion}')`;
 
-    db.sequelize.query(queryInsert, { type: db.sequelize.QueryTypes.INSERT })
+    sequelize.query(queryInsert, { type: sequelize.QueryTypes.INSERT })
         .then(([idPedido,affectedRows]) => {
              
             dataEmail = {
@@ -107,7 +118,7 @@ function crearPedido(io, db, canalUsuario, pedido, itemsPedido, modificaInventar
                 }
             }
             console.log(idPedido)
-            crearItemsPedido(io, db, canalUsuario, idPedido, itemsPedido, modificaInventario,canalserver,sede);
+            crearItemsPedido(io, sequelize, canalUsuario, idPedido, itemsPedido, modificaInventario,canalserver,sede,usuario);
         }).catch((err) => {
             console.log(err)
             respuesta = {
@@ -128,8 +139,8 @@ function crearPedido(io, db, canalUsuario, pedido, itemsPedido, modificaInventar
  * @param {Number} idPedido 
  * @param {Array} itemsPedido 
  */
-function crearItemsPedido(io, db, canalUsuario, idPedido, itemsPedido, modificaInventario,canalserver,sede) {
-
+function crearItemsPedido(io, db, canalUsuario, idPedido, itemsPedido, modificaInventario,canalserver,sede,usuario) {
+    
     var queryInsert = "INSERT INTO itemspedido(";
     queryInsert += "codigoPedido,codigoProducto,valor,cantidad,estado,horaCreacion,usuarioAnulo,horaAnulacion,codigoUsuario)";
     queryInsert += "VALUES";
@@ -162,7 +173,7 @@ function crearItemsPedido(io, db, canalUsuario, idPedido, itemsPedido, modificaI
 
         queryInsert += queryValues;
 
-        db.sequelize.query(queryInsert, { type: db.sequelize.QueryTypes.INSERT })
+        db.query(queryInsert, { type: db.QueryTypes.INSERT })
             .then((idItemPedido) => {
                 respuesta = {
                     sistema: 'POS',
@@ -176,7 +187,7 @@ function crearItemsPedido(io, db, canalUsuario, idPedido, itemsPedido, modificaI
                 enviarDataEmail(io);
 
                 if (modificaInventario != null && modificaInventario != 0) {
-                    actualizarInventario(db,itemsPedido,sede);
+                    actualizarInventario(db,itemsPedido,sede,usuario);
                 }
             }).catch((err) => {
                 console.log(err);
@@ -186,7 +197,7 @@ function crearItemsPedido(io, db, canalUsuario, idPedido, itemsPedido, modificaI
     
 }
 
-function actualizarInventario(db,itemsPedido,sede) {
+function actualizarInventario(db,itemsPedido,sede,usuario) {
     itemsPedido.forEach(itemPedido => {
 
         const {
@@ -197,7 +208,7 @@ function actualizarInventario(db,itemsPedido,sede) {
            console.log(sede)
         queryUpdate = `UPDATE productos SET  ${"cantidad"+(Number(usuario.almacen.slice(-1))+1).toString()}= (cantidad - ${cantidad}) WHERE codigo = ${codigoProducto};`;
 
-        db.sequelize.query(queryUpdate, { type: db.sequelize.QueryTypes.UPDATE })
+        db.query(queryUpdate, { type: db.UPDATE })
             .then((idItemPedido) => {
                 console.log("SE HA ACTUALIZADO EL STOCK DEL PRODUCTO CON EL ID " + codigoProducto);
             }).catch((err) => {
@@ -223,10 +234,10 @@ function enviarDataEmail(io) {
  */
 function eliminarPedido(io, db, canalUsuario, idPedido) {
     var queryInsert = `DELETE FROM itemspedido WHERE codigoPedido = '${idPedido}'`;
-    db.sequelize.query(queryInsert, { type: db.sequelize.QueryTypes.DELETE })
+    db.query(queryInsert, { type: db.QueryTypes.DELETE })
         .then((item) => {
             var queryInsert = `DELETE FROM pedido WHERE codigo = '${idPedido}'`;
-            db.sequelize.query(queryInsert, { type: db.sequelize.QueryTypes.DELETE })
+            db.query(queryInsert, { type: db.QueryTypes.DELETE })
                 .then((item) => {
                     respuesta = {
                         sistema: 'POS',

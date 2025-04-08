@@ -1,24 +1,25 @@
-const {sequelize,DataType} =require("../config/db");
-const almacen=sequelize.define('almacen', {
-    codigo: {
-        type: DataType.INTEGER,
-        primaryKey: true,
-        autoIncrement: true,
-    },
-    almacen: {
-        type: DataType.STRING,
+
+module.exports=(sequelize)=>{
+    const {DataTypes}=require('sequelize')
+    const almacen=sequelize.define('almacen', {
+        codigo: {
+            type: DataTypes.INTEGER,
+            primaryKey: true,
+            autoIncrement: true,
+        },
+        almacen: {
+            type: DataTypes.STRING,
+           
+        },
+        alias: {
+            type: DataTypes.STRING,
+           
+        },
+      
        
-    },
-    alias: {
-        type: DataType.STRING,
-       
-    },
-  
-   
-},{
-    tableName: 'aliasalmacen',
-    timestamps: false,
-});
-module.exports={
-    almacen
+    },{
+        tableName: 'aliasalmacen',
+        timestamps: false,
+    });
+    return almacen
 }

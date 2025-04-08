@@ -1,5 +1,5 @@
 const productoServicio = {};
-
+const {crearConexionPorNombre} =require('../libs/dbhelpers')
 var respuesta = {};
 
 /**
@@ -12,7 +12,11 @@ var respuesta = {};
 productoServicio.consultar = (io, db, datoConsulta) => {
     const sesion = io.request.session;
     const usuario = sesion?.usuario;
+     const { sequelize } =crearConexionPorNombre(usuario.db);
+     console.log(sequelize.config)
+
     console.log(usuario)
+
     var consulta = `SELECT SELECT ${"cantidad"+(Number(usuario.almacen.slice(-1))+1).toString()},codigo,descripcion
             ,codigocontable,codigoBarra,referencia,precio1 FROM productos`;
   
@@ -38,15 +42,16 @@ productoServicio.consultar = (io, db, datoConsulta) => {
         default:
          
             consulta=`SELECT ${"cantidad"+(Number(usuario.almacen.slice(-1))+1).toString()},codigo,descripcion
-            ,codigocontable,codigoBarra,referencia,precio1 FROM productos`
+            ,codigocontable,codigoBarra,referencia,precio1 FROM productos where ${"cantidad"+(Number(usuario.almacen.slice(-1))+1).toString()}>=0 or ${"cantidad"+(Number(usuario.almacen.slice(-1))+1).toString()}<=0`
           
             break;
     }
     
     const { canalUsuario } = datoConsulta;
 
-    db.sequelize.query(consulta, { type: db.sequelize.QueryTypes.SELECT})
+    sequelize.query(consulta, { type: sequelize.QueryTypes.SELECT})
         .then((producto) => {
+
             console.log(producto.length)
             if (producto.length > 0) {
                 respuesta = {
@@ -71,6 +76,7 @@ productoServicio.consultar = (io, db, datoConsulta) => {
                 io.emit(process.env.CANALSERVIDOR,respuesta);
             }
         }).catch((err) => {
+            console.log(err)
             respuesta = {
                 sistema: 'POS',
                 estadoPeticion: 'ERROR',
@@ -81,7 +87,9 @@ productoServicio.consultar = (io, db, datoConsulta) => {
             
            
             io.emit(process.env.CANALSERVIDOR,respuesta);
-        });
+        }).finally( async ()=> await sequelize.close())
+          
+        
 }
 
 productoServicio.actulizar= async (io,db,datoConsulta)=>{
