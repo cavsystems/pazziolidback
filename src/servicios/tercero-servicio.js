@@ -7,69 +7,71 @@ var respuesta = {};
 /**
  * @author Cv1927
  * @description funcion que es llamada desde el index-servicio para hacer el proceso de consultar al tercero
- * @param {*} io es la variable para emitir al socket del servidor en la nube 
+ * @param {*} io es la variable para emitir al socket del servidor en la nube
  * @param {*} db es la variable que tiene la conexion a la bd del pos y ejecuta las consultas
  * @param {*} datoConsulta es la variable que envia el cliente Dashboard de la data para consultar el producto
  */
 terceroServicio.consultar = (io, db, datoConsulta) => {
-    var consulta = 'SELECT * FROM tercero';
-    const sesion = io.request.session;
-    const usuario = sesion?.usuario;
-     const { sequelize } =crearConexionPorNombre(usuario.db);
-    switch (datoConsulta.condicion.toUpperCase()) {
-        case 'CEL':
-            consulta += ` WHERE celulares = ${datoConsulta.datoCondicion} OR telefonoFijo = ${datoConsulta.datoCondicion}`;
-            break;
-        case 'IDENTIFICACION':
-            consulta += ` WHERE identificacion = '${datoConsulta.datoCondicion}'`;
-            break;
-        case 'ID':
-            consulta += ` WHERE codigo = '${parseInt(datoConsulta.datoCondicion)}'`;
-            break;
-        case 'NOMBRES':
-            consulta += ` WHERE nombre1 LIKE '%${datoConsulta.datoCondicion}%' OR nombre2 LIKE '%${datoConsulta.datoCondicion}%' OR apellido1 LIKE '%${datoConsulta.datoCondicion}%' OR apellido2 LIKE '%${datoConsulta.datoCondicion}%' OR razonSocial LIKE '%${datoConsulta.datoCondicion}%'`;
-            break;
-        default:
+  var consulta =
+    "select t.nombre1,t.razonSocial,t.identificacion,t.tipoRegimen,t.direccion,t.telefonoFijo,t.celulares,t.email,t.imagen,t.codigo,m.municipio,d.departamento from tercero t inner join  municipios m inner join paises p inner join departamentos d   on m.codigoDepartamento=d.codigo and m.codigo=t.codigoMunicipio and  t.codigoPais=p.codigo";
+  const sesion = io.request.session;
+  const usuario = sesion?.usuario;
+  const { sequelize } = crearConexionPorNombre(usuario.db);
+  switch (datoConsulta.condicion.toUpperCase()) {
+    case "CEL":
+      consulta += ` WHERE celulares = ${datoConsulta.datoCondicion} OR telefonoFijo = ${datoConsulta.datoCondicion}`;
+      break;
+    case "IDENTIFICACION":
+      consulta += ` WHERE identificacion = '${datoConsulta.datoCondicion}'`;
+      break;
+    case "ID":
+      consulta += ` WHERE codigo = '${parseInt(datoConsulta.datoCondicion)}'`;
+      break;
+    case "NOMBRES":
+      consulta += ` WHERE t.nombre1 LIKE '%${datoConsulta.datoCondicion}%' OR t.nombre2 LIKE '%${datoConsulta.datoCondicion}%' OR t.apellido1 LIKE '%${datoConsulta.datoCondicion}%' OR t.apellido2 LIKE '%${datoConsulta.datoCondicion}%' OR t.razonSocial LIKE '%${datoConsulta.datoCondicion}%'`;
+      break;
+    default:
+      break;
+  }
 
-            break;
-    }
+  const { canalUsuario } = datoConsulta;
 
-    const { canalUsuario } = datoConsulta;
+  sequelize
+    .query(consulta, { type: sequelize.QueryTypes.SELECT })
+    .then((tercero) => {
+      if (tercero.length > 0) {
+        respuesta = {
+          sistema: "POS",
+          estadoPeticion: "SUCCESS",
+          mensajePeticion: tercero,
+          tipoConsulta: "TERCERO",
+          canalUsuario: canalUsuario,
+        };
 
-    sequelize.query(consulta, { type: sequelize.QueryTypes.SELECT})
-        .then((tercero) => {
-            if (tercero.length > 0) {
-                respuesta = {
-                    sistema: 'POS',
-                    estadoPeticion: 'SUCCESS',
-                    mensajePeticion: tercero,
-                    tipoConsulta: 'TERCERO',
-                    canalUsuario: canalUsuario
-                }
-               
-                io.emit(datoConsulta.canalserver,JSON.stringify(respuesta));
-            } else {
-                respuesta = {
-                    sistema: 'POS',
-                    estadoPeticion: 'ERROR',
-                    mensajePeticion: 'No se encontró información',
-                    tipoConsulta: 'TERCERO',
-                    canalUsuario: canalUsuario
-                }
-                console.log(respuesta)
-                io.emit(datoConsulta.canalserver,JSON.stringify(respuesta));
-            }
-        }).catch((err) => {
-            respuesta = {
-                sistema: 'POS',
-                estadoPeticion: 'ERROR',
-                mensajePeticion: err,
-                tipoConsulta: 'TERCERO',
-                canalUsuario: canalUsuario
-            }
-            console.log(respuesta)
-            io.emit(datoConsulta.canalserver,respuesta);
-        });
-}
+        io.emit(datoConsulta.canalserver, JSON.stringify(respuesta));
+      } else {
+        respuesta = {
+          sistema: "POS",
+          estadoPeticion: "ERROR",
+          mensajePeticion: "No se encontró información",
+          tipoConsulta: "TERCERO",
+          canalUsuario: canalUsuario,
+        };
+        console.log(respuesta);
+        io.emit(datoConsulta.canalserver, JSON.stringify(respuesta));
+      }
+    })
+    .catch((err) => {
+      respuesta = {
+        sistema: "POS",
+        estadoPeticion: "ERROR",
+        mensajePeticion: err,
+        tipoConsulta: "TERCERO",
+        canalUsuario: canalUsuario,
+      };
+      console.log(respuesta);
+      io.emit(datoConsulta.canalserver, respuesta);
+    });
+};
 
 module.exports = terceroServicio;
