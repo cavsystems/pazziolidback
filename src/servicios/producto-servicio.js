@@ -13,14 +13,11 @@ productoServicio.consultar = (io, db, datoConsulta) => {
   const sesion = io.request.session;
   const usuario = sesion?.usuario;
   const { sequelize } = crearConexionPorNombre(usuario.db);
-  console.log(sequelize.config);
-
-  console.log(usuario);
 
   var consulta = `SELECT${
     "cantidad" + (Number(usuario.almacen.slice(-1)) + 1).toString()
   },codigo,descripcion
-            ,codigocontable,codigoBarra,referencia,precio1,tasaIva FROM productos`;
+            ,codigocontable,codigoBarra,referencia,precio1,tasaIva,presentacion FROM productos`;
 
   switch (datoConsulta.condicion.trim().toUpperCase()) {
     case "CODIGOBARRA":
@@ -47,7 +44,7 @@ productoServicio.consultar = (io, db, datoConsulta) => {
       consulta = `SELECT ${
         "cantidad" + (Number(usuario.almacen.slice(-1)) + 1).toString()
       },codigo,descripcion
-            ,codigocontable,codigoBarra,referencia,precio1,tasaIva FROM productos where ${
+            ,codigocontable,codigoBarra,referencia,precio1,tasaIva,presentacion FROM productos where ${
               "cantidad" + (Number(usuario.almacen.slice(-1)) + 1).toString()
             }>=0 or ${
         "cantidad" + (Number(usuario.almacen.slice(-1)) + 1).toString()

@@ -49,7 +49,6 @@ const midlewaraseccion = seccion({
     database: process.env.DATABASE,
   }), //endonde guardar la seccion
   cookie: {
-    maxAge: 1000 * 60 * 60, // 1 hora
     sameSite: "lax",
   },
 });
@@ -57,6 +56,29 @@ app.use(midlewaraseccion);
 connectDB();
 //app.set('trust proxy', 1);
 app.use(routerauth);
+app.get("/traerempresas", async (req, res) => {
+  try {
+    let datos = await dbs.sequelize.query("call Buscarempresa()", {
+      type: dbs.sequelize.QueryTypes.SELECT,
+    });
+    //toma un objeto y devuelve un array con los valores de sus propiedades
+    datos = Object.values(datos[0]);
+    console.log(datos);
+    res.json({ response: true, data: datos });
+  } catch (error) {
+    res.json({
+      response: false,
+      message: "ocurrio un error al ejecutar el procedimiento",
+    });
+  }
+});
+app.use((req, res, next) => {
+  console.log("token valido en espera ", req.session);
+  if (!req.session?.usuario) {
+    return res.json({ response: false, mensaje: "token invalido" });
+  }
+  next();
+});
 app.use(routerpedido);
 app.get("/", (req, res) => {
   res.send("Servidor funcionando en Vercel 🚀");
@@ -82,139 +104,26 @@ app.get("/selectempresa", async (req, res) => {
 
   if (user.db) {
     const db = user.db;
-    return res.json({ respose: true, db: db, config: user.config });
+    return res.json({
+      response: true,
+      db: db,
+      config: user.config,
+      alias: user.alias,
+      nombre: user.vendedor,
+      identificacion: user.documento,
+    });
   } else {
-    return res.json({ respose: false });
+    console.log("no hay db");
+    return res.json({
+      response: false,
+      mensaje: "no hay empresa seleccionada",
+    });
   }
 });
 
 app.get("/verificarvariablesseccion", (req, res) => {
   console.log(req.session.usuario);
   return res.json({ response: true });
-});
-
-app.post("/crearinstanciadb", async (req, res) => {
-  const { db, user, contrasena } = req.body;
-
-  const { sequelize, usuarioaliasalmacen, vendedor, almacen, usuario } =
-    crearConexionPorNombre(db);
-
-  const parametros = new Promise(async (resolve, reject) => {
-    let parametros = {};
-    try {
-      const resul = await sequelize.query(
-        "select nombre,valor from parametrosglobales p inner join parametros r on r.codigo=p.codigoParametroGlobal",
-        {
-          type: sequelize.QueryTypes.SELECT,
-        }
-      );
-
-      resul.map((item) => {
-        parametros = { [item.nombre]: item.valor, ...parametros };
-      });
-      resolve(parametros);
-    } catch (error) {
-      reject({ message: "error inesperado", error: error });
-    }
-  });
-  try {
-    const parametro = await parametros;
-    console.log(parametro);
-
-    let usuari = await usuarioaliasalmacen.findAll({
-      include: [
-        {
-          model: vendedor,
-          attributes: ["identificacion", "codigo"],
-
-          required: true,
-        },
-        { model: almacen, attributes: ["almacen"], required: true },
-      ],
-      where: {
-        "$vendedor.identificacion$": req.session.usuario.documento, // <-- Aquí va tu filtro
-      },
-    });
-
-    req.session.usuario = {
-      ...req.session.usuario,
-      db: db,
-      almacen: usuari[0].almacen.almacen,
-      config: parametro,
-    };
-
-    const usu = await usuario.findOne({
-      where: {
-        login: user,
-      },
-    });
-
-    //con get con el parametro plain obtengo los datos obtenidos sin metadatos
-    if (!usu) {
-      return res
-        .status(400)
-        .json({ response: false, error: "usuario de caja no existe " });
-    }
-    if (usu.estado !== "ACTIVO") {
-      return res.status(400).json({
-        response: false,
-        error: "este usuario de caja se encuentra inactivo",
-      });
-    }
-    if (usu.password !== contrasena) {
-      return res.status(400).json({
-        response: false,
-        error: "contraseña incorrecta intenta de nuevo",
-      });
-    }
-
-    const userfund = await modeluser.find({
-      documento: req.session.usuario.documento,
-    });
-
-    if (userfund.length > 0) {
-      const saveduser = await modeluser.findOneAndUpdate(
-        { documento: req.session.usuario.documento },
-        { $set: { db: db } },
-        { new: true }
-      );
-      sequelize.close();
-      //const resul = await usuarioauth.guardarinstanciadb(req,res);
-
-      return res.status(200).json({ response: true });
-      req.session.save(async (err) => {
-        if (err) {
-          console.error("Error guardando la sesión:", err);
-          sequelize.close();
-          return res
-            .status(500)
-            .json({ error: "No se pudo guardar la sesión" });
-        }
-      });
-    } else {
-      const newuserseccion = new modeluser({
-        documento: req.session.usuario.documento,
-        db: db,
-      });
-      const saveduser = await newuserseccion.save();
-
-      req.session.save(async (err) => {
-        if (err) {
-          console.error("Error guardando la sesión:", err);
-          sequelize.close();
-          return res
-            .status(500)
-            .json({ error: "No se pudo guardar la sesión" });
-        }
-
-        sequelize.close();
-        //const resul = await usuarioauth.guardarinstanciadb(req,res);
-        return res.status(200).json({ response: true });
-      });
-    }
-  } catch (error) {
-    console.log(error);
-  }
 });
 
 const options = {
@@ -252,6 +161,9 @@ io.on("connection", (socket) => {
           socket.emit("obteneralmacen", {
             almacen: socket.request.session.usuario.almacen,
             config: socket.request.session.usuario.config,
+
+            nombre: socket.request.session.usuario.vendedor,
+            identificacion: socket.request.session.usuario.documento,
           });
         }
       } else {

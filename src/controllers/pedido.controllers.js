@@ -9,7 +9,7 @@ class Pedidocontrol {
   async obtenerpedido(req, res) {
     console.log(req.session.usuario);
     const { sequelize } = crearConexionPorNombre(req.session.usuario.db);
-    let consulta = `SELECT p.codigo AS codigo_pedido,v.identificacion AS documentovendedor
+    let consulta = `SELECT p.codigo AS codigo_pedido,p.fechaCreacion as fecha_creacion,v.identificacion AS documentovendedor
 ,t.apellido1 AS nombre_cliente ,t.razonSocial AS razonsocial_clientes
  , p.estado AS estadopedido FROM pedido p INNER JOIN  tercero t INNER JOIN vendedores v ON
 v.codigo=p.codigoVendedor AND p.codigoTercero=t.codigo where v.identificacion=${req.session.usuario.documento}`;
@@ -47,7 +47,7 @@ v.codigo=p.codigoVendedor AND p.codigoTercero=t.codigo where v.identificacion=${
     });
 
     const nuevopedido = await newpedidoreservado.save();
-    res.json({ message: "pedidoguardado", pedido: nuevopedido });
+    res.json({ message: "Pedido guardado", pedido: nuevopedido });
   }
 
   async pedidosreversado(req, res) {
@@ -63,6 +63,7 @@ v.codigo=p.codigoVendedor AND p.codigoTercero=t.codigo where v.identificacion=${
   async actulizarreservados(req, res) {
     try {
       const { id } = req.params;
+
       const pedido = await modelpedidoreservado.findById(id);
 
       console.log(pedido);
@@ -71,7 +72,7 @@ v.codigo=p.codigoVendedor AND p.codigoTercero=t.codigo where v.identificacion=${
         { $set: req.body },
         { new: true }
       );
-      return res.json({ message: "pedido actulizado" });
+      return res.json({ message: "Pedido actualizado" });
     } catch (error) {
       return res.status.json({ message: "error inesperado", error: error });
     }
@@ -107,6 +108,18 @@ Códigos de barras y QR
     // Usa USB o el tipo de conexión que tengas
     const device = new escpos.USB();
     await fs.writeFile();
+  }
+
+  async opdetenernumropedido(req, res) {
+    const { sequelize } = crearConexionPorNombre(req.session.usuario.db);
+    const consulta = "select codigo from pedido order by codigo desc limit 1";
+    const result = await sequelize.query(consulta, {
+      type: sequelize.QueryTypes.SELECT,
+    });
+
+    sequelize.close();
+
+    return res.status(200).json({ response: true, codigo: result[0] });
   }
 }
 

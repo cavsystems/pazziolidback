@@ -15,4 +15,6 @@ routerpedido.delete(
   pedidocontroller.eliminarpedidoreservado
 );
 
+routerpedido.get("/obtenernumeropedido", pedidocontroller.opdetenernumropedido);
+
 module.exports = routerpedido;
