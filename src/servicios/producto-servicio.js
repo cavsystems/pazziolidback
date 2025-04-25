@@ -13,11 +13,14 @@ productoServicio.consultar = (io, db, datoConsulta) => {
   const sesion = io.request.session;
   const usuario = sesion?.usuario;
   const { sequelize } = crearConexionPorNombre(usuario.db);
-
-  var consulta = `SELECT${
-    "cantidad" + (Number(usuario.almacen.slice(-1)) + 1).toString()
-  },codigo,descripcion
-            ,codigocontable,codigoBarra,referencia,precio1,tasaIva,presentacion FROM productos`;
+  let cantidad = "";
+  if (usuario.almacen === "BODEGA") {
+    cantidad = "cantidad";
+  } else {
+    cantidad = ` cantidad${(Number(usuario.almacen.slice(-1)) + 1).toString()}`;
+  }
+  var consulta = `SELECT ${cantidad},codigo,descripcion
+            ,codigocontable,codigoBarra,referencia,precio1,tasaIva,presentacion FROM productos order by descripcion`;
 
   switch (datoConsulta.condicion.trim().toUpperCase()) {
     case "CODIGOBARRA":
@@ -41,14 +44,8 @@ productoServicio.consultar = (io, db, datoConsulta) => {
       consulta += ` WHERE codigoBarra = '${datoConsulta.datoCondicion.trim()}' OR codigo = '${datoConsulta.datoCondicion.trim()}' OR referencia = '${datoConsulta.datoCondicion.trim()}'`;
       break;
     default:
-      consulta = `SELECT ${
-        "cantidad" + (Number(usuario.almacen.slice(-1)) + 1).toString()
-      },codigo,descripcion
-            ,codigocontable,codigoBarra,referencia,precio1,tasaIva,presentacion FROM productos where ${
-              "cantidad" + (Number(usuario.almacen.slice(-1)) + 1).toString()
-            }>=0 or ${
-        "cantidad" + (Number(usuario.almacen.slice(-1)) + 1).toString()
-      }<=0`;
+      consulta = `SELECT ${cantidad},codigo,descripcion
+            ,codigocontable,codigoBarra,referencia,precio1,tasaIva,presentacion FROM productos where ${cantidad}>=0 or ${cantidad}<=0  order by descripcion `;
 
       break;
   }

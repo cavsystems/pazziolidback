@@ -9,9 +9,9 @@ class Pedidocontrol {
   async obtenerpedido(req, res) {
     console.log(req.session.usuario);
     const { sequelize } = crearConexionPorNombre(req.session.usuario.db);
-    let consulta = `SELECT p.codigo AS codigo_pedido,p.fechaCreacion as fecha_creacion,v.identificacion AS documentovendedor
+    let consulta = `SELECT p.codigo AS codigo_pedido,p.fechaCreacion as fecha_creacion,v.nombre AS nombrevendedor ,p.horaCreacion AS  hora
 ,t.apellido1 AS nombre_cliente ,t.razonSocial AS razonsocial_clientes
- , p.estado AS estadopedido FROM pedido p INNER JOIN  tercero t INNER JOIN vendedores v ON
+ , p.estado AS estadopedido,p.totalpedido as totalpedido,t.email,t.identificacion ,t.telefonoFijo FROM pedido p INNER JOIN  tercero t INNER JOIN vendedores v ON
 v.codigo=p.codigoVendedor AND p.codigoTercero=t.codigo where v.identificacion=${req.session.usuario.documento}`;
 
     const pedidos_obtenidos = await sequelize.query(consulta, {
@@ -24,16 +24,23 @@ v.codigo=p.codigoVendedor AND p.codigoTercero=t.codigo where v.identificacion=${
     const codigopedido = req.query.codigo;
     const { sequelize } = crearConexionPorNombre(req.session.usuario.db);
     console.log(codigopedido);
+
     const consulta = `SELECT p.totalPedido AS total,i.cantidad AS cantidad
      ,r.descripcion AS nombre ,precio1 AS precio
-     ,r.codigoBarra AS codigoBarra,r.cantidad2 AS cantidaddisponible 
+     ,r.codigo AS codigo,r.descripcion AS nombre ,r.referencia AS referencia,r.presentacion AS presentacion ,r.precio1 AS precio
      FROM pedido p INNER JOIN itemspedido i INNER JOIN productos r INNER JOIN tercero t ON p.codigo=i.codigoPedido AND p.codigoTercero=t.codigo AND i.codigoProducto=r.codigo WHERE p.codigo=?`;
     const result = await sequelize.query(consulta, {
       replacements: [codigopedido],
       type: sequelize.QueryTypes.SELECT,
     });
     sequelize.close(result);
-    return res.status(200).json(result);
+    return res
+      .status(200)
+      .json({
+        result,
+        config: req.session.usuario.config,
+        vendedor: req.session.usuario.vendedor,
+      });
   }
 
   async reservarpedido(req, res) {
@@ -74,7 +81,9 @@ v.codigo=p.codigoVendedor AND p.codigoTercero=t.codigo where v.identificacion=${
       );
       return res.json({ message: "Pedido actualizado" });
     } catch (error) {
-      return res.status.json({ message: "error inesperado", error: error });
+      return res
+        .status(400)
+        .json({ message: "error inesperado", error: error });
     }
   }
 

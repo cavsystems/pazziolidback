@@ -24,6 +24,7 @@ const { createConnection } = require("net");
 const { crearConexionPorNombre } = require("./libs/dbhelpers");
 const { usuarioauth } = require("./controllers/auth.controllers");
 const db = require("./config/db");
+const { enviarDataEmail } = require("./servicios/servicio-email");
 
 const MySQLStore = require("express-mysql-session")(seccion);
 // hace la conexión al socket servidor en la nube
@@ -31,7 +32,7 @@ app = express();
 
 app.use(
   cors({
-    origin: "http://localhost:4200", // 👈 origen exacto del frontend
+    origin: `${process.env.local}`, // 👈 origen exacto del frontend
     credentials: true,
   })
 );
@@ -182,6 +183,8 @@ io.on("connection", (socket) => {
         break;
       case "ACTULIZAR":
         indexServicio.actulizar(socket, dbs, data);
+      case "EMAIL":
+        enviarDataEmail(socket, data);
       default:
         break;
     }

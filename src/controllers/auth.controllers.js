@@ -22,6 +22,7 @@ class Useraccioneauth {
     const [vendedoruser] = await sequelize.query(consulta, {
       replacements: [documento],
     });
+    console.log(vendedoruser);
 
     if (vendedoruser.length > 0) {
       consulta = "select * from usuario where login=?";
@@ -79,9 +80,11 @@ class Useraccioneauth {
             };
             return res.json({ autenticado: true });
           } catch (error) {
+            console.log(error);
             return res.status(400).json({
               autenticado: false,
               mensaje: "error de servidor",
+              error,
             });
           }
         }

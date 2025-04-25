@@ -2,6 +2,7 @@ const PDFDocument = require("pdfkit");
 
 async function generarTirillaPDF(usuario, productos, idpedido, cliente) {
   console.log(cliente);
+  console.log("pedidos", productos[0]);
   const getStream = (await import("get-stream")).default;
   const total = productos.reduce((sum, data) => {
     return sum + data.total;
@@ -9,7 +10,7 @@ async function generarTirillaPDF(usuario, productos, idpedido, cliente) {
   const total_items = productos.reduce((sum, data) => {
     return sum + data.cantidad;
   }, 0);
-  console.log("pedidos", productos);
+
   //Crea un nuevo documento PDF con un tamaño personalizado estrecho, ideal para recibos (200 puntos ≈ 7 cm de ancho).
   const doc = new PDFDocument({
     size: [120, 600], // tamaño tipo tirilla (ancho x alto en puntos)

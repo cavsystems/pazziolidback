@@ -13,7 +13,7 @@ var respuesta = {};
  */
 terceroServicio.consultar = (io, db, datoConsulta) => {
   var consulta =
-    "select t.nombre1,t.razonSocial,t.identificacion,t.tipoRegimen,t.direccion,t.telefonoFijo,t.celulares,t.email,t.imagen,t.codigo,m.municipio,d.departamento from tercero t inner join  municipios m inner join paises p inner join departamentos d   on m.codigoDepartamento=d.codigo and m.codigo=t.codigoMunicipio and  t.codigoPais=p.codigo";
+    "select t.nombre1,t.razonSocial,t.identificacion,t.tipoRegimen,t.direccion,t.telefonoFijo,t.celulares,t.email,t.codigo,m.municipio,d.departamento from tercero t inner join  municipios m inner join paises p inner join departamentos d   on m.codigoDepartamento=d.codigo and m.codigo=t.codigoMunicipio and  t.codigoPais=p.codigo";
   const sesion = io.request.session;
   const usuario = sesion?.usuario;
   const { sequelize } = crearConexionPorNombre(usuario.db);

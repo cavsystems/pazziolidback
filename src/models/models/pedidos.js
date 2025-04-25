@@ -34,10 +34,6 @@ const pedido = new mongoose.Schema({
     type: String,
   },
 
-  id: {
-    type: Number,
-  },
-
   nombre: {
     type: String,
   },
@@ -59,6 +55,9 @@ const pedido = new mongoose.Schema({
 
   total: {
     type: Number,
+  },
+  presentacion: {
+    type: String,
   },
 });
 

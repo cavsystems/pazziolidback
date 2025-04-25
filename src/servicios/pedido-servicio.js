@@ -1,6 +1,4 @@
 const { crearConexionPorNombre } = require("../libs/dbhelpers");
-const { generarTirillaPDF } = require("../libs/generarpdftirilla");
-const { crearcorreo } = require("../libs/instanciacorreo");
 const { modelpedidoreservado } = require("../models/models/pedidos");
 
 const pedidoServicio = {};
@@ -227,7 +225,6 @@ function crearItemsPedido(
         };
         console.log(canalserver);
         io.emit(canalserver, respuesta);
-        enviarDataEmail(io, idPedido);
       })
       .catch((err) => {
         console.log(err);
@@ -266,116 +263,6 @@ function actualizarInventario(db, itemsPedido, sede, usuario) {
 /**
  * @description funcion que hace envio de la data para registrar en la bd como correo pendiente para envio
  */
-async function enviarDataEmail(io, idpedido) {
-  const pdfBuffer = await generarTirillaPDF(
-    io.request.session.usuario,
-    dataEmail.itemsPedido,
-    idpedido,
-    dataEmail.cliente
-  );
-  try {
-    if (dataEmail.pdf === null) {
-      let message = {
-        from: `${io.request.session.usuario.config.CORREO_ENVIO_PRINCIPAL}`,
-        to: `${dataEmail.cliente.email}`,
-        subject: "Message title",
-        text: "Plaintext version of the message",
-        html: "<p>HTML version of the message</p>",
-        cc: [`${io.request.session.usuario.config.CORREO_ENVIO_PRINCIPAL}`],
-        bcc: [`${io.request.session.usuario.config.CORREO_ENVIO_PRINCIPAL}`],
-        subject: "comprobante de pedido solicitado",
-        attachments: [
-          {
-            filename: "tirilla.pdf", //nombre del archivo
-            content: pdfBuffer,
-            contentType: "application/pdf",
-          },
-        ],
-      };
-      let transpor = await crearcorreo(
-        io.request.session.usuario.config.CORREO_ENVIO_PRINCIPAL,
-        io.request.session.usuario.config.CONTRASENA
-      );
-      transpor.sendMail(message, (error) => {
-        if (error) {
-          console.log(error);
-          respuesta = {
-            sistema: "POS",
-            estadoPeticion: "ERROR",
-            mensajePeticion:
-              "pedido realizado pero correo no enviado quieres intentar",
-            tipoConsulta: "PEDIDO",
-            //canalUsuario: canalUsuario,
-          };
-          io.emit("estadocorreo", respuesta);
-        } else {
-          console.log("correo enviado");
-          respuesta = {
-            sistema: "POS",
-            estadoPeticion: "Done",
-            mensajePeticion: "pedido realizado",
-            tipoConsulta: "PEDIDO",
-            // canalUsuario: canalUsuario,
-          };
-          io.emit("estadocorreo", respuesta);
-        }
-      });
-    } else {
-      let message = {
-        from: `${io.request.session.usuario.config.CORREO_ENVIO_PRINCIPAL}`,
-        to: `${dataEmail.cliente.email}`,
-        subject: "Message title",
-        text: "Plaintext version of the message",
-        html: "<p>HTML version of the message</p>",
-        cc: [`${io.request.session.usuario.config.CORREO_ENVIO_PRINCIPAL}`],
-        bcc: [`${io.request.session.usuario.config.CORREO_ENVIO_PRINCIPAL}`],
-        subject: "comprobante de pedido solicitado",
-        attachments: [
-          {
-            filename: "tirilla.pdf", //nombre del archivo
-            content: pdfBuffer,
-            contentType: "application/pdf",
-          },
-          {
-            filename: "pedido.pdf", //nombre del archivo
-            content: Buffer.from(dataEmail.pdf, "base64"),
-            contentType: "application/pdf",
-          },
-        ],
-      };
-      let transpor = await crearcorreo(
-        io.request.session.usuario.config.CORREO_ENVIO_PRINCIPAL,
-        io.request.session.usuario.config.CONTRASENA
-      );
-      transpor.sendMail(message, (error) => {
-        if (error) {
-          console.log(error);
-          respuesta = {
-            sistema: "POS",
-            estadoPeticion: "ERROR",
-            mensajePeticion:
-              "pedido realizado pero correo no enviado quieres intentar",
-            tipoConsulta: "PEDIDO",
-            //canalUsuario: canalUsuario,
-          };
-          io.emit("estadocorreo", respuesta);
-        } else {
-          console.log("correo enviado");
-          respuesta = {
-            sistema: "POS",
-            estadoPeticion: "Done",
-            mensajePeticion: "pedido realizado",
-            tipoConsulta: "PEDIDO",
-            // canalUsuario: canalUsuario,
-          };
-          io.emit("estadocorreo", respuesta);
-        }
-      });
-    }
-  } catch (error) {
-    console.log(error);
-  }
-}
 
 /**
  *
