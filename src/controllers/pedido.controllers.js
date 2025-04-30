@@ -11,7 +11,7 @@ class Pedidocontrol {
     const { sequelize } = crearConexionPorNombre(req.session.usuario.db);
     let consulta = `SELECT p.codigo AS codigo_pedido,p.fechaCreacion as fecha_creacion,v.nombre AS nombrevendedor ,p.horaCreacion AS  hora
 ,t.apellido1 AS nombre_cliente ,t.razonSocial AS razonsocial_clientes
- , p.estado AS estadopedido,p.totalpedido as totalpedido,t.email,t.identificacion ,t.telefonoFijo FROM pedido p INNER JOIN  tercero t INNER JOIN vendedores v ON
+ , p.estado AS estadopedido,p.totalpedido as totalpedido,t.email,t.identificacion ,t.telefonoFijo,t.direccion FROM pedido p INNER JOIN  tercero t INNER JOIN vendedores v ON
 v.codigo=p.codigoVendedor AND p.codigoTercero=t.codigo where v.identificacion=${req.session.usuario.documento}`;
 
     const pedidos_obtenidos = await sequelize.query(consulta, {
@@ -34,13 +34,11 @@ v.codigo=p.codigoVendedor AND p.codigoTercero=t.codigo where v.identificacion=${
       type: sequelize.QueryTypes.SELECT,
     });
     sequelize.close(result);
-    return res
-      .status(200)
-      .json({
-        result,
-        config: req.session.usuario.config,
-        vendedor: req.session.usuario.vendedor,
-      });
+    return res.status(200).json({
+      result,
+      config: req.session.usuario.config,
+      vendedor: req.session.usuario.vendedor,
+    });
   }
 
   async reservarpedido(req, res) {

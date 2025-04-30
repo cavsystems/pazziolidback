@@ -1,12 +1,14 @@
 const { generarTirillaPDF } = require("../libs/generarpdftirilla");
 const { crearcorreo } = require("../libs/instanciacorreo");
 async function enviarDataEmail(io, data) {
+  console.log(io.request.session.usuario.config.CONTRASENA_ENVIO_PEDIDO);
   console.log(data);
   const pdfBuffer = await generarTirillaPDF(
     io.request.session.usuario,
     data.data.itemspedido,
     data.data.idpedido,
-    data.data.cliente
+    data.data.cliente,
+    data.data.fecha.split(" ")
   );
   try {
     if (data.data.pdf === null) {
@@ -68,7 +70,7 @@ async function enviarDataEmail(io, data) {
       let mensaje = `<p>
         Estimado(a) <b>${data.data.cliente.nombre}</b>,<br><br>
     
-        Hemos recibido su solicitud de pedido con número <b>${data.data.idpedido}</b>, registrada el día <b>$${data.data.fecha}</b>.<br><br>
+        Hemos recibido su solicitud de pedido con número <b>${data.data.idpedido}</b>, registrada el día <b>${data.data.fecha}</b>.<br><br>
     
         Adjunto encontrará el documento en formato PDF con el detalle de los productos solicitados, incluyendo cantidades, precios estimados y condiciones generales.<br><br>
     

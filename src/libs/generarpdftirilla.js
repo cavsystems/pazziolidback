@@ -1,6 +1,6 @@
 const PDFDocument = require("pdfkit");
 
-async function generarTirillaPDF(usuario, productos, idpedido, cliente) {
+async function generarTirillaPDF(usuario, productos, idpedido, cliente, fecha) {
   console.log(cliente);
   console.log("pedidos", productos[0]);
   const getStream = (await import("get-stream")).default;
@@ -36,7 +36,7 @@ async function generarTirillaPDF(usuario, productos, idpedido, cliente) {
     .moveDown()
     .text("________________________________")
     .moveDown()
-    .text(`Fecha: ${new Date().toLocaleString()}`)
+    .text(`Fecha: ${fecha[0]}  ${fecha[1]}`)
     .text(`Cliente: ${cliente.nombre}`)
     .text(`Identificación: ${cliente.identificacion}`)
     .text(`Dirección: ${cliente.direccion}`)
