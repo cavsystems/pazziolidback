@@ -56,8 +56,11 @@ const midlewaraseccion = seccion({
 app.use(midlewaraseccion);
 connectDB();
 //app.set('trust proxy', 1);
-app.use(routerauth);
-app.get("/traerempresas", async (req, res) => {
+app.get("/api", (req, res) => {
+  res.send("Servidor funcionando en Vercel 🚀");
+});
+app.use("/api", routerauth);
+app.get("/api/traerempresas", async (req, res) => {
   try {
     let datos = await dbs.sequelize.query("call Buscarempresa()", {
       type: dbs.sequelize.QueryTypes.SELECT,
@@ -73,6 +76,7 @@ app.get("/traerempresas", async (req, res) => {
     });
   }
 });
+
 app.use((req, res, next) => {
   console.log("token valido en espera ", req.session);
   if (!req.session?.usuario) {
@@ -80,11 +84,9 @@ app.use((req, res, next) => {
   }
   next();
 });
-app.use(routerpedido);
-app.get("/", (req, res) => {
-  res.send("Servidor funcionando en Vercel 🚀");
-});
-app.get("/esteblecerdb/:db", async (req, res) => {
+app.use("/api", routerpedido);
+
+app.get("/api/esteblecerdb/:db", async (req, res) => {
   const { usuario } = req.session;
   req.session.usuario = { ...usuario, db: req.params.db };
 
@@ -93,13 +95,13 @@ app.get("/esteblecerdb/:db", async (req, res) => {
  })*/
 });
 
-app.get("/obtenerdbfiltradas", async (req, res) => {
+app.get("/api/obtenerdbfiltradas", async (req, res) => {
   const pertenece = await dbfiltradas(dbs, req.session.usuario.documento);
 
   res.json({ opcionesdb: pertenece });
 });
 
-app.get("/selectempresa", async (req, res) => {
+app.get("/api/selectempresa", async (req, res) => {
   const session = req.session;
   const user = session?.usuario;
 
@@ -122,7 +124,7 @@ app.get("/selectempresa", async (req, res) => {
   }
 });
 
-app.get("/verificarvariablesseccion", (req, res) => {
+app.get("/api/verificarvariablesseccion", (req, res) => {
   console.log(req.session.usuario);
   return res.json({ response: true });
 });
@@ -135,7 +137,7 @@ const options = {
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "https://pazzioli-web-90bed.web.app",
+    origin: "https://pazziolweb.cavsystems.com.co",
     methods: ["GET", "POST"],
     credentials: true,
   },
