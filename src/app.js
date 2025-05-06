@@ -52,19 +52,10 @@ const midlewaraseccion = seccion({
   }), //endonde guardar la seccion
   //http es para que cookie se accesible desde document.cookie
   cookie: {
-    sameSite: "None", // ⬅️ obligatorio si tu frontend y backend están en dominios distintos
-    secure: true, // ⬅️ obligatorio para que se envíe por HTTPS
+    sameSite: "lax", // ⬅️ obligatorio si tu frontend y backend están en dominios distintos
+    // secure: true, // ⬅️ obligatorio para que se envíe por HTTPS
     httpOnly: true, // ⬅️ recomendado para seguridad (aunque puedes poner false si necesitas leerla en JS)
   },
-});
-app.use("/api", (req, res, next) => {
-  res.set(
-    "Cache-Control",
-    "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
-  );
-  res.set("Pragma", "no-cache");
-  res.set("Expires", "0");
-  next();
 });
 
 app.use(midlewaraseccion);
