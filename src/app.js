@@ -25,6 +25,7 @@ const { crearConexionPorNombre } = require("./libs/dbhelpers");
 const { usuarioauth } = require("./controllers/auth.controllers");
 const db = require("./config/db");
 const { enviarDataEmail } = require("./servicios/servicio-email");
+const { midleware } = require("./libs/midleware");
 
 const MySQLStore = require("express-mysql-session")(seccion);
 // hace la conexión al socket servidor en la nube
@@ -91,16 +92,9 @@ app.get("/api/traerempresas", async (req, res) => {
   }
 });
 
-app.use((req, res, next) => {
-  console.log("token valido en espera ", req.session);
-  if (!req.session?.usuario) {
-    return res.json({ response: false, mensaje: "token invalido" });
-  }
-  next();
-});
-app.use("/api", routerpedido);
+app.use("/api", midleware, routerpedido);
 
-app.get("/api/esteblecerdb/:db", async (req, res) => {
+app.get("/api/esteblecerdb/:db", midleware, async (req, res) => {
   const { usuario } = req.session;
   req.session.usuario = { ...usuario, db: req.params.db };
 
@@ -109,7 +103,7 @@ app.get("/api/esteblecerdb/:db", async (req, res) => {
  })*/
 });
 
-app.get("/api/obtenerdbfiltradas", async (req, res) => {
+app.get("/api/obtenerdbfiltradas", midleware, async (req, res) => {
   const pertenece = await dbfiltradas(dbs, req.session.usuario.documento);
 
   res.json({ opcionesdb: pertenece });
@@ -138,7 +132,7 @@ app.get("/api/selectempresa", async (req, res) => {
   }
 });
 
-app.get("/api/verificarvariablesseccion", (req, res) => {
+app.get("/api/verificarvariablesseccion", midleware, (req, res) => {
   console.log(req.session.usuario);
   return res.json({ response: true });
 });
