@@ -64,6 +64,7 @@ app.get("/api", (req, res) => {
 });
 app.use("/api", routerauth);
 app.get("/api/traerempresas", async (req, res) => {
+  console.log("entro aqui");
   try {
     let datos = await dbs.sequelize.query("call Buscarempresa()", {
       type: dbs.sequelize.QueryTypes.SELECT,
