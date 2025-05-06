@@ -56,6 +56,16 @@ const midlewaraseccion = seccion({
     httpOnly: true, // ⬅️ recomendado para seguridad (aunque puedes poner false si necesitas leerla en JS)
   },
 });
+app.use("/api", (req, res, next) => {
+  res.set(
+    "Cache-Control",
+    "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
+  );
+  res.set("Pragma", "no-cache");
+  res.set("Expires", "0");
+  next();
+});
+
 app.use(midlewaraseccion);
 connectDB();
 //app.set('trust proxy', 1);
