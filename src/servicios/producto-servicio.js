@@ -55,7 +55,6 @@ productoServicio.consultar = (io, db, datoConsulta) => {
   sequelize
     .query(consulta, { type: sequelize.QueryTypes.SELECT })
     .then((producto) => {
-      console.log(producto.length);
       if (producto.length > 0) {
         respuesta = {
           sistema: "POS",
@@ -64,7 +63,7 @@ productoServicio.consultar = (io, db, datoConsulta) => {
           tipoConsulta: "PRODUCTO",
           canalUsuario: canalUsuario,
         };
-        console.log("entro aqui consulta producto");
+
         io.emit(process.env.CANALSERVIDOR, JSON.stringify(respuesta));
       } else {
         respuesta = {
@@ -74,12 +73,11 @@ productoServicio.consultar = (io, db, datoConsulta) => {
           tipoConsulta: "PRODUCTO",
           canalUsuario: canalUsuario,
         };
-        console.log(respuesta);
+
         io.emit(process.env.CANALSERVIDOR, respuesta);
       }
     })
     .catch((err) => {
-      console.log(err);
       respuesta = {
         sistema: "POS",
         estadoPeticion: "ERROR",
@@ -116,7 +114,7 @@ productoServicio.actulizar = async (io, db, datoConsulta) => {
     estadoPeticion: "SUCCESS",
     mensajePeticion: resul,
   };
-  console.log(datoConsulta.canalservidor);
+
   io.emit(datoConsulta.canalserver, respuesta);
 };
 module.exports = productoServicio;

@@ -42,6 +42,7 @@ async function enviarDataEmail(io, data) {
         io.request.session.usuario.config.CORREO_ENVIO_PEDIDO,
         io.request.session.usuario.config.CONTRASENA_ENVIO_PEDIDO
       );
+      console.log(io.request.session.usuario.config);
       transpor.sendMail(message, (error) => {
         if (error) {
           console.log(error);
@@ -96,11 +97,6 @@ async function enviarDataEmail(io, data) {
         subject: `Comprobante de pedido solicitado`,
         attachments: [
           {
-            filename: "tirilla.pdf", //nombre del archivo
-            content: pdfBuffer,
-            contentType: "application/pdf",
-          },
-          {
             filename: "pedido.pdf", //nombre del archivo
             content: Buffer.from(data.data.pdf, "base64"),
             contentType: "application/pdf",
@@ -111,6 +107,7 @@ async function enviarDataEmail(io, data) {
         io.request.session.usuario.config.CORREO_ENVIO_PEDIDO,
         io.request.session.usuario.config.CONTRASENA_ENVIO_PEDIDO
       );
+      console.log(io.request.session.usuario.config);
       transpor.sendMail(message, (error) => {
         if (error) {
           console.log(error);

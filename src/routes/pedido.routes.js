@@ -16,5 +16,6 @@ routerpedido.delete(
 );
 
 routerpedido.get("/obtenernumeropedido", pedidocontroller.opdetenernumropedido);
+routerpedido.post("/creartirilla", pedidocontroller.generarpedidotirilla);
 
 module.exports = routerpedido;

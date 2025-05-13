@@ -39,27 +39,15 @@ terceroServicio.consultar = (io, db, datoConsulta) => {
   sequelize
     .query(consulta, { type: sequelize.QueryTypes.SELECT })
     .then((tercero) => {
-      if (tercero.length > 0) {
-        respuesta = {
-          sistema: "POS",
-          estadoPeticion: "SUCCESS",
-          mensajePeticion: tercero,
-          tipoConsulta: "TERCERO",
-          canalUsuario: canalUsuario,
-        };
+      respuesta = {
+        sistema: "POS",
+        estadoPeticion: "SUCCESS",
+        mensajePeticion: tercero,
+        tipoConsulta: "TERCERO",
+        canalUsuario: canalUsuario,
+      };
 
-        io.emit(datoConsulta.canalserver, JSON.stringify(respuesta));
-      } else {
-        respuesta = {
-          sistema: "POS",
-          estadoPeticion: "ERROR",
-          mensajePeticion: "No se encontró información",
-          tipoConsulta: "TERCERO",
-          canalUsuario: canalUsuario,
-        };
-        console.log(respuesta);
-        io.emit(datoConsulta.canalserver, JSON.stringify(respuesta));
-      }
+      io.emit(datoConsulta.canalserver, JSON.stringify(respuesta));
     })
     .catch((err) => {
       respuesta = {

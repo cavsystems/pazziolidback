@@ -34,7 +34,6 @@ pedidoServicio.crear = (io, db, datoCrear) => {
           pdf: pdf,
           estado: cliente.email === null ? "SIN_CORREO" : "NO_ENVIADO",
         };
-        console.log(pdf);
         crearPedido(
           io,
           db,
@@ -105,7 +104,6 @@ async function crearPedido(
       identificacion: usuario.documento,
     },
   });
-  console.log(codigousuario.codigo);
   const {
     codigoVendedor,
     codigoTercero,
@@ -144,7 +142,6 @@ async function crearPedido(
           codigoPedido: idPedido[0],
         },
       };
-      console.log(idPedido);
       crearItemsPedido(
         io,
         sequelize,
@@ -159,7 +156,6 @@ async function crearPedido(
       );
     })
     .catch((err) => {
-      console.log(err);
       respuesta = {
         sistema: "POS",
         estadoPeticion: "ERROR",
@@ -223,11 +219,9 @@ function crearItemsPedido(
           tipoConsulta: "PEDIDO",
           canalUsuario: canalUsuario,
         };
-        console.log(canalserver);
         io.emit(canalserver, respuesta);
       })
       .catch((err) => {
-        console.log(err);
         eliminarPedido(io, db, canalUsuario, idPedido);
       });
   });
@@ -236,10 +230,7 @@ function crearItemsPedido(
 function actualizarInventario(db, itemsPedido, sede, usuario) {
   itemsPedido.forEach((itemPedido) => {
     const { codigoProducto, cantidad } = itemPedido;
-    console.log(cantidad);
-    console.log(
-      "cantidad" + (Number(usuario.almacen.slice(-1)) + 1).toString()
-    );
+
     const colAlmacen =
       "cantidad" + (Number(usuario.almacen.slice(-1)) + 1).toString();
     queryUpdate = `UPDATE productos SET  ${colAlmacen}=(${colAlmacen} - ?) WHERE codigo =?;`;
@@ -248,15 +239,8 @@ function actualizarInventario(db, itemsPedido, sede, usuario) {
       replacements: [cantidad, codigoProducto],
       type: db.QueryTypes.UPDATE,
     })
-      .then((idItemPedido) => {
-        console.log(idItemPedido);
-        console.log(
-          "SE HA ACTUALIZADO EL STOCK DEL PRODUCTO CON EL ID " + codigoProducto
-        );
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+      .then((idItemPedido) => {})
+      .catch((err) => {});
   });
 }
 

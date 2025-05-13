@@ -37,7 +37,7 @@ app.use(
     credentials: true,
   })
 );
-app.use(bodyParser.json());
+app.use(express.json());
 app.use(express.static(path.join(__dirname, "img")));
 const midlewaraseccion = seccion({
   secret: "fazt", // como va empezar a guardar las secciones
@@ -66,14 +66,13 @@ app.get("/api", (req, res) => {
 });
 app.use("/api", routerauth);
 app.get("/api/traerempresas", async (req, res) => {
-  console.log("entro aqui");
   try {
     let datos = await dbs.sequelize.query("call Buscarempresa()", {
       type: dbs.sequelize.QueryTypes.SELECT,
     });
     //toma un objeto y devuelve un array con los valores de sus propiedades
     datos = Object.values(datos[0]);
-    console.log(datos);
+
     res.json({ response: true, data: datos });
   } catch (error) {
     res.json({
@@ -83,7 +82,7 @@ app.get("/api/traerempresas", async (req, res) => {
   }
 });
 
-app.use("/api", midleware, routerpedido);
+app.use("/api", routerpedido);
 
 app.get("/api/esteblecerdb/:db", midleware, async (req, res) => {
   const { usuario } = req.session;
@@ -100,11 +99,16 @@ app.get("/api/obtenerdbfiltradas", midleware, async (req, res) => {
   res.json({ opcionesdb: pertenece });
 });
 
-app.get("/api/selectempresa", async (req, res) => {
+app.get("/api/selectempresa", midleware, async (req, res) => {
   const session = req.session;
   const user = session?.usuario;
 
-  if (user.db) {
+  if (user?.db) {
+    if (!user?.documento) {
+      return res.json({
+        response: false,
+      });
+    }
     const db = user.db;
     return res.json({
       response: true,
@@ -113,9 +117,9 @@ app.get("/api/selectempresa", async (req, res) => {
       alias: user.alias,
       nombre: user.vendedor,
       identificacion: user.documento,
+      nombreusuario: user.nombre,
     });
   } else {
-    console.log("no hay db");
     return res.json({
       response: false,
       mensaje: "no hay empresa seleccionada",
@@ -124,7 +128,6 @@ app.get("/api/selectempresa", async (req, res) => {
 });
 
 app.get("/api/verificarvariablesseccion", midleware, (req, res) => {
-  console.log(req.session.usuario);
   return res.json({ response: true });
 });
 
@@ -146,18 +149,17 @@ const wrap = (middleware) => (socket, next) =>
 io.use(wrap(midlewaraseccion));
 io.on("connection", (socket) => {
   // Crea el canal al cual escucha
-  console.log("usuarioinicio", socket.request.session.usuario);
-  socket.on("connect", () => {
-    console.log("✅ Socket conectado correctamente");
-  });
+  socket.on("connect", () => {});
 
   socket.on(process.env.CANAL, (data) => {
     const sesion = socket.request.session;
     const usuario = sesion?.usuario;
     if (!usuario) {
-      console.log("Usuario no autenticado");
-      return socket.disconnect();
+      if (usuario.document) return socket.disconnect();
     } else {
+      if (!usuario.documento) {
+        return socket.disconnect();
+      }
       if (usuario.db) {
         if (data.metodo === "traeralmacen") {
           socket.emit("obteneralmacen", {
@@ -169,7 +171,6 @@ io.on("connection", (socket) => {
           });
         }
       } else {
-        console.log("db no definida");
       }
     }
     //Recibe la data y valida que proceso requieren
@@ -179,7 +180,6 @@ io.on("connection", (socket) => {
         indexServicio.crear(socket, dbs, data);
         break;
       case "CONSULTAR":
-        console.log("entro aqui");
         indexServicio.consultar(socket, dbs, data);
         break;
       case "ACTULIZAR":
@@ -196,5 +196,5 @@ io.on("connection", (socket) => {
     });*/
 });
 server.listen(process.env.PORT || 3000, "0.0.0.0", () => {
-  console.log("escuchando en puerto 3000");
+  console.log("escuchando en el puerto 3000");
 });

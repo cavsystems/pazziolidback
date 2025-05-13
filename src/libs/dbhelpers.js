@@ -18,12 +18,12 @@ const crearConexionPorNombre = (nombreDB) => {
     usuarioaliasalmacen: require("../models/usuarioaliasalmacen")(sequelize),
     vendedor: require("../models/vendedor-model")(sequelize),
     almacen: require("../models/almacen")(sequelize),
-    usuario: require("../models/user-model")(sequelize),
+    usuarios: require("../models/user-model")(sequelize),
   };
 
   // Si hay relaciones entre modelos, aquí puedes definirlas
   // 👇 Aquí defines que usuarioaliasalmacen pertenece a vendedor por el campo codigoUsuario
-  models.usuarioaliasalmacen.belongsTo(models.vendedor, {
+  models.usuarioaliasalmacen.belongsTo(models.usuarios, {
     foreignKey: "codigoUsuario",
   });
   // 👇 Y que pertenece a almacen por el campo codigoAliasAlmacen

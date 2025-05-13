@@ -7,7 +7,6 @@ class Pedidocontrol {
   constructor() {}
 
   async obtenerpedido(req, res) {
-    console.log(req.session.usuario);
     const { sequelize } = crearConexionPorNombre(req.session.usuario.db);
     let consulta = `SELECT p.codigo AS codigo_pedido,p.fechaCreacion as fecha_creacion,v.nombre AS nombrevendedor ,p.horaCreacion AS  hora
 ,t.apellido1 AS nombre_cliente ,t.razonSocial AS razonsocial_clientes
@@ -23,7 +22,6 @@ v.codigo=p.codigoVendedor AND p.codigoTercero=t.codigo where v.identificacion=${
   async odteneritemspedido(req, res) {
     const codigopedido = req.query.codigo;
     const { sequelize } = crearConexionPorNombre(req.session.usuario.db);
-    console.log(codigopedido);
 
     const consulta = `SELECT p.totalPedido AS total,i.cantidad AS cantidad
      ,r.descripcion AS nombre ,precio1 AS precio
@@ -43,7 +41,6 @@ v.codigo=p.codigoVendedor AND p.codigoTercero=t.codigo where v.identificacion=${
 
   async reservarpedido(req, res) {
     const { cliente, productos_pedido } = req.body;
-    console.log(req.body);
 
     const newpedidoreservado = new modelpedidoreservado({
       vendedor: req.session.usuario.documento,
@@ -71,7 +68,6 @@ v.codigo=p.codigoVendedor AND p.codigoTercero=t.codigo where v.identificacion=${
 
       const pedido = await modelpedidoreservado.findById(id);
 
-      console.log(pedido);
       const productosreservado = await modelpedidoreservado.findByIdAndUpdate(
         id,
         { $set: req.body },
@@ -87,7 +83,6 @@ v.codigo=p.codigoVendedor AND p.codigoTercero=t.codigo where v.identificacion=${
 
   async eliminarpedidoreservado(req, res) {
     const { id } = req.params;
-    console.log(id);
     const pedidoid = await modelpedidoreservado.findById(id);
 
     if (!pedidoid) {
@@ -127,6 +122,25 @@ Códigos de barras y QR
     sequelize.close();
 
     return res.status(200).json({ response: true, codigo: result[0] });
+  }
+
+  generarpedidotirilla(req, res) {
+    const tirilla = `
+       ${body.config.RAZON_SOCIAL}
+       ${config.NIT}
+       ______________________________
+       Fecha: ${req.body.fecha_actual}  ${req.body.horaActual}
+       cleinte: ${req.body.cliente.nombre}
+       Identificación: ${req.body.cliente.identificacion}
+       direccion: ${req.body.cliente.direccion}
+       telefonofijo: ${req.body.cliente.telefonoFijo}
+       Vendedor: ${req.body.vendedor}
+       
+      
+      
+     `;
+
+    return res.json({ data: { tirilla } });
   }
 }
 
