@@ -19,16 +19,18 @@ terceroServicio.consultar = (io, db, datoConsulta) => {
   const { sequelize } = crearConexionPorNombre(usuario.db);
   switch (datoConsulta.condicion.toUpperCase()) {
     case "CEL":
-      consulta += ` WHERE celulares = ${datoConsulta.datoCondicion} OR telefonoFijo = ${datoConsulta.datoCondicion}`;
+      consulta += ` WHERE celulares = ${datoConsulta.datoCondicion} OR telefonoFijo = ${datoConsulta.datoCondicion} limit 20`;
       break;
     case "IDENTIFICACION":
-      consulta += ` WHERE identificacion = '${datoConsulta.datoCondicion}'`;
+      consulta += ` WHERE identificacion = '${datoConsulta.datoCondicion}' limit 20`;
       break;
     case "ID":
-      consulta += ` WHERE codigo = '${parseInt(datoConsulta.datoCondicion)}'`;
+      consulta += ` WHERE codigo = '${parseInt(
+        datoConsulta.datoCondicion
+      )}limit 20'`;
       break;
     case "NOMBRES":
-      consulta += ` WHERE t.nombre1 LIKE '%${datoConsulta.datoCondicion}%' OR t.nombre2 LIKE '%${datoConsulta.datoCondicion}%' OR t.apellido1 LIKE '%${datoConsulta.datoCondicion}%' OR t.apellido2 LIKE '%${datoConsulta.datoCondicion}%' OR t.razonSocial LIKE '%${datoConsulta.datoCondicion}%'`;
+      consulta += ` WHERE t.nombre1 LIKE '%${datoConsulta.datoCondicion}%' OR t.nombre2 LIKE '%${datoConsulta.datoCondicion}%' OR t.apellido1 LIKE '%${datoConsulta.datoCondicion}%' OR t.apellido2 LIKE '%${datoConsulta.datoCondicion}%' OR t.razonSocial LIKE '%${datoConsulta.datoCondicion}%' limit 20`;
       break;
     default:
       break;
