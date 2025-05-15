@@ -158,9 +158,11 @@ io.on("connection", (socket) => {
     const sesion = socket.request.session;
     const usuario = sesion?.usuario;
     if (!usuario) {
-      if (usuario.document) return socket.disconnect();
+      console.log("el error fue aqui");
+      return socket.disconnect();
     } else {
       if (!usuario.documento) {
+        console.log("el error fue aqui");
         return socket.disconnect();
       }
       if (usuario.db) {

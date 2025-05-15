@@ -12,7 +12,7 @@ var respuesta = {};
 productoServicio.consultar = (io, db, datoConsulta) => {
   const sesion = io.request.session;
   const usuario = sesion?.usuario;
-  console.log("consultando productos");
+
   const { sequelize } = crearConexionPorNombre(usuario.db);
   let cantidad = "";
   if (usuario.almacen === "BODEGA") {
