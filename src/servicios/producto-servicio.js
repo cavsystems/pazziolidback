@@ -45,7 +45,7 @@ productoServicio.consultar = (io, db, datoConsulta) => {
       break;
     default:
       consulta = `SELECT ${cantidad},codigo,descripcion
-            ,codigocontable,codigoBarra,referencia,precio1,tasaIva,presentacion FROM productos  order by descripcion limit 10`;
+            ,codigocontable,codigoBarra,referencia,precio1,tasaIva,presentacion FROM productos  order by descripcion`;
 
       break;
   }
