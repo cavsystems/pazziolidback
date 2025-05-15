@@ -154,7 +154,7 @@ class Useraccioneauth {
       } else {
         return res
           .status(400)
-          .json({ autenticado: false, mensaje: "usuario incorrecto" });
+          .json({ autenticado: false, mensaje: "credenciales incorrectas" });
       }
     }
     return res
