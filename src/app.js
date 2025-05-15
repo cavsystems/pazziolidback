@@ -67,7 +67,10 @@ app.get("/api", (req, res) => {
 app.use("/api", routerauth);
 app.get("/api/traerempresas", async (req, res) => {
   try {
-    let datos = await dbs.sequelize.query("call Buscarempresa()", {
+    const { documento } = req.query;
+
+    let datos = await dbs.sequelize.query("call BuscarEmpresaPorVendedor(?)", {
+      replacements: [documento],
       type: dbs.sequelize.QueryTypes.SELECT,
     });
     //toma un objeto y devuelve un array con los valores de sus propiedades

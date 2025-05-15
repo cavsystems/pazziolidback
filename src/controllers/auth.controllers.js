@@ -117,8 +117,8 @@ class Useraccioneauth {
                   reject({ message: "error inesperado", error: error });
                 }
               });
-              if (usuarioauth.length < 0) {
-                res.status(401).json({
+              if (usuarioauth.length <= 0) {
+                return res.status(401).json({
                   autenticado: false,
                   mensaje: "usuario no relacionado con ningun almacen",
                 });
