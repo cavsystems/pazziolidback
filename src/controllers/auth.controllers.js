@@ -24,7 +24,7 @@ class Useraccioneauth {
     if (db === null || db === "" || !db) {
       return res.json({
         autenticado: false,
-        mensaje: "selecciona una organizacion",
+        mensaje: "Selecciona una organización",
       });
     }
     const { sequelize, usuarioaliasalmacen, almacen, usuarios, vendedor } =
@@ -65,7 +65,7 @@ class Useraccioneauth {
               };
               return res.status(401).json({
                 autenticado: true,
-                mensaje: "sesion activa en otro dispositivo desea cerrarla",
+                mensaje: "Sesión activa en otro dispositivo desea cerrarla",
                 opcion: true,
               });
             } else {
@@ -120,7 +120,7 @@ class Useraccioneauth {
               if (usuarioauth.length <= 0) {
                 return res.status(401).json({
                   autenticado: false,
-                  mensaje: "usuario no relacionado con ningun almacen",
+                  mensaje: "Usuario no relacionado con ningun almacen",
                 });
               }
               try {
@@ -148,18 +148,18 @@ class Useraccioneauth {
           } else {
             return res
               .status(401)
-              .json({ autenticado: false, mensaje: "vendedor no asociado" });
+              .json({ autenticado: false, mensaje: "Vendedor no asociado" });
           }
         }
       } else {
         return res
           .status(400)
-          .json({ autenticado: false, mensaje: "credenciales incorrectas" });
+          .json({ autenticado: false, mensaje: "Credenciales incorrectas" });
       }
     }
     return res
       .status(400)
-      .json({ autenticado: false, mensaje: "usuario no existe" });
+      .json({ autenticado: false, mensaje: "Usuario no existe" });
   }
 
   async verificarauth(req, res) {

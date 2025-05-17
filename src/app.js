@@ -13,6 +13,7 @@ const { Http2ServerRequest } = require("http2");
 const seccion = require("express-session");
 const routerauth = require("./routes/auth.routes");
 const routerpedido = require("./routes/pedido.routes");
+const routerterceo = require("./routes/tercero.routes");
 const bdyparse = require("body-parser");
 const { Server } = require("socket.io");
 const bodyParser = require("body-parser");
@@ -85,7 +86,8 @@ app.get("/api/traerempresas", async (req, res) => {
   }
 });
 
-app.use("/api", routerpedido);
+app.use("/api", midleware, routerpedido);
+app.use("/api", midleware, routerterceo);
 
 app.get("/api/esteblecerdb/:db", midleware, async (req, res) => {
   const { usuario } = req.session;
