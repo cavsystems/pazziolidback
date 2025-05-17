@@ -4,6 +4,8 @@ class tercero {
   constructor() {}
 
   async guardartercero(req, res) {
+    let id;
+
     try {
       const cliente = await modeltercero.find({
         vendedor: req.session.usuario.documento,
@@ -11,13 +13,14 @@ class tercero {
 
       if (cliente.length > 0) {
         const data = { ...req.body, vendedor: req.session.usuario.documento };
+
         const updatedcliente = await modeltercero.findByIdAndUpdate(
           cliente[0]._id.toString(),
           { $set: data },
           { new: true }
         );
 
-        console.log(cliente[0]._id);
+        console.log(updatedcliente);
         return res
           .status(200)
           .json({ mensaje: "cliente actulizado", response: true });
