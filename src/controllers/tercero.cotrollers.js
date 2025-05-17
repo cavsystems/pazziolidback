@@ -12,12 +12,12 @@ class tercero {
       if (cliente.length > 0) {
         const data = { ...req.body, vendedor: req.session.usuario.documento };
         const updatedcliente = await modeltercero.findByIdAndUpdate(
-          cliente._di,
+          cliente[0]._id.toString(),
           { $set: data },
           { new: true }
         );
 
-        console.log(cliente);
+        console.log(cliente[0]._id);
         return res
           .status(200)
           .json({ mensaje: "cliente actulizado", response: true });
@@ -37,18 +37,6 @@ class tercero {
         response: true,
       });
     }
-  }
-
-  async obtenercliente(req, res) {
-    const cliente = await modeltercero
-      .findOne({
-        vendedor: req.session.usuario.documento,
-      })
-      .lean();
-
-    console.log(cliente);
-
-    return res.status(200).json({ response: true, datos: cliente });
   }
 
   async obtenercliente(req, res) {
