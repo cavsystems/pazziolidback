@@ -46,7 +46,8 @@ class Pedidocontrol {
   async optenernumeroregistro(req, res) {
     const { sequelize } = crearConexionPorNombre(req.session.usuario.db);
     const [resultado] = await sequelize.query(
-      "SELECT COUNT(codigo)  as nregistros FROM productos"
+      "SELECT COUNT(v.codigo)  as nregistros FROM pedido p inner join vendedores v  on v.codigo=p.codigoVendedor where v.identificacion=?",
+      { replacements: [req.session.usuario.documento] }
     );
     sequelize.close();
     return res.status(200).json({ response: true, nregistros: resultado[0] });
