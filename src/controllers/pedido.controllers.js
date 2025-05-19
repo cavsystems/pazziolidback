@@ -50,7 +50,11 @@ class Pedidocontrol {
       { replacements: [req.session.usuario.documento] }
     );
     sequelize.close();
-    return res.status(200).json({ response: true, nregistros: resultado[0] });
+
+    const result = Math.round(resultado[0].nregistros / 15);
+    return res
+      .status(200)
+      .json({ response: true, nregistros: { nregistros: result } });
   }
 
   async odteneritemspedido(req, res) {
