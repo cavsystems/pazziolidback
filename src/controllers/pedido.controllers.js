@@ -8,15 +8,48 @@ class Pedidocontrol {
 
   async obtenerpedido(req, res) {
     const { sequelize } = crearConexionPorNombre(req.session.usuario.db);
-    let consulta = `SELECT p.codigo AS codigo_pedido,p.fechaCreacion as fecha_creacion,v.nombre AS nombrevendedor ,p.horaCreacion AS  hora
-,t.apellido1 AS nombre_cliente ,t.razonSocial AS razonsocial_clientes
- , p.estado AS estadopedido,p.totalpedido as totalpedido,t.email,t.identificacion ,t.telefonoFijo,t.direccion FROM pedido p INNER JOIN  tercero t INNER JOIN vendedores v ON
-v.codigo=p.codigoVendedor AND p.codigoTercero=t.codigo where v.identificacion=${req.session.usuario.documento}`;
+    let consulta;
+    const inicio = req.query.pagina > 0 ? req.query.pagina * 15 - 15 : 0;
+    const busqueda =
+      !isNaN(req.query.busqueda) && isFinite(req.query.busqueda)
+        ? req.query.busqueda
+        : req.query.busqueda.toUpperCase();
+    if (busqueda && busqueda !== "") {
+      consulta = `SELECT p.codigo AS codigo_pedido,p.fechaCreacion as fecha_creacion,v.nombre AS nombrevendedor ,v.identificacion as cedula,p.horaCreacion AS  hora
+      ,t.apellido1 AS nombre_cliente ,t.razonSocial AS razonsocial_clientes
+       , p.estado AS estadopedido,p.totalpedido as totalpedido,t.email,t.identificacion ,t.telefonoFijo,t.direccion FROM pedido p INNER JOIN  tercero t INNER JOIN vendedores v ON
+      v.codigo=p.codigoVendedor AND p.codigoTercero=t.codigo where v.identificacion=${
+        req.session.usuario.documento
+      } and t.razonSocial like '%${busqueda}%'  or p.codigo like '%${busqueda}%' or v.nombre like '%${busqueda}%' limit  ${inicio},${15} `;
+    } else {
+      consulta = `SELECT p.codigo AS codigo_pedido,p.fechaCreacion as fecha_creacion,v.nombre AS nombrevendedor,v.identificacion as cedula ,p.horaCreacion AS  hora
+      ,t.apellido1 AS nombre_cliente ,t.razonSocial AS razonsocial_clientes
+       , p.estado AS estadopedido,p.totalpedido as totalpedido,t.email,t.identificacion ,t.telefonoFijo,t.direccion FROM pedido p INNER JOIN  tercero t INNER JOIN vendedores v ON
+      v.codigo=p.codigoVendedor AND p.codigoTercero=t.codigo where v.identificacion=${
+        req.session.usuario.documento
+      } limit ${inicio},${15}`;
+    }
 
-    const pedidos_obtenidos = await sequelize.query(consulta, {
+    let pedidos_obtenidos = await sequelize.query(consulta, {
       type: sequelize.QueryTypes.SELECT,
     });
+
+    if (pedidos_obtenidos.length > 0) {
+      if (req.session.usuario.documento !== pedidos_obtenidos[0].cedula) {
+        pedidos_obtenidos = [];
+      }
+    }
+
     return res.status(200).json({ pedidos: pedidos_obtenidos });
+  }
+
+  async optenernumeroregistro(req, res) {
+    const { sequelize } = crearConexionPorNombre(req.session.usuario.db);
+    const [resultado] = await sequelize.query(
+      "SELECT COUNT(codigo)  as nregistros FROM productos"
+    );
+    sequelize.close();
+    return res.status(200).json({ response: true, nregistros: resultado[0] });
   }
 
   async odteneritemspedido(req, res) {

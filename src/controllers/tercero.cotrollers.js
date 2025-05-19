@@ -55,6 +55,7 @@ class tercero {
   }
 
   async eliminarcliente(req, res) {
+    console.log(req.params.id);
     const result = await modeltercero.findByIdAndDelete(req.params.id);
 
     if (!result) {

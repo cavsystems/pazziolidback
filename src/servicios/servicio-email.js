@@ -1,8 +1,6 @@
 const { generarTirillaPDF } = require("../libs/generarpdftirilla");
 const { crearcorreo } = require("../libs/instanciacorreo");
 async function enviarDataEmail(io, data) {
-  console.log(io.request.session.usuario.config.CONTRASENA_ENVIO_PEDIDO);
-  console.log(data);
   const pdfBuffer = await generarTirillaPDF(
     io.request.session.usuario,
     data.data.itemspedido,
@@ -41,7 +39,7 @@ async function enviarDataEmail(io, data) {
     </p>`;
       let message = {
         from: `${io.request.session.usuario.config.CORREO_ENVIO_PEDIDO}`,
-        to: `${data.data.cliente.email}`,
+        to: [`${data.data.cliente.email}`, `${data.data.email}`],
         subject: "Message title",
         text: "Plaintext version of the message",
         html: mensaje,
