@@ -49,13 +49,16 @@ class tercero {
       })
       .lean();
 
-    console.log(cliente);
-
     return res.status(200).json({ response: true, datos: cliente });
   }
 
   async eliminarcliente(req, res) {
-    console.log(req.params.id);
+    // console.log(req.params.id);
+    if (!req.params.id) {
+      return res
+        .status(404)
+        .json({ response: false, message: "id no proporcionado" });
+    }
     const result = await modeltercero.findByIdAndDelete(req.params.id);
 
     if (!result) {

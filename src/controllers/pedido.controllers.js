@@ -15,19 +15,47 @@ class Pedidocontrol {
         ? req.query.busqueda
         : req.query.busqueda.toUpperCase();
     if (busqueda && busqueda !== "") {
-      consulta = `SELECT p.codigo AS codigo_pedido,p.fechaCreacion as fecha_creacion,v.nombre AS nombrevendedor ,v.identificacion as cedula,p.horaCreacion AS  hora
-      ,t.apellido1 AS nombre_cliente ,t.razonSocial AS razonsocial_clientes
-       , p.estado AS estadopedido,p.totalpedido as totalpedido,t.email,t.identificacion ,t.telefonoFijo,t.direccion FROM pedido p INNER JOIN  tercero t INNER JOIN vendedores v ON
-      v.codigo=p.codigoVendedor AND p.codigoTercero=t.codigo where v.identificacion=${
-        req.session.usuario.documento
-      } and t.razonSocial like '%${busqueda}%'  or p.codigo like '%${busqueda}%' or v.nombre like '%${busqueda}%' limit  ${inicio},${15} `;
+      if (
+        req.query.estado &&
+        req.query.estado !== "" &&
+        req.query.estado !== "TODO"
+      ) {
+        consulta = `SELECT p.codigo AS codigo_pedido,p.codigoUsuario AS codigousuario,p.fechaCreacion as fecha_creacion,v.nombre AS nombrevendedor ,v.identificacion as cedula,p.horaCreacion AS  hora
+        ,t.apellido1 AS nombre_cliente ,t.razonSocial AS razonsocial_clientes
+         , p.estado AS estadopedido,p.totalpedido as totalpedido,t.email,t.identificacion ,t.telefonoFijo,t.direccion FROM pedido p INNER JOIN  tercero t INNER JOIN vendedores v ON
+        v.codigo=p.codigoVendedor AND p.codigoTercero=t.codigo where v.identificacion=${
+          req.session.usuario.documento
+        } and (t.razonSocial like '%${busqueda}%'  or p.codigo like '%${busqueda}%' or v.nombre like '%${busqueda}%') and  p.estado='${
+          req.query.estado
+        }'limit  ${inicio},${15} `;
+      } else {
+        consulta = `SELECT p.codigo AS codigo_pedido,p.codigoUsuario AS codigousuario,p.fechaCreacion as fecha_creacion,v.nombre AS nombrevendedor ,v.identificacion as cedula,p.horaCreacion AS  hora
+        ,t.apellido1 AS nombre_cliente ,t.razonSocial AS razonsocial_clientes
+         , p.estado AS estadopedido,p.totalpedido as totalpedido,t.email,t.identificacion ,t.telefonoFijo,t.direccion FROM pedido p INNER JOIN  tercero t INNER JOIN vendedores v ON
+        v.codigo=p.codigoVendedor AND p.codigoTercero=t.codigo where v.identificacion=${
+          req.session.usuario.documento
+        } and t.razonSocial like '%${busqueda}%'  or p.codigo like '%${busqueda}%' or v.nombre like '%${busqueda}%'   limit  ${inicio},${15} `;
+      }
     } else {
-      consulta = `SELECT p.codigo AS codigo_pedido,p.fechaCreacion as fecha_creacion,v.nombre AS nombrevendedor,v.identificacion as cedula ,p.horaCreacion AS  hora
-      ,t.apellido1 AS nombre_cliente ,t.razonSocial AS razonsocial_clientes
-       , p.estado AS estadopedido,p.totalpedido as totalpedido,t.email,t.identificacion ,t.telefonoFijo,t.direccion FROM pedido p INNER JOIN  tercero t INNER JOIN vendedores v ON
-      v.codigo=p.codigoVendedor AND p.codigoTercero=t.codigo where v.identificacion=${
-        req.session.usuario.documento
-      } limit ${inicio},${15}`;
+      if (
+        req.query.estado &&
+        req.query.estado !== "" &&
+        req.query.estado !== "TODO"
+      ) {
+        consulta = `SELECT p.codigo AS codigo_pedido,p.codigoUsuario AS codigousuario,p.fechaCreacion as fecha_creacion,v.nombre AS nombrevendedor,v.identificacion as cedula ,p.horaCreacion AS  hora
+        ,t.apellido1 AS nombre_cliente ,t.razonSocial AS razonsocial_clientes
+         , p.estado AS estadopedido,p.totalpedido as totalpedido,t.email,t.identificacion ,t.telefonoFijo,t.direccion FROM pedido p INNER JOIN  tercero t INNER JOIN vendedores v ON
+        v.codigo=p.codigoVendedor AND p.codigoTercero=t.codigo where v.identificacion=${
+          req.session.usuario.documento
+        }  and  p.estado='${req.query.estado}'  limit ${inicio},${15}`;
+      } else {
+        consulta = `SELECT p.codigo AS codigo_pedido,p.codigoUsuario AS codigousuario,p.fechaCreacion as fecha_creacion,v.nombre AS nombrevendedor,v.identificacion as cedula ,p.horaCreacion AS  hora
+        ,t.apellido1 AS nombre_cliente ,t.razonSocial AS razonsocial_clientes
+         , p.estado AS estadopedido,p.totalpedido as totalpedido,t.email,t.identificacion ,t.telefonoFijo,t.direccion FROM pedido p INNER JOIN  tercero t INNER JOIN vendedores v ON
+        v.codigo=p.codigoVendedor AND p.codigoTercero=t.codigo where v.identificacion=${
+          req.session.usuario.documento
+        } limit ${inicio},${15}`;
+      }
     }
 
     let pedidos_obtenidos = await sequelize.query(consulta, {
@@ -45,13 +73,45 @@ class Pedidocontrol {
 
   async optenernumeroregistro(req, res) {
     const { sequelize } = crearConexionPorNombre(req.session.usuario.db);
-    const [resultado] = await sequelize.query(
-      "SELECT COUNT(v.codigo)  as nregistros FROM pedido p inner join vendedores v  on v.codigo=p.codigoVendedor where v.identificacion=?",
-      { replacements: [req.session.usuario.documento] }
-    );
+    let resultado;
+
+    if (req.query.busqueda && req.query.busqueda !== "") {
+      if (
+        req.query.estado &&
+        req.query.estado.trim() !== "" &&
+        req.query.estado !== "TODO"
+      ) {
+        resultado = await sequelize.query(
+          `SELECT COUNT(v.codigo)  as nregistros FROM pedido p inner join vendedores v  on v.codigo=p.codigoVendedor where v.identificacion=? and estado='${req.query.estado}' and estado='${req.query.busqueda}'`,
+          { replacements: [req.session.usuario.documento] }
+        );
+      } else {
+        resultado = await sequelize.query(
+          `SELECT COUNT(v.codigo)  as nregistros FROM pedido p inner join vendedores v  on v.codigo=p.codigoVendedor where v.identificacion=? and estado='${req.query.busqueda}'`,
+          { replacements: [req.session.usuario.documento] }
+        );
+      }
+    } else {
+      if (
+        req.query.estado &&
+        req.query.estado.trim() !== "" &&
+        req.query.estado !== "TODO"
+      ) {
+        resultado = await sequelize.query(
+          `SELECT COUNT(v.codigo)  as nregistros FROM pedido p inner join vendedores v  on v.codigo=p.codigoVendedor where v.identificacion=? and estado='${req.query.estado}'`,
+          { replacements: [req.session.usuario.documento] }
+        );
+      } else {
+        resultado = await sequelize.query(
+          `SELECT COUNT(v.codigo)  as nregistros FROM pedido p inner join vendedores v  on v.codigo=p.codigoVendedor where v.identificacion=?`,
+          { replacements: [req.session.usuario.documento] }
+        );
+      }
+    }
     sequelize.close();
 
-    const result = Math.round(resultado[0].nregistros / 15);
+    const result = Math.round(resultado[0][0].nregistros / 15);
+
     return res
       .status(200)
       .json({ response: true, nregistros: { nregistros: result } });
@@ -118,7 +178,63 @@ class Pedidocontrol {
         .json({ message: "error inesperado", error: error });
     }
   }
+  async anularpedido(req, res) {
+    const { sequelize } = crearConexionPorNombre(req.session.usuario.db);
+    try {
+      let fecha = new Date();
+      const pad = (n) => n.toString().padStart(2, "0");
 
+      let diaActual =
+        fecha.getFullYear() +
+        "-" +
+        pad(fecha.getMonth() + 1) +
+        "-" +
+        pad(fecha.getDate());
+
+      let horaActual =
+        pad(fecha.getHours()) +
+        ":" +
+        pad(fecha.getMinutes()) +
+        ":" +
+        pad(fecha.getSeconds());
+
+      await sequelize.query(
+        "update pedido set estado=? ,codigoUsuarioAnulo=?, fechaAnulo=?  where codigo=? and codigoUsuario=?",
+        {
+          replacements: [
+            req.body.estado,
+            Number(req.query.codigousuario),
+            diaActual,
+            Number(req.query.codigo),
+            Number(req.query.codigousuario),
+          ],
+        }
+      );
+
+      await sequelize.query(
+        "update itemspedido set estado=? ,usuarioAnulo=?, horaAnulacion=?  where codigoPedido=? and codigoUsuario=?",
+        {
+          replacements: [
+            "INACTIVO",
+            Number(req.query.codigousuario),
+            horaActual,
+            Number(req.query.codigo),
+            Number(req.query.codigousuario),
+          ],
+        }
+      );
+      res.status(200).json({
+        response: true,
+        mensaje: "Pedido anulado",
+      });
+    } catch (error) {
+      console.log(error);
+      res.status(400).json({
+        response: true,
+        mensaje: "Ocurrio un erro inesperado",
+      });
+    }
+  }
   async eliminarpedidoreservado(req, res) {
     const { id } = req.params;
     const pedidoid = await modelpedidoreservado.findById(id);

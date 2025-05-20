@@ -123,6 +123,7 @@ async function crearPedido(
   if (id !== "") {
     await modelpedidoreservado.findByIdAndDelete(id);
   }
+
   var queryInsert = "INSERT INTO pedido(";
   queryInsert +=
     "codigoVendedor,codigoTercero,fechaCreacion,horaCreacion,codigoFactura,codigoUsuarioAnulo,";
@@ -130,7 +131,7 @@ async function crearPedido(
     "fechaAnulo,estado,ubicacion,codigoUsuario,descuento,totalPedido,tipoFactura,observacion)";
   queryInsert += "VALUES(";
   queryInsert += `${codigousuario.codigo},${codigoUsuario},'${fechaCreacion}','${horaCreacion}',${codigoFactura},${codigoUsuarioAnulo},`;
-  queryInsert += `'1970-01-01','${estado}','${ubicacion}',${codigoUsuario},${descuento},${totalPedido},'${tipoFactura}','${observacion}')`;
+  queryInsert += `'1970-01-01','${estado}','${ubicacion}',${io.request.session.usuario.codigousuario},${descuento},${totalPedido},'${tipoFactura}','${observacion}')`;
 
   sequelize
     .query(queryInsert, { type: sequelize.QueryTypes.INSERT })
@@ -151,11 +152,12 @@ async function crearPedido(
         modificaInventario,
         canalserver,
         sede,
-        usuario,
+        io.request.session.usuario.codigousuario,
         pdf
       );
     })
     .catch((err) => {
+      console.log(err);
       respuesta = {
         sistema: "POS",
         estadoPeticion: "ERROR",
@@ -198,9 +200,9 @@ function crearItemsPedido(
       const { codigoProducto, valor, cantidad, codigoUsuario } = itemPedido;
 
       if (queryValues === "") {
-        queryValues += `(${idPedido},${codigoProducto},${valor},${cantidad},'ACTIVO',CURRENT_TIME(),0,'00:00:00',${codigoUsuario})`;
+        queryValues += `(${idPedido},${codigoProducto},${valor},${cantidad},'ACTIVO',CURRENT_TIME(),0,'00:00:00',${usuario})`;
       } else {
-        queryValues += `,(${idPedido},${codigoProducto},${valor},${cantidad},'ACTIVO',CURRENT_TIME(),0,'00:00:00',${codigoUsuario})`;
+        queryValues += `,(${idPedido},${codigoProducto},${valor},${cantidad},'ACTIVO',CURRENT_TIME(),0,'00:00:00',${usuario})`;
       }
     });
 
@@ -222,6 +224,7 @@ function crearItemsPedido(
         io.emit(canalserver, respuesta);
       })
       .catch((err) => {
+        console.log(err);
         eliminarPedido(io, db, canalUsuario, idPedido);
       });
   });
@@ -269,7 +272,7 @@ function eliminarPedido(io, db, canalUsuario, idPedido) {
             tipoConsulta: "PEDIDO",
             canalUsuario: canalUsuario,
           };
-          io.emit(process.env.CANALSERVIDOR, respuesta);
+          io.emit(process.env.CANALSERVIDOR, JSON.stringify(respuesta));
         })
         .catch((err) => {
           respuesta = {
