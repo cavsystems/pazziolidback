@@ -83,13 +83,13 @@ class Pedidocontrol {
       ) {
         console.log("0");
         resultado = await sequelize.query(
-          `SELECT COUNT(v.codigo)  as nregistros FROM pedido p inner join vendedores v  on v.codigo=p.codigoVendedor where v.identificacion=? and estado='${req.query.estado}' and estado='${req.query.busqueda}'`,
+          `SELECT COUNT(v.codigo)  as nregistros FROM pedido p inner join vendedores v  on v.codigo=p.codigoVendedor where v.identificacion=? and p.estado='${req.query.estado}' and estado='${req.query.busqueda}'`,
           { replacements: [req.session.usuario.documento] }
         );
       } else {
         console.log("0.1");
         resultado = await sequelize.query(
-          `SELECT COUNT(v.codigo)  as nregistros FROM pedido p inner join vendedores v  on v.codigo=p.codigoVendedor where v.identificacion=? and estado='${req.query.busqueda}'`,
+          `SELECT COUNT(v.codigo)  as nregistros FROM pedido p inner join vendedores v  on v.codigo=p.codigoVendedor where v.identificacion=? and p.estado='${req.query.busqueda}'`,
           { replacements: [req.session.usuario.documento] }
         );
       }
@@ -101,7 +101,7 @@ class Pedidocontrol {
       ) {
         console.log("2");
         resultado = await sequelize.query(
-          `SELECT COUNT(v.codigo)  as nregistros FROM pedido p inner join vendedores v  on v.codigo=p.codigoVendedor where v.identificacion=? and estado='${req.query.estado}'`,
+          `SELECT COUNT(v.codigo)  as nregistros FROM pedido p inner join vendedores v  on v.codigo=p.codigoVendedor where v.identificacion=? and p.estado='${req.query.estado}'`,
           { replacements: [req.session.usuario.documento] }
         );
       } else {
