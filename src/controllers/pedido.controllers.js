@@ -81,11 +81,13 @@ class Pedidocontrol {
         req.query.estado.trim() !== "" &&
         req.query.estado !== "TODO"
       ) {
+        console.log("0");
         resultado = await sequelize.query(
           `SELECT COUNT(v.codigo)  as nregistros FROM pedido p inner join vendedores v  on v.codigo=p.codigoVendedor where v.identificacion=? and estado='${req.query.estado}' and estado='${req.query.busqueda}'`,
           { replacements: [req.session.usuario.documento] }
         );
       } else {
+        console.log("0.1");
         resultado = await sequelize.query(
           `SELECT COUNT(v.codigo)  as nregistros FROM pedido p inner join vendedores v  on v.codigo=p.codigoVendedor where v.identificacion=? and estado='${req.query.busqueda}'`,
           { replacements: [req.session.usuario.documento] }
@@ -97,11 +99,13 @@ class Pedidocontrol {
         req.query.estado.trim() !== "" &&
         req.query.estado !== "TODO"
       ) {
+        console.log("2");
         resultado = await sequelize.query(
           `SELECT COUNT(v.codigo)  as nregistros FROM pedido p inner join vendedores v  on v.codigo=p.codigoVendedor where v.identificacion=? and estado='${req.query.estado}'`,
           { replacements: [req.session.usuario.documento] }
         );
       } else {
+        console.log("1");
         resultado = await sequelize.query(
           `SELECT COUNT(v.codigo)  as nregistros FROM pedido p inner join vendedores v  on v.codigo=p.codigoVendedor where v.identificacion=?`,
           { replacements: [req.session.usuario.documento] }
@@ -110,8 +114,10 @@ class Pedidocontrol {
     }
     sequelize.close();
 
-    const result = Math.round(resultado[0][0].nregistros / 15);
-
+    let result = Math.round(resultado[0][0].nregistros / 15);
+    if (result === 0) {
+      result = 1;
+    }
     return res
       .status(200)
       .json({ response: true, nregistros: { nregistros: result } });

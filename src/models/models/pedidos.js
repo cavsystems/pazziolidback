@@ -59,6 +59,9 @@ const pedido = new mongoose.Schema({
   presentacion: {
     type: String,
   },
+  codigoContable: {
+    type: String,
+  },
 });
 
 const pedidoreservado = new mongoose.Schema(
