@@ -69,15 +69,21 @@ app.use("/api", routerauth);
 app.get("/api/traerempresas", async (req, res) => {
   try {
     const { documento } = req.query;
+    if (!/^\d*$/.test(documento)) {
+      let datos = await dbs.sequelize.query(
+        "call BuscarEmpresaPorVendedor(?)",
+        {
+          replacements: [documento],
+          type: dbs.sequelize.QueryTypes.SELECT,
+        }
+      );
+      //toma un objeto y devuelve un array con los valores de sus propiedades
+      datos = Object.values(datos[0]);
 
-    let datos = await dbs.sequelize.query("call BuscarEmpresaPorVendedor(?)", {
-      replacements: [documento],
-      type: dbs.sequelize.QueryTypes.SELECT,
-    });
-    //toma un objeto y devuelve un array con los valores de sus propiedades
-    datos = Object.values(datos[0]);
-
-    res.json({ response: true, data: datos });
+      res.json({ response: true, data: datos });
+    } else {
+      res.json({ response: true, data: [] });
+    }
   } catch (error) {
     res.json({
       response: false,
