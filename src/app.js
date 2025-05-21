@@ -69,7 +69,7 @@ app.use("/api", routerauth);
 app.get("/api/traerempresas", async (req, res) => {
   try {
     const { documento } = req.query;
-    if (/^\d*$/.test(documento)) {
+    if (/^\d+$/.test(documento)) {
       let datos = await dbs.sequelize.query(
         "call BuscarEmpresaPorVendedor(?)",
         {
