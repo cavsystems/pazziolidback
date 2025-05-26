@@ -77,9 +77,11 @@ productoServicio.consultar = (io, db, datoConsulta) => {
         };
 
         io.emit(process.env.CANALSERVIDOR, JSON.stringify(respuesta));
+        io.emit(process.env.CANALSERVIDOR, JSON.stringify(respuesta));
       }
     })
     .catch((err) => {
+      console.log(err);
       console.log(err);
       respuesta = {
         sistema: "POS",
@@ -89,6 +91,7 @@ productoServicio.consultar = (io, db, datoConsulta) => {
         canalUsuario: canalUsuario,
       };
 
+      io.emit(process.env.CANALSERVIDOR, JSON.stringify(respuesta));
       io.emit(process.env.CANALSERVIDOR, JSON.stringify(respuesta));
     })
     .finally(async () => await sequelize.close());

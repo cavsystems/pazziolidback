@@ -219,6 +219,9 @@ class Useraccioneauth {
   }
 
   async logout(req, res) {
+    console.log(req.session.usuario);
+    console.log("entro a deslogguiarse");
+    console.log(req.session);
     if (req.session.usuario) {
       const saveduser = await modeluser.findOneAndUpdate(
         { documento: req.session.usuario.documento },
