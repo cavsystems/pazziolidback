@@ -157,7 +157,6 @@ async function crearPedido(
       );
     })
     .catch((err) => {
-      console.log(err);
       respuesta = {
         sistema: "POS",
         estadoPeticion: "ERROR",
@@ -165,7 +164,8 @@ async function crearPedido(
         tipoConsulta: "PEDIDO",
         canalUsuario: canalUsuario,
       };
-      io.emit(process.env.CANALSERVIDOR, respuesta);
+      console.log("canal usuario", canalUsuario);
+      io.emit(canalserver, JSON.stringify(respuesta));
     });
 }
 
