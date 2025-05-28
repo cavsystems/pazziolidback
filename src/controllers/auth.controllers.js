@@ -27,6 +27,12 @@ class Useraccioneauth {
         mensaje: "Selecciona una organización",
       });
     }
+    if (documento.length < 8) {
+      return res.status(401).json({
+        autenticado: false,
+        mensaje: "Numero de identificacion muy corto",
+      });
+    }
     const { sequelize, usuarioaliasalmacen, almacen, usuarios, vendedor } =
       crearConexionPorNombre(db);
     let consulta = "select * from vendedores where identificacion=?";

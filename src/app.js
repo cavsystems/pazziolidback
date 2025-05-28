@@ -40,7 +40,7 @@ app.use(
 );
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "img")));
-app.set("trust proxy", 1);
+//app.set("trust proxy", 1);
 const midlewaraseccion = seccion({
   secret: "fazt", // como va empezar a guardar las secciones
   resave: false, //para que no se empiense a rrenoar la seccion
@@ -55,8 +55,8 @@ const midlewaraseccion = seccion({
   //http es para que cookie se accesible desde document.cookie
   cookie: {
     sameSite: "none",
-    //sameSite: "lax", // ⬅️ obligatorio si tu frontend y backend están en dominios distintos
-    secure: true, // ⬅️ obligatorio para que se envíe por HTTPS
+    sameSite: "lax", // ⬅️ obligatorio si tu frontend y backend están en dominios distintos
+    // secure: true, // ⬅️ obligatorio para que se envíe por HTTPS
     httpOnly: true, // ⬅️ recomendado para seguridad (aunque puedes poner false si necesitas leerla en JS)
   },
 });
@@ -72,6 +72,12 @@ app.get("/api/traerempresas", async (req, res) => {
   try {
     const { documento } = req.query;
     if (/^\d+$/.test(documento)) {
+      if (documento.length < 8) {
+        return res.status(401).json({
+          autenticado: false,
+          mensaje: "Numero de identificacion muy corto",
+        });
+      }
       let datos = await dbs.sequelize.query(
         "call BuscarEmpresaPorVendedor(?)",
         {
