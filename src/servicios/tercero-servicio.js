@@ -30,7 +30,7 @@ terceroServicio.consultar = (io, db, datoConsulta) => {
       )}limit 20'`;
       break;
     case "NOMBRES":
-      consulta += ` WHERE t.nombre1 LIKE '${datoConsulta.datoCondicion}%' OR t.nombre2 LIKE '${datoConsulta.datoCondicion}%' OR t.apellido1 LIKE '${datoConsulta.datoCondicion}%' OR t.apellido2 LIKE '${datoConsulta.datoCondicion}%' OR t.razonSocial LIKE '${datoConsulta.datoCondicion}%' OR  t.identificacion  LIKE '${datoConsulta.datoCondicion}%' limit 20`;
+      consulta += ` WHERE t.nombre1 LIKE '%${datoConsulta.datoCondicion}%' OR t.nombre2 LIKE '%${datoConsulta.datoCondicion}%' OR t.apellido1 LIKE '%${datoConsulta.datoCondicion}%' OR t.apellido2 LIKE '%${datoConsulta.datoCondicion}%' OR t.razonSocial LIKE '%${datoConsulta.datoCondicion}%' OR  t.identificacion  LIKE '%${datoConsulta.datoCondicion}%' limit 20`;
 
       break;
     default:

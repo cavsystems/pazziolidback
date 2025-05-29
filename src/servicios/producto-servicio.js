@@ -58,7 +58,7 @@ productoServicio.consultar = (io, db, datoConsulta) => {
       consulta += ` WHERE codigo = '${parseInt(datoConsulta.datoCondicion)}'`;
       break;
     case "DESCRIPCION":
-      consulta += ` WHERE descripcion LIKE '${datoConsulta.datoCondicion.trim()}%' OR  referencia LIKE '${datoConsulta.datoCondicion.trim()}%'  OR codigoBarra LIKE '${datoConsulta.datoCondicion.trim()}%' order by descripcion`;
+      consulta += ` WHERE descripcion LIKE '%${datoConsulta.datoCondicion.trim()}%' OR  referencia LIKE '%${datoConsulta.datoCondicion.trim()}%'  OR codigoBarra LIKE '%${datoConsulta.datoCondicion.trim()}%' order by descripcion`;
 
       break;
     case "CODIGO":
