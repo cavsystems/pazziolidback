@@ -362,7 +362,8 @@ class Useraccioneauth {
       }
     );
     console.log(result);
-    if (Number(!result[0].valor)) {
+
+    if (result.length <= 0) {
       return 1;
     }
     if (
