@@ -18,6 +18,8 @@ class Useraccioneauth {
     this.logout = this.logout.bind(this);
     this.destruir = this.destruir.bind(this);
     this.guardarinstanciadb = this.guardarinstanciadb.bind(this);
+    this.obtenerpreciopredeterminado =
+      this.obtenerpreciopredeterminado.bind(this);
   }
   async login(req, res) {
     const { user, documento, password, db } = req.body;
@@ -131,6 +133,10 @@ class Useraccioneauth {
               }
               try {
                 const parametro = await parametros;
+                const precio = await this.obtenerpreciopredeterminado(
+                  usuario[0].codigo,
+                  sequelize
+                );
                 req.session.usuario = {
                   documento: documento,
                   db: db,
@@ -141,9 +147,11 @@ class Useraccioneauth {
                   nombre: usuario[0].nombre,
                   alias: usuarioauth[0].almacen.alias,
                   fecha: fecha,
+                  precio,
                 };
                 return res.json({ autenticado: true });
               } catch (error) {
+                console.log(error);
                 return res.status(400).json({
                   autenticado: false,
                   mensaje: "error de servidor",
@@ -343,6 +351,29 @@ class Useraccioneauth {
       const saveduser = await newuserseccion.save();
 
       return res.status(200).json({ response: true });
+    }
+  }
+
+  async obtenerpreciopredeterminado(codigousuario, sequelize) {
+    const [result] = await sequelize.query(
+      "SELECT pc.* FROM parametroscomprobante pc JOIN parametros p ON pc.codigoParametro = p.codigo JOIN usuarioscomprobantes uc ON pc.codigoComprobante = uc.codigoComprobante WHERE p.nombre LIKE ? AND uc.codigoUsuario =? AND uc.categoria =?;",
+      {
+        replacements: ["%LISTA_PREDETERMINADA%", codigousuario, "VENTAS"],
+      }
+    );
+    console.log(result);
+    if (Number(!result[0].valor)) {
+      return 1;
+    }
+    if (
+      Number(result[0].valor) === 1 ||
+      Number(result[0].valor) === 2 ||
+      Number(result[0].valor) === 3 ||
+      Number(result[0].valor) === 4
+    ) {
+      return Number(result[0].valor);
+    } else {
+      return 1;
     }
   }
 }

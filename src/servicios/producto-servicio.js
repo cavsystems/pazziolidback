@@ -10,9 +10,33 @@ var respuesta = {};
  * @param {*} datoConsulta es la variable que envia el cliente Dashboard de la data para consultar el producto
  */
 productoServicio.consultar = (io, db, datoConsulta) => {
+  console.log(io.request.session);
   const sesion = io.request.session;
   const usuario = sesion?.usuario;
+  const precio = usuario.precio;
+  let precioconsulta = "precio1";
+  switch (precio) {
+    case 1:
+      precioconsulta = "precio1";
 
+      break;
+    case 2:
+      precioconsulta = "precio2";
+
+      break;
+    case 3:
+      precioconsulta = "precio3";
+
+      break;
+    case 4:
+      precioconsulta = "costo";
+
+      break;
+
+    default:
+      precioconsulta = "precio1";
+      break;
+  }
   const { sequelize } = crearConexionPorNombre(usuario.db);
   let cantidad = "";
   if (usuario.almacen === "BODEGA") {
@@ -21,7 +45,7 @@ productoServicio.consultar = (io, db, datoConsulta) => {
     cantidad = ` cantidad${(Number(usuario.almacen.slice(-1)) + 1).toString()}`;
   }
   var consulta = `SELECT ${cantidad},codigo,descripcion
-            ,codigocontable,codigoBarra,referencia,precio1,tasaIva,presentacion FROM productos `;
+            ,codigocontable,codigoBarra,referencia,${precioconsulta} as precio,tasaIva,presentacion FROM productos `;
 
   switch (datoConsulta.condicion.trim().toUpperCase()) {
     case "CODIGOBARRA":
@@ -41,11 +65,13 @@ productoServicio.consultar = (io, db, datoConsulta) => {
       consulta += ` WHERE codigoBarra LIKE '%${datoConsulta.datoCondicion.trim()}%' OR codigo LIKE '%${datoConsulta.datoCondicion.trim()}%' OR referencia LIKE '%${datoConsulta.datoCondicion.trim()}%'`;
       break;
     case "CODIGO-EQUAL":
-      consulta += ` WHERE codigoBarra = '${datoConsulta.datoCondicion.trim()}' OR codigo = '${datoConsulta.datoCondicion.trim()}' OR referencia = '${datoConsulta.datoCondicion.trim()}'`;
+      consulta += ` WHERE codigoBarra = '${datoConsulta.datoCondicion.toString()}' OR codigo = '${
+        datoConsulta.datoCondicion
+      }' OR referencia = '${datoConsulta.datoCondicion.toString()}'`;
       break;
     default:
       consulta = `SELECT ${cantidad},codigo,descripcion
-            ,codigocontable,codigoBarra,referencia,precio1,tasaIva,presentacion FROM productos  order by descripcion`;
+            ,codigocontable,codigoBarra,referencia,${precioconsulta} as precio,tasaIva,presentacion FROM productos  order by descripcion`;
 
       break;
   }
