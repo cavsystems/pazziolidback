@@ -58,16 +58,16 @@ productoServicio.consultar = (io, db, datoConsulta) => {
       consulta += ` WHERE codigo = '${parseInt(datoConsulta.datoCondicion)}'`;
       break;
     case "DESCRIPCION":
-      consulta += ` WHERE descripcion LIKE '%${datoConsulta.datoCondicion.trim()}%' OR  referencia LIKE '%${datoConsulta.datoCondicion.trim()}%'  OR codigoBarra LIKE '%${datoConsulta.datoCondicion.trim()}%' order by descripcion`;
+      consulta += ` WHERE descripcion LIKE '%${datoConsulta.datoCondicion.trim()}%' OR  referencia LIKE '%${datoConsulta.datoCondicion.trim()}%'  OR codigoBarra LIKE '%${datoConsulta.datoCondicion.trim()}%' order by descripcion limit 10`;
 
       break;
     case "CODIGO":
-      consulta += ` WHERE codigoBarra LIKE '%${datoConsulta.datoCondicion.trim()}%' OR codigo LIKE '%${datoConsulta.datoCondicion.trim()}%' OR referencia LIKE '%${datoConsulta.datoCondicion.trim()}%'`;
+      consulta += ` WHERE codigoBarra LIKE '%${datoConsulta.datoCondicion.trim()}%' OR codigo LIKE '%${datoConsulta.datoCondicion.trim()}%' OR referencia LIKE '%${datoConsulta.datoCondicion.trim()}%' limit 1`;
       break;
     case "CODIGO-EQUAL":
       consulta += ` WHERE codigoBarra = '${datoConsulta.datoCondicion.toString()}' OR codigo = '${
         datoConsulta.datoCondicion
-      }' OR referencia = '${datoConsulta.datoCondicion.toString()}'`;
+      }' OR referencia = '${datoConsulta.datoCondicion.toString()}' limit 1`;
       break;
     default:
       consulta = `SELECT ${cantidad},codigo,descripcion
