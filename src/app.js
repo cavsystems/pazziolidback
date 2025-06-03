@@ -27,6 +27,7 @@ const { usuarioauth } = require("./controllers/auth.controllers");
 const db = require("./config/db");
 const { enviarDataEmail } = require("./servicios/servicio-email");
 const { midleware } = require("./libs/midleware");
+const { routerfactura } = require("./routes/factura.routes");
 
 const MySQLStore = require("express-mysql-session")(seccion);
 // hace la conexión al socket servidor en la nube
@@ -68,6 +69,7 @@ app.get("/api", (req, res) => {
   res.send("Servidor funcionando en Vercel 🚀");
 });
 app.use("/api", routerauth);
+app.use("/api", routerfactura);
 app.get("/api/traerempresas", async (req, res) => {
   try {
     const { documento } = req.query;
@@ -93,6 +95,7 @@ app.get("/api/traerempresas", async (req, res) => {
       res.json({ response: true, data: [] });
     }
   } catch (error) {
+    console.log(error);
     res.json({
       response: false,
       message: "ocurrio un error al ejecutar el procedimiento",
