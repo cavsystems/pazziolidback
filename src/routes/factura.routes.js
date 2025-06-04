@@ -4,6 +4,7 @@ const { Factura } = require("../controllers/factura.controller");
 const routerfactura = Router();
 
 routerfactura.get("/obtenerfactura", Factura.traerfactura);
+routerfactura.get("/obtenerfacturaall",Factura.traerfacturasSaldo);
 
 module.exports = {
   routerfactura,

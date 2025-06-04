@@ -140,6 +140,7 @@ class Useraccioneauth {
                 req.session.usuario = {
                   documento: documento,
                   db: db,
+                  nivel:usuario[0].nivel,
                   almacen: usuarioauth[0].almacen.almacen,
                   vendedor: vendedoruser[0].nombre,
                   config: parametro,
@@ -377,7 +378,12 @@ class Useraccioneauth {
       return 1;
     }
   }
+  obternenivel(req,res){
+  return res.json({nivel:req.session.usuario.nivel})
 }
+}
+
+
 
 module.exports = {
   usuarioauth: new Useraccioneauth(),
