@@ -140,7 +140,7 @@ class Useraccioneauth {
                 req.session.usuario = {
                   documento: documento,
                   db: db,
-                  nivel:usuario[0].nivel,
+                  nivel: usuario[0].nivel,
                   almacen: usuarioauth[0].almacen.almacen,
                   vendedor: vendedoruser[0].nombre,
                   config: parametro,
@@ -178,6 +178,7 @@ class Useraccioneauth {
   }
 
   async verificarauth(req, res) {
+    console.log(req.session);
     const { usuario } = req.session;
 
     if (usuario) {
@@ -236,7 +237,7 @@ class Useraccioneauth {
   async logout(req, res) {
     console.log(req.session.usuario);
     console.log("entro a deslogguiarse");
-    console.log(req.session);
+
     if (req.session.usuario) {
       const saveduser = await modeluser.findOneAndUpdate(
         { documento: req.session.usuario.documento },
@@ -378,12 +379,10 @@ class Useraccioneauth {
       return 1;
     }
   }
-  obternenivel(req,res){
-  return res.json({nivel:req.session.usuario.nivel})
+  obternenivel(req, res) {
+    return res.json({ nivel: req.session.usuario.nivel });
+  }
 }
-}
-
-
 
 module.exports = {
   usuarioauth: new Useraccioneauth(),

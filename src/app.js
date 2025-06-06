@@ -55,7 +55,7 @@ const midlewaraseccion = seccion({
   }), //endonde guardar la seccion
   //http es para que cookie se accesible desde document.cookie
   cookie: {
-    sameSite: "none",
+    //sameSite: "none",
     sameSite: "lax", // ⬅️ obligatorio si tu frontend y backend están en dominios distintos
     // secure: true, // ⬅️ obligatorio para que se envíe por HTTPS
     httpOnly: true, // ⬅️ recomendado para seguridad (aunque puedes poner false si necesitas leerla en JS)
