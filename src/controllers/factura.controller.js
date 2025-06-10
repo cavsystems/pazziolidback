@@ -9,7 +9,7 @@ class Factura {
     const consulta = `select f.codigo, f.codigoComprobante, c.nombre, f.fechaEmision as fechaEmision, f.fechaVencimiento 
     as fechaVencimiento,  DATEDIFF(fechavencimiento,CURRENT_DATE) AS dias,
     f.totalFactura as totalFactura , f.saldo as saldo, f.observaciones ,
-     v.nombre as vendedor, t.razonSocial as cliente from  factura f inner join vendedores v inner join 
+     v.nombre as vendedor, t.razonSocial as cliente, false as selected, 0 as abono from  factura f inner join vendedores v inner join 
     comprobantes c inner join tercero t on 
     v.codigo=f.codigoVendedor and  f.codigoComprobante=c.codigo and f.codigoTercero=t.codigo where t.codigo=? && saldo<>0 && f.estado='ACTIVO' limit ?,15 ;`;
     const consultatotal = `select  COUNT(f.codigo) as nregistros  , sum(f.saldo)   as saldo  from  factura f inner join vendedores v inner join 
@@ -69,7 +69,7 @@ INNER JOIN (
     GROUP BY f2.codigoTercero
 ) AS totales ON totales.codigoTercero = f.codigoTercero
 WHERE f.saldo <> 0 AND f.estado = 'ACTIVO'
-ORDER BY cliente `;
+ORDER BY cliente,f.fechaEmision `;
     const result = await sequelize.query(consulta, {
       type: sequelize.QueryTypes.SELECT,
       logging: true,
@@ -84,7 +84,7 @@ ORDER BY cliente `;
     f.totalFactura as totalFactura , f.saldo as saldo, f.observaciones ,
      v.nombre as vendedor, t.razonSocial as cliente from  factura f inner join vendedores v inner join 
     comprobantes c inner join tercero t on 
-    v.codigo=f.codigoVendedor and  f.codigoComprobante=c.codigo and f.codigoTercero=t.codigo where saldo<>0 && f.estado='ACTIVO' order by cliente limit ?,15 ;`;
+    v.codigo=f.codigoVendedor and  f.codigoComprobante=c.codigo and f.codigoTercero=t.codigo where saldo<>0 && f.estado='ACTIVO' order by cliente, fechaEmision limit ?,15 ;`;
     const consultatotal = `select  COUNT(*) as nregistros,  sum(f.saldo)   as saldo from  factura f inner join vendedores v inner join 
     comprobantes c inner join tercero t on 
     v.codigo=f.codigoVendedor and  f.codigoComprobante=c.codigo and f.codigoTercero=t.codigo where saldo<>0 && f.estado='ACTIVO'`;
