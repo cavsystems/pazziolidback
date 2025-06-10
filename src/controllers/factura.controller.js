@@ -1,5 +1,6 @@
 const sequelize = require("sequelize");
 const { crearConexionPorNombre } = require("../libs/dbhelpers");
+const { Sequelize } = require("../config/db");
 
 class Factura {
   async traerfactura(req, res) {
@@ -133,43 +134,124 @@ ORDER BY cliente,f.fechaEmision `;
 
   }*/
 
-  abonarfactura(req, res) {
-    const { factura, ingresos } = req.body;
-    let valor = 0;
-    console.log(factura);
-    factura.forEach(async (data) => {
-      const procesardata = () =>
-        new Promise((reject, resolve) => {
-          if (data.saldo === data.totalfactura) {
-            valor = 0;
-            resolve();
-          } else {
-            valor = data.totalfactura - ingresos.totalrecibo;
-            ingresos.totalrecibo = ingresos.totalrecibo - valor;
-            resolve();
-          }
-        });
+ async crearreciboingreso(req, res) {
 
-      try {
-        await procesardata();
-        if (valor !== 0) {
-          const { sequelize } = crearConexionPorNombre("pruebas");
-          let codigo = await sequelize.query(
-            "select * from reciboingreso order by codigo desc limit 1"
-          );
-          codigo = codigo[0].codigo + 1;
+    // informacion del 
+    const {sequelize}=crearConexionPorNombre(req.session.usuario.db)
+    const {totalrecibo,cliente,concepto,descuento,observacion,facturas,tipopago}=req.body
+    const codigoReciboCreado = await ingresoReciboCaja(totalrecibo, cliente, concepto,descuento,observacion,sequelize)
 
-          let consulta = `insert into reciboingreso(codigo,codigoComprobante, valor, codigoCaja, concepto, recibidoDe, estado, fechaIngreso, usuarioIngreso, fechaAnulo, usuarioAnulo, codigoFactura, codigoComprobanteFactura, codigoTercero, consecutivoContable, descuento, baseiva, baseretencion, reteiva, reteica, retefuente, codigocuentapago, observacion, codigoVendedor)values(0,22,${valor},0,'','','ACTIVO',CURRENT_TIMESTAMP,13,'1990-01-01',0,${data.codigo},
-        22,${data.codigotercero},0,0,0,0,0,0,0,'',${data.codigovendedor})`;
+    if(codigoReciboCreado>0){
+      const codigoreciboingresofactura=await ingresarRecibosFacturas(codigoReciboCreado,facturas,sequelize);
+
+        if( codigoreciboingresofactura>0){
+          await ingresarTiposPagoReciboIngreso(tipopago,sequelize,codigoReciboCreado)
+
+        res.json({mensaje:"recibo de ingreso creado correctamente"})
+
         }
 
-        await sequelize.query(consulta, {
-          type: sequelize.QueryTypes.INSERT,
-        });
-      } catch (err) {
-        console.log("OCURRIO UN ERROR", err);
+    }
+    // informacion para recibosFacturas(un arreglo con las facturas y valor abono) 
+      // codigo:1, codigoComprobate:22, valor:20000
+      /*for(){
+        insert(codigoRecibo, codigoComprobante, codigoFactura, codigoComprobanteFactura, valor);
+      }*/
+    // informacion tipoPagosRecibosIngreso( un arreglo con los tipo pago reciboingreso)
+
+
+
+
+  }
+
+ async ingresoReciboCaja(totalrecibo,cliente, concepto,descuento,observacion,sequelize){
+   
+   const ultimoCodigo= await sequelize.query(`select max(codigo) as ultimoCodigo from reciboingreso where codigoComprobante=${req.session.usuario.codigoComprobanteReciboIngreso}`)
+   let codigoReciboUsar=ultimoCodigo[0][0].ultimoCodigo+1;
+   const consulta=`insert into reciboingreso(codigo, codigoComprobante, valor, codigoCaja, concepto, recibidoDe, estado, fechaIngreso, usuarioIngreso,
+    fechaAnulo, usuarioAnulo, codigoFactura, codigoComprobanteFactura, codigoTercero, consecutivoContable, descuento, baseiva, 
+    baseretencion, reteiva, reteica, retefuente, codigocuentapago,
+    observacion, codigoVendedor) values(${codigoReciboUsar},${req.session.usuario.codigoComprobanteReciboIngreso},${totalrecibo},0,'${concepto}','${cliente.nombre}','ACTIVO',CURRENT_TIMESTAMP(),
+    ${req.session.usuario.codigousuario},'1990-01-01',0,0,0,${cliente.codigo},${codigoReciboUsar},${descuento},
+    // insert reciboIngreso()
+    0,0,0,0,0,0,'${observacion}',${req.session.usuario.codigoVendedor})`
+    cont [result,affectedRows] = await sequelize.query(consulta,{
+      type:sequelize.QueryTypes.INSERT
+    })
+    
+    if(affectedRows>0){
+      return codigoReciboUsar;
+    }else{
+      return 0;
+    }
+  }
+
+  
+  async ingresarRecibosFacturas(codigoReciboIngreso, facturas,sequelize){
+    const consulta="insert into recibosfacturas(codigo,codigoFactura,codigoComprobante,codigoReciboCaja,codigoReciboCajaComprobante,valor)values"
+    facturas.forEach((data,index)=>{
+      consulta+=`(0, ${facturas.codigo},${facturas.codigoComprobante},${codigoReciboIngreso}, ${req.session.usuario.codigoComprobanteReciboIngreso},${facturas.abono})`
+      if(index<facturas.length-1){
+        consulta+=","
       }
-    });
+    })
+    const [result,affectedRows] = await sequelize.query(consulta,{
+      type:sequelize.QueryTypes.INSERT
+    })
+    
+     if(affectedRows>0){
+
+      return codigoReciboUsar;
+    }else{
+      return 0;
+    }
+  }
+  
+  async ingresarTiposPagoReciboIngreso(tipopago,sequelize,codigoreciboingreso){
+    let valorefectivo=0,valorcredito=0,valordebito=0,valorcheque=0,valorbono=0, codigoCuentaOtros=0;
+    tipopago.forEach((data)=>{
+      switch (data.Movimiento) {
+        case 'Efectivo':
+          valorefectivo=data.valor
+          break;
+        case 'Cheque':
+          valorcheque=data.valor
+          break;
+        case 'T.Debito':
+          valordebito=data.valor
+          break;
+
+        case 'T.Credito':
+          valorcredito=data.valor
+          break;
+       case 'Banco':
+          valorbono=data.valor
+          codigoCuentaOtros=data.opcionbanco.codigoCuenta
+          break;
+      
+        default:
+          break;
+      }
+    }) 
+      await sequelize.query(`insert into Tipopagoreciboingreso(codigo, codigoReciboIngreso, valorEfectivo, valorCredito, 
+        numeroTarjetaCredito, valorDebito, numeroTarjetaDebito,
+         valorCheque, numeroCheque, valorBono, numeroBono, valorCXC, codigoComprobante)values(0,${codigoreciboingreso},${valorefectivo},${valorcredito},'',${valordebito},0,${valorcheque}
+         ,${valorbono},0,0,${req.session.usuario.codigoComprobanteReciboIngreso})`)
+        
+         if(codigoCuentaOtros>0){
+            await ingresarAnexosReciboIngreso(codigoReciboIngreso, codigoCuentaOtros)
+         }
+  }
+
+ async ingresarAnexosReciboIngreso(codigoReciboIngreso, codigoCuentaOtros, sequelize){
+    await sequelize.query(`insert into anexosreciboingreso(codigo,codigoReciboIngreso,codigoComprobante,saldo,codigoCuentaCxc,codigoCuentaOtros) 
+      values(0,${codigoReciboIngreso},${req.session.usuario.codigoComprobanteReciboIngreso},0,0,${codigoCuentaOtros})`)
+  }
+
+  async traerbancos(req,res){
+    const {sequelize}=crearConexionPorNombre(req.session.usuario.db)
+    const bancos=await sequelize.query("select * from categoriasingresos")
+    res.json({respuesta:bancos[0]})
   }
 }
 

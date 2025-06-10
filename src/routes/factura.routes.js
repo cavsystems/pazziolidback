@@ -6,7 +6,8 @@ const routerfactura = Router();
 routerfactura.get("/obtenerfactura", Factura.traerfactura);
 routerfactura.get("/obtenerfacturaall", Factura.traerfacturasSaldo);
 routerfactura.get("/pdffactura", Factura.pdffactura);
-routerfactura.post("/abonarfactura", Factura.abonarfactura);
+routerfactura.post("/crearreciboingreso", Factura.crearreciboingreso);
+routerfactura.get("/traerbancos", Factura.traerbancos);
 
 module.exports = {
   routerfactura,
