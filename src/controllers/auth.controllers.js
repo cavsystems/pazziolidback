@@ -137,17 +137,21 @@ class Useraccioneauth {
                   usuario[0].codigo,
                   sequelize
                 );
-                 const resultcodigo=await sequelize.query(`select codigoComprobante from usuariosComprobantes where codigoUsuario=${usuario[0].codigo} && categoria='INGRESOS'`)
-                 console.log('codigo comprobante',resultcodigo[0][0])
+                const resultcodigo = await sequelize.query(
+                  `select codigoComprobante from usuariosComprobantes where codigoUsuario=${usuario[0].codigo} && categoria='INGRESOS'`
+                );
+                console.log("codigo comprobante", resultcodigo);
+                console.log("codigo comprobante", resultcodigo[0][0]);
                 req.session.usuario = {
                   documento: documento,
                   db: db,
                   nivel: usuario[0].nivel,
                   almacen: usuarioauth[0].almacen.almacen,
-                  codigoVendedor:vendedoruser[0].codigo,
+                  codigoVendedor: vendedoruser[0].codigo,
                   vendedor: vendedoruser[0].nombre,
                   config: parametro,
-                  codigoComprobanteReciboIngreso:resultcodigo[0][0].codigoComprobante,
+                  codigoComprobanteReciboIngreso:
+                    resultcodigo[0][0].codigoComprobante,
                   codigousuario: usuario[0].codigo,
                   nombre: usuario[0].nombre,
                   alias: usuarioauth[0].almacen.alias,
