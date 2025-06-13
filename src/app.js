@@ -25,7 +25,10 @@ const { createConnection } = require("net");
 const { crearConexionPorNombre } = require("./libs/dbhelpers");
 const { usuarioauth } = require("./controllers/auth.controllers");
 const db = require("./config/db");
-const { enviarDataEmail } = require("./servicios/servicio-email");
+const {
+  enviarDataEmail,
+  enviarDataingresos,
+} = require("./servicios/servicio-email");
 const { midleware } = require("./libs/midleware");
 const { routerfactura } = require("./routes/factura.routes");
 
@@ -210,6 +213,10 @@ io.on("connection", (socket) => {
         indexServicio.actulizar(socket, dbs, data);
       case "EMAIL":
         enviarDataEmail(socket, data);
+        break;
+      case "EMAILINGRESO":
+        console.log("entro aqui");
+        enviarDataingresos(socket, data);
       default:
         break;
     }

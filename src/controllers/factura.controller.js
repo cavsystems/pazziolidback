@@ -191,9 +191,15 @@ ORDER BY cliente,f.fechaEmision `;
         const [resultado] = await sequelize.query(
           `select * from reciboingreso where codigo=${codigoReciboCreado} && codigoComprobante=${req.session.usuario.codigoComprobanteReciboIngreso}`
         );
+        const [countcliente] = await sequelize.query(
+          `select sum(saldo) AS saldo from factura where codigoTercero=${cliente.codigo}`
+        );
         res.status(200).json({
           mensaje: "recibo de ingreso creado correctamente",
           datos: resultado,
+          saldoactual: countcliente[0].saldo,
+          vendedor: req.session.usuario.vendedor,
+          usuario: req.session.usuario.nombre,
         });
       }
     } else {
@@ -327,6 +333,7 @@ ORDER BY cliente,f.fechaEmision `;
   async traerbancos(req, res) {
     const { sequelize } = crearConexionPorNombre(req.session.usuario.db);
     const bancos = await sequelize.query("select * from categoriasingresos");
+
     res.json({
       respuesta: bancos[0],
       razon: req.session.usuario.config.RAZON_SOCIAL,
