@@ -194,6 +194,7 @@ ORDER BY cliente,f.fechaEmision `;
         res.status(200).json({
           mensaje: "recibo de ingreso creado correctamente",
           datos: resultado,
+          nombreComprobanteRI:req.session.usuario.nombreComprobanteRI,
         });
       }
     } else {

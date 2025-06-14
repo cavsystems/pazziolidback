@@ -19,5 +19,9 @@ routerpedido.get("/obtenernumeropedido", pedidocontroller.opdetenernumropedido);
 routerpedido.post("/creartirilla", pedidocontroller.generarpedidotirilla);
 routerpedido.get("/obtenernregistros", pedidocontroller.optenernumeroregistro);
 routerpedido.patch("/eliminarpedido", pedidocontroller.anularpedido);
+routerpedido.get("/traerPedidosPorSemana", pedidocontroller.cantidad_TotalPedidosPorSemana);
+routerpedido.get("/topProductosMasPedidosSemana", pedidocontroller.topProductosMasPedidosSemana);
+routerpedido.get("/totalPedidosVendedorMes", pedidocontroller.totalPedidosVendedorMes);
+routerpedido.get("/cargarTotalPedidosVsTotalRecibosIngresoMes", pedidocontroller.cargarTotalPedidosVsTotalRecibosIngresoMes);
 
 module.exports = routerpedido;
