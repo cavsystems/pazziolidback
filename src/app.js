@@ -127,7 +127,7 @@ app.get("/api/obtenerdbfiltradas", midleware, async (req, res) => {
 app.get("/api/selectempresa", midleware, async (req, res) => {
   const session = req.session;
   const user = session?.usuario;
-
+console.log(user.codigoVendedor)
   if (user?.db) {
     if (!user?.documento) {
       return res.json({
@@ -143,6 +143,7 @@ app.get("/api/selectempresa", midleware, async (req, res) => {
       nombre: user.vendedor,
       identificacion: user.documento,
       nombreusuario: user.nombre,
+      codigoVendedor:user.codigoVendedor,
     });
   } else {
     return res.json({
@@ -195,6 +196,7 @@ io.on("connection", (socket) => {
 
             nombre: socket.request.session.usuario.vendedor,
             identificacion: socket.request.session.usuario.documento,
+            codigoVendedor: socket.request.session.usuario.codigoVendedor,
           });
         }
       } else {

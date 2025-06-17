@@ -138,7 +138,7 @@ class Useraccioneauth {
                   sequelize
                 );
                 const resultcodigo = await sequelize.query(
-                  `select codigoComprobante from usuariosComprobantes where codigoUsuario=${usuario[0].codigo} && categoria='INGRESOS'`
+                  `select codigoComprobante,comprobantes.nombre from usuariosComprobantes join comprobantes ON comprobantes.codigo=usuariosComprobantes.codigoComprobante where codigoUsuario=${usuario[0].codigo} && usuariosComprobantes.categoria='INGRESOS'`
                 );
                 console.log("codigo comprobante", resultcodigo);
                 console.log("codigo comprobante", resultcodigo[0][0]);
@@ -152,6 +152,7 @@ class Useraccioneauth {
                   config: parametro,
                   codigoComprobanteReciboIngreso:
                     resultcodigo[0][0].codigoComprobante,
+                  nombreComprobanteRI:resultcodigo[0][0].nombre,
                   codigousuario: usuario[0].codigo,
                   nombre: usuario[0].nombre,
                   alias: usuarioauth[0].almacen.alias,

@@ -3,6 +3,7 @@ const { crearConexionPorNombre } = require("../libs/dbhelpers");
 const { modelpedidoreservado } = require("../models/models/pedidos");
 const fs = require("fs/promises");
 const escpos = require("escpos");
+const { response } = require("express");
 class Pedidocontrol {
   constructor() {}
 
@@ -302,6 +303,127 @@ Códigos de barras y QR
 
     return res.json({ data: { tirilla } });
   }
+
+  async cantidad_TotalPedidosPorSemana(req, res){
+    const { sequelize } = crearConexionPorNombre(req.session.usuario.db);
+    const consulta = `SELECT 
+                        dias.nombre_dia AS dia_semana,
+                        COUNT(p.fechaCreacion) AS cantidad_pedidos,
+                        COALESCE(SUM(p.totalPedido),0) AS total_Pedidos_Dia
+                      FROM (
+                        SELECT 'Lunes' AS nombre_dia, 0 AS dia_num UNION
+                        SELECT 'Martes', 1 UNION
+                        SELECT 'Miercoles', 2 UNION
+                        SELECT 'Jueves', 3 UNION
+                        SELECT 'Viernes', 4 UNION
+                        SELECT 'Sabado', 5 UNION
+                        SELECT 'Domingo', 6
+                      ) AS dias
+                      LEFT JOIN pedido p
+                        ON WEEKDAY(p.fechaCreacion) = dias.dia_num
+                        AND YEARWEEK(p.fechaCreacion, 1) = YEARWEEK(CURDATE(), 1)
+                        AND p.codigoVendedor = ?
+                      GROUP BY dias.nombre_dia, dias.dia_num
+                      ORDER BY dias.dia_num;`
+
+    const result = await sequelize.query(consulta, {
+      replacements:[Number(req.query.codigoVendedor)],
+      type: sequelize.QueryTypes.SELECT,
+    });
+    sequelize.close(result);
+    return res.status(200).json({ response:true, pedidosSemana: result });
+
+  }
+async topProductosMasPedidosSemana(req, res){
+  const { sequelize } = crearConexionPorNombre(req.session.usuario.db);
+  const consulta = `SELECT 
+                        pr.codigo AS codigo_producto,
+                        pr.descripcion AS descripcion_producto,
+                        SUM(ip.cantidad) AS total_pedida
+                    FROM 
+                        itemspedido ip
+                    JOIN 
+                        pedido p ON ip.codigoPedido = p.codigo
+                    JOIN 
+                        productos pr ON ip.codigoProducto = pr.codigo
+                    WHERE 
+                        p.codigoVendedor=?
+                        AND p.estado != 'ANULADO' 
+                        AND YEARWEEK(p.fechaCreacion, 1) = YEARWEEK(CURDATE(), 1)
+                    GROUP BY 
+                        pr.codigo, pr.descripcion
+                    ORDER BY 
+                        total_pedida DESC
+                    LIMIT 5;`
+                  
+  const result = await sequelize.query(consulta, {
+    replacements:[Number(req.query.codigoVendedor)],
+    type: sequelize.QueryTypes.SELECT,
+  });
+  sequelize.close();
+  return res.status(200).json({ response:true, TopProductosSemana: result });
+}
+
+async totalPedidosVendedorMes(req, res){
+  const { sequelize } = crearConexionPorNombre(req.session.usuario.db);
+  const consulta = `SELECT 
+                      count(p.codigo) AS total_pedidos_mes
+                    FROM 
+                      pedido p
+                    WHERE 
+                      p.estado != 'ANULADO'
+                      AND codigoVendedor = ?
+                      AND MONTH(p.fechaCreacion) = MONTH(CURDATE())
+                      AND YEAR(p.fechaCreacion) = YEAR(CURDATE());`
+                  
+  const result = await sequelize.query(consulta, {
+    replacements:[Number(req.query.codigoVendedor)],
+    type: sequelize.QueryTypes.SELECT,
+  });
+  sequelize.close();
+  return res.status(200).json({ response:true, cantidadTotalPedidosMes: result });
+}
+
+  async cargarTotalPedidosVsTotalRecibosIngresoMes(req, res){
+    const { sequelize } = crearConexionPorNombre(req.session.usuario.db);
+    const consulta = `SELECT 
+                        s.semana,
+                        IFNULL(p.totalPedidosSemana, 0) AS totalPedidosSemana,
+                        IFNULL(r.totalRecibosSemana, 0) AS totalRecibosSemana
+                      FROM
+                        (SELECT 1 AS semana UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4) s
+                      LEFT JOIN (
+                        SELECT 
+                          WEEK(fechaCreacion, 1) - WEEK(DATE_SUB(fechaCreacion, INTERVAL DAYOFMONTH(fechaCreacion)-1 DAY), 1) + 1 AS semanaDelMes,
+                          SUM(totalPedido) AS totalPedidosSemana
+                        FROM pedido
+                        WHERE estado != 'ANULADO'
+                          AND MONTH(fechaCreacion) = MONTH(CURDATE())
+                          AND YEAR(fechaCreacion) = YEAR(CURDATE())
+                          AND codigoVendedor = ?
+                        GROUP BY semanaDelMes
+                      ) p ON s.semana = p.semanaDelMes
+                      LEFT JOIN (
+                        SELECT 
+                          WEEK(fechaIngreso, 1) - WEEK(DATE_SUB(fechaIngreso, INTERVAL DAYOFMONTH(fechaIngreso)-1 DAY), 1) + 1 AS semanaDelMes,
+                          SUM(valor) AS totalRecibosSemana
+                        FROM reciboIngreso
+                        WHERE MONTH(fechaIngreso) = MONTH(CURDATE())
+                          AND YEAR(fechaIngreso) = YEAR(CURDATE())
+                          AND codigoVendedor = ?
+                        GROUP BY semanaDelMes
+                      ) r ON s.semana = r.semanaDelMes
+                      ORDER BY s.semana;`
+    const result = await sequelize.query(consulta, {
+      replacements:[
+        Number(req.query.codigoVendedor),
+        req.query.codigoVendedor],
+      type: sequelize.QueryTypes.SELECT,
+    });
+    sequelize.close();
+    return res.status(200).json({ response:true, tPedidosVsTRecibosISemas: result });
+  }
+
 }
 
 module.exports = {

@@ -200,6 +200,7 @@ ORDER BY cliente,f.fechaEmision `;
           saldoactual: countcliente[0].saldo,
           vendedor: req.session.usuario.vendedor,
           usuario: req.session.usuario.nombre,
+          nombreComprobanteRI:req.session.usuario.nombreComprobanteRI,
         });
       }
     } else {
