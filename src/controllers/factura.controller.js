@@ -358,6 +358,42 @@ ORDER BY cliente,f.fechaEmision `;
 
     await sequelize.query(consulta, { Types: sequelize.QueryTypes.UPDATE });
   }
+
+  async buscarrecibocliente(req, res) {
+    const { sequelize } = crearConexionPorNombre(req.session.usuario.db);
+    let consulta;
+    if (!req.query.razonsocial && req.query.razonsocial === "") {
+      consulta = `select  r.codigo,e.razonSocial,e.codigo as codigotercero,r.fechaIngreso as fecha,
+      v.nombre,t.valorEfectivo as efectivo,t.valorCredito  as credito , t.valorDebito as debito 
+      , t.valorCheque as cheque  ,t.valorBono as banco ,c.nombre as comprobante  from comprobantes c inner join   Tipopagoreciboingreso t inner join reciboingreso r inner join tercero e 
+      inner join vendedores v on t.codigoReciboIngreso=r.codigo  and t.codigoComprobante=c.codigo and r.codigoTercero=e.codigo and
+      r.codigoVendedor=v.codigo where DATE_FORMAT(r.fechaIngreso, '%Y-%m-%d') between '${req.query.fechainicial}' and '${req.query.fechafinal}' ;`;
+    } else {
+      if (
+        (!req.query.fechainicial && req.query.fechainicial === "") ||
+        (!req.query.fechafinal && req.query.fechafinal === "")
+      ) {
+        consulta = `select  r.codigo,e.razonSocial,e.codigo as codigotercero,r.fechaIngreso as fecha,
+      v.nombre,t.valorEfectivo as efectivo,t.valorCredito  as credito , t.valorDebito as debito 
+      , t.valorCheque as cheque  ,t.valorBono as banco ,c.nombre as comprobante  from comprobantes c inner join   Tipopagoreciboingreso t inner join reciboingreso r inner join tercero e 
+      inner join vendedores v on t.codigoReciboIngreso=r.codigo  and t.codigoComprobante=c.codigo and r.codigoTercero=e.codigo and
+      r.codigoVendedor=v.codigo where e.razonSocial='${req.query.razonsocial}'   ;`;
+      } else {
+        consulta = `select  r.codigo,e.razonSocial,e.codigo as codigotercero,r.fechaIngreso as fecha,
+        v.nombre,t.valorEfectivo as efectivo,t.valorCredito  as credito , t.valorDebito as debito 
+        , t.valorCheque as cheque  ,t.valorBono as banco ,c.nombre as comprobante  from comprobantes c inner join   Tipopagoreciboingreso t inner join reciboingreso r inner join tercero e 
+        inner join vendedores v on t.codigoReciboIngreso=r.codigo  and t.codigoComprobante=c.codigo and r.codigoTercero=e.codigo and
+        r.codigoVendedor=v.codigo where e.razonSocial='${req.query.razonsocial}'&& DATE_FORMAT(r.fechaIngreso, '%Y-%m-%d') between '${req.query.fechainicial}' and '${req.query.fechafinal}';`;
+      }
+    }
+
+    const result = await sequelize.query(consulta, {
+      type: sequelize.QueryTypes.SELECT,
+      logging: true,
+    });
+
+    return res.json({ respuesta: result });
+  }
 }
 
 module.exports = {
