@@ -12,7 +12,9 @@ routerfactura.post(
 );
 routerfactura.get("/traerbancos", Factura.traerbancos);
 routerfactura.get("/traerrecibos", Factura.buscarrecibocliente);
-
+routerfactura.get("/traersaldoactual", Factura. traersaldoactual);
+routerfactura.post("/insertariteminventario", Factura.insertaritmesinventario);
+routerfactura.get("/consultaritemsiventario", Factura.consultaritemsinventario);
 module.exports = {
   routerfactura,
 };
