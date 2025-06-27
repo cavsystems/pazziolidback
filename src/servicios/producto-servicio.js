@@ -41,28 +41,30 @@ productoServicio.consultar = (io, db, datoConsulta) => {
   let cantidad = "";
   if (usuario.almacen === "BODEGA") {
     cantidad = "cantidad";
+      console.log(usuario.almacen)
   } else {
+    console.log(usuario.almacen)
     cantidad = ` cantidad${(Number(usuario.almacen.slice(-1)) + 1).toString()}`;
   }
-  var consulta = `SELECT ${cantidad},codigo,descripcion
+  var consulta = `SELECT ${cantidad} as cantidad ,codigo,descripcion
             ,codigocontable,codigoBarra,referencia,${precioconsulta} as precio,tasaIva,presentacion FROM productos `;
-
+  
   switch (datoConsulta.condicion.trim().toUpperCase()) {
     case "CODIGOBARRA":
-      consulta += ` WHERE codigoBarra = '${datoConsulta.datoCondicion.trim()}'`;
+      consulta += ` WHERE codigoBarra = '${datoConsulta.datoCondicion.toString().trim()}'`;
       break;
     case "REF":
-      consulta += ` WHERE referencia LIKE '%${datoConsulta.datoCondicion.trim()}%'`;
+      consulta += ` WHERE referencia LIKE '%${datoConsulta.datoCondicion.toString().trim()}%'`;
       break;
     case "ID":
       consulta += ` WHERE codigo = '${parseInt(datoConsulta.datoCondicion)}'`;
       break;
     case "DESCRIPCION":
-      consulta += ` WHERE descripcion LIKE '%${datoConsulta.datoCondicion.trim()}%' OR  referencia LIKE '%${datoConsulta.datoCondicion.trim()}%'  OR codigoBarra LIKE '%${datoConsulta.datoCondicion.trim()}%' order by descripcion limit 10`;
+      consulta += ` WHERE descripcion LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' OR  referencia LIKE '%${datoConsulta.datoCondicion.toString().trim()}%'  OR codigoBarra LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' order by descripcion limit 10`;
 
       break;
     case "CODIGO":
-      consulta += ` WHERE codigoBarra LIKE '%${datoConsulta.datoCondicion.trim()}%' OR codigo LIKE '%${datoConsulta.datoCondicion.trim()}%' OR referencia LIKE '%${datoConsulta.datoCondicion.trim()}%' limit 1`;
+      consulta += ` WHERE codigoBarra LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' OR codigo LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' OR referencia LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' limit 1`;
       break;
     case "CODIGO-EQUAL":
       consulta += ` WHERE codigoBarra = '${datoConsulta.datoCondicion.toString()}' OR codigo = '${
@@ -70,7 +72,7 @@ productoServicio.consultar = (io, db, datoConsulta) => {
       }' OR referencia = '${datoConsulta.datoCondicion.toString()}' limit 1`;
       break;
     default:
-      consulta = `SELECT ${cantidad},codigo,descripcion
+      consulta = `SELECT ${cantidad} as cantidad,codigo,descripcion
             ,codigocontable,codigoBarra,referencia,${precioconsulta} as precio,tasaIva,presentacion FROM productos  order by descripcion limit 10`;
 
       break;
@@ -79,7 +81,7 @@ productoServicio.consultar = (io, db, datoConsulta) => {
   const { canalUsuario } = datoConsulta;
 
   sequelize
-    .query(consulta, { type: sequelize.QueryTypes.SELECT })
+    .query(consulta, { type: sequelize.QueryTypes.SELECT ,logging:true})
     .then((producto) => {
       console.log(producto);
       if (producto.length > 0) {
@@ -138,8 +140,10 @@ productoServicio.actulizar = async (io, db, datoConsulta) => {
       break;
   }
   //await db.sequelize.query(update,{ type: db.sequelize.QueryTypes.UPDATE})
+  console.log(consulta)
   let resul = await db.sequelize.query(consulta, {
     type: db.sequelize.QueryTypes.SELECT,
+    logging:true
   });
 
   respuesta = {

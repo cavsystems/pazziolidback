@@ -50,7 +50,7 @@ class Useraccioneauth {
       if (usuario.length > 0) {
         if (usuario[0].password === password) {
           const [result] = await sequelize.query(
-            "SELECT pc.* FROM parametroscomprobante pc JOIN parametros p ON pc.codigoParametro = p.codigo JOIN usuarioscomprobantes uc ON pc.codigoComprobante = uc.codigoComprobante WHERE p.nombre LIKE ? AND uc.codigoUsuario =? AND uc.categoria =?;",
+            "SELECT pc.* FROM parametroscomprobante pc JOIN parametros p ON pc.codigoParametro = p.codigo JOIN usuarioscomprobantes uc ON pc.codigoComprobante = uc.codigoComprobante WHERE p.nombre  LIKE ?  AND uc.codigoUsuario =? AND uc.categoria =?;",
             {
               replacements: [
                 "%VENDEDOR_PREDETERMINADO%",
@@ -140,9 +140,30 @@ class Useraccioneauth {
                 const resultcodigo = await sequelize.query(
                   `select codigoComprobante,comprobantes.nombre from usuariosComprobantes join comprobantes ON comprobantes.codigo=usuariosComprobantes.codigoComprobante where codigoUsuario=${usuario[0].codigo} && usuariosComprobantes.categoria='INGRESOS'`
                 );
+                const [resultParametrosComprobanteUsuario] = await sequelize.query(
+                  "SELECT p.nombre,pc.* FROM parametroscomprobante pc JOIN parametros p ON pc.codigoParametro = p.codigo JOIN usuarioscomprobantes uc ON pc.codigoComprobante = uc.codigoComprobante WHERE p.nombre  LIKE ?  AND uc.codigoUsuario =? AND uc.categoria =?;",
+                  {
+                    replacements: [
+                      "%BLOQUEAR_CAMPO_PRECIO%",
+                      usuario[0].codigo,
+                      "VENTAS",
+                    ],
+                  }
+                );
+                
+                let modificarPrecio=0;
+                if(resultParametrosComprobanteUsuario.length>0){
+                  resultParametrosComprobanteUsuario.forEach(dato => {
+                    if(dato.nombre === 'BLOQUEAR_CAMPO_PRECIO'){
+                      modificarPrecio=Number (dato.valor);
+                    }
+                  })
+                }
+
                 console.log("codigo comprobante", resultcodigo);
                 console.log("codigo comprobante", resultcodigo[0][0]);
                 req.session.usuario = {
+                  modificarPrecio,
                   documento: documento,
                   db: db,
                   nivel: usuario[0].nivel,

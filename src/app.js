@@ -193,7 +193,7 @@ io.on("connection", (socket) => {
           socket.emit("obteneralmacen", {
             almacen: socket.request.session.usuario.almacen,
             config: socket.request.session.usuario.config,
-
+             modificarPrecio:socket.request.session.usuario.modificarPrecio,
             nombre: socket.request.session.usuario.vendedor,
             identificacion: socket.request.session.usuario.documento,
             codigoVendedor: socket.request.session.usuario.codigoVendedor,
