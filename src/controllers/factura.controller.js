@@ -78,6 +78,13 @@ ORDER BY cliente,f.fechaEmision `;
     });
     return res.status(200).json({ respuesta: result });
   }
+
+  async traersaldoactual(req,res){
+    const {sequelize}=crearConexionPorNombre(req.session.usuario.db)
+    console.log("tercero",req.query.codigotercero)
+  const [result] = await sequelize.query(`select sum(saldo) as suma from factura where  codigoTercero=${req.query.codigotercero}`,{logging:true})
+    res.json({respuesta:result, usuario:req.session.usuario.nombre})
+  }
   async traerfacturasSaldo(req, res) {
     const { sequelize } = crearConexionPorNombre(req.session.usuario.db);
     const inicio = req.query.pagina > 0 ? req.query.pagina * 15 - 15 : 0;
@@ -364,7 +371,7 @@ ORDER BY cliente,f.fechaEmision `;
     const { sequelize } = crearConexionPorNombre(req.session.usuario.db);
     let consulta;
     if (!req.query.razonsocial && req.query.razonsocial === "") {
-      consulta = `select  r.codigo,e.razonSocial,e.codigo as codigotercero,r.fechaIngreso as fecha,
+      consulta = `select  r.codigo,r.valor as Valor,r.concepto,e.razonSocial,e.direccion,e.identificacion,e.codigo as codigotercero,r.fechaIngreso as fecha,
       v.nombre,t.valorEfectivo as efectivo,t.valorCredito  as credito , t.valorDebito as debito 
       , t.valorCheque as cheque  ,t.valorBono as banco ,c.nombre as comprobante  from comprobantes c inner join   Tipopagoreciboingreso t inner join reciboingreso r inner join tercero e 
       inner join vendedores v on t.codigoReciboIngreso=r.codigo  and t.codigoComprobante=c.codigo and r.codigoTercero=e.codigo and
@@ -374,13 +381,13 @@ ORDER BY cliente,f.fechaEmision `;
         (!req.query.fechainicial && req.query.fechainicial === "") ||
         (!req.query.fechafinal && req.query.fechafinal === "")
       ) {
-        consulta = `select  r.codigo,e.razonSocial,e.codigo as codigotercero,r.fechaIngreso as fecha,
+        consulta = `select  r.codigo,r.valor as Valor,r.concepto,e.razonSocial,e.identificacion,e.direccion,e.codigo as codigotercero,r.fechaIngreso as fecha,
       v.nombre,t.valorEfectivo as efectivo,t.valorCredito  as credito , t.valorDebito as debito 
       , t.valorCheque as cheque  ,t.valorBono as banco ,c.nombre as comprobante  from comprobantes c inner join   Tipopagoreciboingreso t inner join reciboingreso r inner join tercero e 
       inner join vendedores v on t.codigoReciboIngreso=r.codigo  and t.codigoComprobante=c.codigo and r.codigoTercero=e.codigo and
       r.codigoVendedor=v.codigo where e.razonSocial='${req.query.razonsocial}'   ;`;
       } else {
-        consulta = `select  r.codigo,e.razonSocial,e.codigo as codigotercero,r.fechaIngreso as fecha,
+        consulta = `select  r.codigo,r.valor as Valor,r.concepto,e.razonSocial,e.direccion,e.identificacion,e.codigo as codigotercero,r.fechaIngreso as fecha,
         v.nombre,t.valorEfectivo as efectivo,t.valorCredito  as credito , t.valorDebito as debito 
         , t.valorCheque as cheque  ,t.valorBono as banco ,c.nombre as comprobante  from comprobantes c inner join   Tipopagoreciboingreso t inner join reciboingreso r inner join tercero e 
         inner join vendedores v on t.codigoReciboIngreso=r.codigo  and t.codigoComprobante=c.codigo and r.codigoTercero=e.codigo and
@@ -393,7 +400,57 @@ ORDER BY cliente,f.fechaEmision `;
       logging: true,
     });
 
-    return res.json({ respuesta: result });
+    return res.json({ respuesta: result ,nit:req.session.usuario.config.NIT,
+      nombreComprobanteRI:req.session.usuario.nombreComprobanteRI,razonsocial:req.session.usuario.config.RAZON_SOCIAL,direccion:req.session.usuario.config.DIRECCION});
+  }
+
+  async insertaritmesinventario(req,res){
+    console.log(req.body)
+  const {sequelize}=crearConexionPorNombre(req.session.usuario.db)
+   await sequelize.query(`insert into itemsinventariofisico(codigo, codigoProducto,
+     codigoInventario, cantidad, fechaIngreso, codigoUsuario, estado, codigoUsuarioAnulo, 
+    fechaAnulo, fechaAjuste, ubicacion)values(0,${req.body.codigo},0,${req.body.cantidad},
+     CURDATE(),${req.session.usuario.codigousuario},"CONTABILIZADO",0,'1990-01-01','1990-01-01','${req.body.ubicacion}')`)
+
+    res.json({response:true})
+  }
+
+  async consultaritemsinventario(req,res){
+  //consulta para traer los items del inventario fisico
+  const inicio =
+      req.query.pagina && req.query.pagina > 0 ? req.query.pagina * 15 - 15 : 0;
+  const {sequelize}=crearConexionPorNombre(req.session.usuario.db);
+  console.log(req.query.cliente)
+    if(req.query.cliente && req.query.cliente!==""){
+    const consulta=`select i.codigo ,p.codigoContable,p.descripcion,i.cantidad,i.ubicacion from itemsinventariofisico i inner join productos  p on i.codigoProducto=p.codigo where i.estado='CONTABILIZADO' && p.descripcion='${req.query.cliente}' limit ${inicio},15 ;`
+    const todo=`select COUNT(*)  AS suma from itemsinventariofisico i inner join productos  p on i.codigoProducto=p.codigo  where i.estado='CONTABILIZADO' && p.descripcion='${req.query.cliente}';`
+   const result=await sequelize.query(consulta,{
+     type:sequelize.QueryTypes.SELECT,
+     logging:true
+   })
+   console.log("resultado",result)
+   const [result2]=await sequelize.query(todo,{
+     type:sequelize.QueryTypes.SELECT,
+     logging:true
+   })
+   res.json({respuesta:result,nregistros:result2});
+ 
+  }else{
+    const consulta=`select i.codigo ,p.codigoContable,p.descripcion,i.cantidad,i.ubicacion from itemsinventariofisico i inner join productos  p on i.codigoProducto=p.codigo where i.estado='CONTABILIZADO' limit ${inicio},15 ;`
+    const todo=`select COUNT(*)  AS suma from itemsinventariofisico i inner join productos  p on i.codigoProducto=p.codigo  where i.estado='CONTABILIZADO' ;`
+   const result=await sequelize.query(consulta,{
+     type:sequelize.QueryTypes.SELECT,
+     logging:true
+   })
+   const [result2]=await sequelize.query(todo,{
+     type:sequelize.QueryTypes.SELECT,
+     logging:true
+   })
+   res.json({respuesta:result,nregistros:result2});
+  }
+ 
+
+
   }
 }
 
