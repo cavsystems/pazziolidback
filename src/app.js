@@ -144,7 +144,7 @@ console.log(user.codigoVendedor)
       identificacion: user.documento,
       nombreusuario: user.nombre,
       codigoVendedor:user.codigoVendedor,
-        modificarPrecio:socket.request.session.usuario.modificarPrecio
+        modificarPrecio:user.modificarPrecio
     });
   } else {
     return res.json({
