@@ -422,8 +422,14 @@ ORDER BY cliente,f.fechaEmision `;
   const {sequelize}=crearConexionPorNombre(req.session.usuario.db);
   console.log(req.query.cliente)
     if(req.query.cliente && req.query.cliente!==""){
-    const consulta=`select i.codigo ,p.codigoContable,p.descripcion,i.cantidad,i.ubicacion from itemsinventariofisico i inner join productos  p on i.codigoProducto=p.codigo where i.estado='CONTABILIZADO' && p.descripcion='${req.query.cliente}' limit ${inicio},15 ;`
-    const todo=`select COUNT(*)  AS suma from itemsinventariofisico i inner join productos  p on i.codigoProducto=p.codigo  where i.estado='CONTABILIZADO' && p.descripcion='${req.query.cliente}';`
+    const consulta=`select  sum(i.cantidad) as cantidad ,p.descripcion from itemsinventariofisico i inner join productos  p on i.codigoProducto=p.codigo where i.estado='CONTABILIZADO' && p.descripcion='${req.query.cliente}'  group by p.descripcion limit ${inicio},15 ;`
+    const todo=`SELECT COUNT(*) AS suma FROM (
+  SELECT p.descripcion
+  FROM itemsinventariofisico i
+  INNER JOIN productos p ON i.codigoProducto = p.codigo
+  WHERE i.estado = 'CONTABILIZADO' && p.descripcion='${req.query.cliente}'
+  GROUP BY p.descripcion
+) AS sub;`
    const result=await sequelize.query(consulta,{
      type:sequelize.QueryTypes.SELECT,
      logging:true
@@ -433,11 +439,18 @@ ORDER BY cliente,f.fechaEmision `;
      type:sequelize.QueryTypes.SELECT,
      logging:true
    })
+  
    res.json({respuesta:result,nregistros:result2});
  
   }else{
-    const consulta=`select i.codigo ,p.codigoContable,p.descripcion,i.cantidad,i.ubicacion from itemsinventariofisico i inner join productos  p on i.codigoProducto=p.codigo where i.estado='CONTABILIZADO' limit ${inicio},15 ;`
-    const todo=`select COUNT(*)  AS suma from itemsinventariofisico i inner join productos  p on i.codigoProducto=p.codigo  where i.estado='CONTABILIZADO' ;`
+    const consulta=`select sum(i.cantidad) as cantidad , p.descripcion from itemsinventariofisico i inner join productos  p on i.codigoProducto=p.codigo where i.estado='CONTABILIZADO'  group by p.descripcion limit ${inicio},15;`
+    const todo=` SELECT COUNT(*) AS suma FROM (
+  SELECT p.descripcion
+  FROM itemsinventariofisico i
+  INNER JOIN productos p ON i.codigoProducto = p.codigo
+  WHERE i.estado = 'CONTABILIZADO'
+  GROUP BY p.descripcion
+) AS sub;`
    const result=await sequelize.query(consulta,{
      type:sequelize.QueryTypes.SELECT,
      logging:true
@@ -446,12 +459,142 @@ ORDER BY cliente,f.fechaEmision `;
      type:sequelize.QueryTypes.SELECT,
      logging:true
    })
+   console.log('result2',result2)
    res.json({respuesta:result,nregistros:result2});
   }
  
 
 
   }
+
+
+
+   async insertaritmesinventario(req,res){
+    console.log(req.body)
+  const {sequelize}=crearConexionPorNombre(req.session.usuario.db)
+   await sequelize.query(`insert into itemsinventariofisico(codigo, codigoProducto,
+     codigoInventario, cantidad, fechaIngreso, codigoUsuario, estado, codigoUsuarioAnulo, 
+    fechaAnulo, fechaAjuste, ubicacion)values(0,${req.body.codigo},0,${req.body.cantidad},
+     CURDATE(),${req.session.usuario.codigousuario},"CONTABILIZADO",0,'1990-01-01','1990-01-01','${req.body.ubicacion}')`)
+
+    res.json({response:true})
+  }
+
+  async consultaritemsinventario(req,res){
+  //consulta para traer los items del inventario fisico
+  const inicio =
+      req.query.pagina && req.query.pagina > 0 ? req.query.pagina * 15 - 15 : 0;
+  const {sequelize}=crearConexionPorNombre(req.session.usuario.db);
+  console.log(req.query.cliente)
+    if(req.query.cliente && req.query.cliente!==""){
+    const consulta=`select  sum(i.cantidad) as cantidad ,p.descripcion from itemsinventariofisico i inner join productos  p on i.codigoProducto=p.codigo where i.estado='CONTABILIZADO' && p.descripcion='${req.query.cliente}'  group by p.descripcion limit ${inicio},15 ;`
+    const todo=`SELECT COUNT(*) AS suma FROM (
+  SELECT p.descripcion
+  FROM itemsinventariofisico i
+  INNER JOIN productos p ON i.codigoProducto = p.codigo
+  WHERE i.estado = 'CONTABILIZADO' && p.descripcion='${req.query.cliente}'
+  GROUP BY p.descripcion
+) AS sub;`
+   const result=await sequelize.query(consulta,{
+     type:sequelize.QueryTypes.SELECT,
+     logging:true
+   })
+   console.log("resultado",result)
+   const [result2]=await sequelize.query(todo,{
+     type:sequelize.QueryTypes.SELECT,
+     logging:true
+   })
+  
+   res.json({respuesta:result,nregistros:result2});
+ 
+  }else{
+    const consulta=`select sum(i.cantidad) as cantidad , p.descripcion from itemsinventariofisico i inner join productos  p on i.codigoProducto=p.codigo where i.estado='CONTABILIZADO'  group by p.descripcion limit ${inicio},15;`
+    const todo=` SELECT COUNT(*) AS suma FROM (
+  SELECT p.descripcion
+  FROM itemsinventariofisico i
+  INNER JOIN productos p ON i.codigoProducto = p.codigo
+  WHERE i.estado = 'CONTABILIZADO'
+  GROUP BY p.descripcion
+) AS sub;`
+   const result=await sequelize.query(consulta,{
+     type:sequelize.QueryTypes.SELECT,
+     logging:true
+   })
+   const [result2]=await sequelize.query(todo,{
+     type:sequelize.QueryTypes.SELECT,
+     logging:true
+   })
+   console.log('result2',result2)
+   res.json({respuesta:result,nregistros:result2});
+  }
+ 
+
+
+  }
+
+
+  async consultaritems(req,res){
+    //consulta para traer los items del inventario fisico
+    const inicio =
+        req.query.pagina && req.query.pagina > 0 ? req.query.pagina * 15 - 15 : 0;
+    const {sequelize}=crearConexionPorNombre(req.session.usuario.db);
+    console.log('ubicacion',req.query)
+      if(req.query.ubicacion && req.query.ubicacion!==""){
+      
+      const consulta=`select  i.cantidad ,p.descripcion ,i.codigo,i.ubicacion from itemsinventariofisico i inner join productos  p on i.codigoProducto=p.codigo where i.estado='CONTABILIZADO' && p.descripcion='${req.query.descripcion}' &&  i.ubicacion='${req.query.ubicacion}' limit ${inicio},15 ;`
+      const todo=`
+    SELECT COUNT(*) AS suma
+    FROM itemsinventariofisico i
+    INNER JOIN productos p ON i.codigoProducto = p.codigo
+    WHERE i.estado = 'CONTABILIZADO' && p.descripcion='${req.query.descripcion}' && i.ubicacion='${req.query.ubicacion}';
+ 
+  ;`
+     const result=await sequelize.query(consulta,{
+       type:sequelize.QueryTypes.SELECT,
+       logging:true
+     })
+     console.log("resultado",result)
+     const [result2]=await sequelize.query(todo,{
+       type:sequelize.QueryTypes.SELECT,
+       logging:true
+     })
+    
+     res.json({respuesta:result,nregistros:result2});
+   
+    }else{
+      const consulta=`select i.cantidad , p.descripcion,i.codigo,i.ubicacion from itemsinventariofisico i inner join productos  p on i.codigoProducto=p.codigo where i.estado='CONTABILIZADO' &&  p.descripcion='${req.query.descripcion}' limit ${inicio},15;`
+      const todo=`  SELECT COUNT(*) AS suma
+    FROM itemsinventariofisico i
+    INNER JOIN productos p ON i.codigoProducto = p.codigo
+    WHERE i.estado = 'CONTABILIZADO' && p.descripcion='${req.query.descripcion}';`
+     const result=await sequelize.query(consulta,{
+       type:sequelize.QueryTypes.SELECT,
+       logging:true
+     })
+     const [result2]=await sequelize.query(todo,{
+       type:sequelize.QueryTypes.SELECT,
+       logging:true
+     })
+     console.log('result2',result2)
+     res.json({respuesta:result,nregistros:result2});
+    }
+   
+  
+  
+    }
+
+    eliminariteminventario(req,res){
+      const {sequelize}=crearConexionPorNombre(req.session.usuario.db)
+      console.log('eliminar item',req.body)
+      sequelize.query(`update itemsinventariofisico set estado='ANULADO', codigoUsuarioAnulo=${req.session.usuario.codigousuario}, fechaAnulo=current_date() where codigo=${req.body.codigo}`,{logging:true})
+      .then(()=>{
+        res.json({response:true})
+      })
+      .catch((error)=>{
+        console.error('Error al eliminar el item de inventario:', error);
+        res.status(500).json({respuesta:false, error: 'Error al eliminar el item de inventario'});
+      })
+    }
 }
 
 module.exports = {

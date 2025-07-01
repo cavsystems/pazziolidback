@@ -2,6 +2,7 @@ const terceroServicio = require('./tercero-servicio');
 const productoServicio = require('./producto-servicio');
 const pedidoServicio = require('./pedido-servicio');
 const sedesservi=require('./sedes-servicio')
+const {inventarioservi}=require('./iventario-servicio')
 const indexServicio = {};
 
 /**
@@ -12,8 +13,9 @@ const indexServicio = {};
  * @param {*} datos es la variable que envia el cliente Dashboard de la data para consultar
  */
 indexServicio.consultar = (io, db, datos) => {
-   
+    console.log(datos.consulta)
     switch (datos.consulta.toUpperCase()) {
+        
         case 'TERCEROS':
             terceroServicio.consultar(io, db, datos); 
             break;
@@ -22,6 +24,11 @@ indexServicio.consultar = (io, db, datos) => {
             break;
         case 'SEDES':
          sedesservi.consultar(io, db, datos);
+         break;
+        case 'INVENTARIO':
+            
+        console.log(datos)
+            inventarioservi.consultaritems(io, null, datos);
           break;
         default:
             break;
