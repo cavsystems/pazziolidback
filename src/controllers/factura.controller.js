@@ -467,7 +467,16 @@ ORDER BY cliente,f.fechaEmision `;
 
   }
 
-
+ async traeritemsfactura(req,res){
+  const {sequelize}=crearConexionPorNombre(req.session.usuario.db)
+  console.log("codigo factura",req.query.codigo)
+  const consulta=`select i.descripcion,i.cantidad,i.presentacion , i.precio,i.totalItem     from factura f inner join itemsfactura i on f.codigo=i.codigoFactura where f.codigo=${req.query.codigo} && f.codigoComprobante=${req.query.codigoComprobante} `
+  const result=await sequelize.query(consulta,{
+    type:sequelize.QueryTypes.SELECT,
+    logging:true
+  })
+  res.status(200).json({respuesta:result})
+ }
 
    async insertaritmesinventario(req,res){
     console.log(req.body)

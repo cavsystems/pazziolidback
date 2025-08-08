@@ -160,8 +160,34 @@ class Useraccioneauth {
                   })
                 }
 
+                const [resultParametrosComprobanteVentaEnNegativo] = await sequelize.query(
+                  "SELECT p.nombre,pc.* FROM parametroscomprobante pc JOIN parametros p ON pc.codigoParametro = p.codigo JOIN usuarioscomprobantes uc ON pc.codigoComprobante = uc.codigoComprobante WHERE p.nombre  LIKE ?  AND uc.codigoUsuario =? AND uc.categoria =?;",
+                  {
+                    replacements: [
+                      "%VENTA_EN_NEGATIVO%",
+                      usuario[0].codigo,
+                      "VENTAS",
+                    ],
+                  }
+                );
+
+                let ventaEnNegativo=0;
+                if(resultParametrosComprobanteVentaEnNegativo.length>0){
+                  resultParametrosComprobanteVentaEnNegativo.forEach(dato => {
+                    if(dato.nombre === 'VENTA_EN_NEGATIVO'){
+                      ventaEnNegativo=Number (dato.valor);
+                    }
+                  })
+                }
+
+                 let permisos=await this.obtenerPermisoUsuario(usuario[0].codigo,sequelize);
+                 permisos=JSON.stringify(permisos);
+                  console.log("permisos",permisos);
                 console.log("codigo comprobante", resultcodigo);
                 console.log("codigo comprobante", resultcodigo[0][0]);
+                if(!resultcodigo[0][0]){
+                  resultcodigo[0][0]={codigoComprobante:0};
+                }
                 req.session.usuario = {
                   modificarPrecio,
                   documento: documento,
@@ -177,8 +203,10 @@ class Useraccioneauth {
                   codigousuario: usuario[0].codigo,
                   nombre: usuario[0].nombre,
                   alias: usuarioauth[0].almacen.alias,
+                  permisos,
                   fecha: fecha,
                   precio,
+                  ventaEnNegativo,
                 };
                 return res.json({ autenticado: true });
               } catch (error) {
@@ -412,7 +440,18 @@ class Useraccioneauth {
   obternenivel(req, res) {
     return res.json({ nivel: req.session.usuario.nivel });
   }
+
+ async obtenerPermisoUsuario(codigoUsuario, sequelize) {
+  const [result] = await sequelize.query(
+      "SELECT p.* FROM permisos p join permisosusuarios pu on pu.codigoPermiso=p.codigo where pu.codigoUsuario=?;",
+      {
+        replacements: [codigoUsuario],
+      }
+    );
+   return result;
+} 
 }
+
 
 module.exports = {
   usuarioauth: new Useraccioneauth(),

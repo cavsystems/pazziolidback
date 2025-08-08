@@ -144,7 +144,11 @@ console.log(user.codigoVendedor)
       identificacion: user.documento,
       nombreusuario: user.nombre,
       codigoVendedor:user.codigoVendedor,
-        modificarPrecio:user.modificarPrecio
+        modificarPrecio:user.modificarPrecio,
+        permisos:user.permisos,
+           codigoComprobanteReciboIngreso: user.codigoComprobanteReciboIngreso,
+          ventaEnNegativo:user.ventaEnNegativo,
+
     });
   } else {
     return res.json({
@@ -167,7 +171,7 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: "https://pazziolweb.cavsystems.com.co",
-    methods: ["GET", "POST"],
+    methods: ["GET", "PO ST"],
     credentials: true,
   },
 });
@@ -198,6 +202,8 @@ io.on("connection", (socket) => {
             nombre: socket.request.session.usuario.vendedor,
             identificacion: socket.request.session.usuario.documento,
             codigoVendedor: socket.request.session.usuario.codigoVendedor,
+            codigoComprobanteReciboIngreso:socket.request.session.usuario.codigoComprobanteReciboIngreso,
+            ventaEnNegativo:socket.request.session.usuario.ventaEnNegativo,
           });
         }
       } else {
