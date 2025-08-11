@@ -21,6 +21,9 @@ const clienteschema = new mongoose.Schema({
   telefonoFijo: {
     type: String,
   },
+  plazo:{
+    type:Number,
+  }
 });
 
 const pedido = new mongoose.Schema({

@@ -170,7 +170,8 @@ class Useraccioneauth {
                     ],
                   }
                 );
-
+                let codigoComprobateventa=0;
+                let nombrecomprobateventa=""
                 let ventaEnNegativo=0;
                 if(resultParametrosComprobanteVentaEnNegativo.length>0){
                   resultParametrosComprobanteVentaEnNegativo.forEach(dato => {
@@ -179,7 +180,25 @@ class Useraccioneauth {
                     }
                   })
                 }
+                
+                const [resultComprobanteVenta] = await sequelize.query(
+                  "SELECT c.* FROM usuarioscomprobantes uc JOIN comprobantes c ON uc.codigoComprobante = c.codigo WHERE uc.codigoUsuario =? AND uc.categoria =?;",
+                  {
+                    replacements: [
+                      usuario[0].codigo,
+                      "VENTAS",
+                    ],
+                  }
+                );
+                       if(resultComprobanteVenta.length>0){
+                          console.log("resultComprobanteVenta",resultComprobanteVenta[0].codigo);
+                          codigoComprobateventa=resultComprobanteVenta[0].codigo;
+                         
+                          nombrecomprobateventa=resultComprobanteVenta[0].nombre;
+                       }
 
+              
+           
                  let permisos=await this.obtenerPermisoUsuario(usuario[0].codigo,sequelize);
                  permisos=JSON.stringify(permisos);
                   console.log("permisos",permisos);
@@ -189,6 +208,8 @@ class Useraccioneauth {
                   resultcodigo[0][0]={codigoComprobante:0};
                 }
                 req.session.usuario = {
+                  codigoComprobateventa,
+                  nombrecomprobateventa,
                   modificarPrecio,
                   documento: documento,
                   db: db,

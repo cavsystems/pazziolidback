@@ -4,6 +4,12 @@ const { Sequelize } = require("../config/db");
 const { Types } = require("mysql2");
 
 class Factura {
+
+    constructor() {
+  
+    this.insertaritemsfactura=
+      this.insertaritemsfactura.bind(this);
+  }
   async traerfactura(req, res) {
     const { sequelize } = crearConexionPorNombre(req.session.usuario.db);
     const inicio =
@@ -123,6 +129,64 @@ ORDER BY cliente,f.fechaEmision `;
     });
   }
 
+  async crearfactura(req,res){
+    const { sequelize } = crearConexionPorNombre(req.session.usuario.db);
+      const {tercero ,itemsPedidos,totalPagar,observacion} = req.body;
+    //creacion de factura
+    const ultimoCodigo = await sequelize.query(
+      `select max(codigo) as ultimoCodigo from factura where codigoComprobante=${req.session.usuario.codigoComprobateventa}`
+    );
+    console.log(ultimoCodigo)
+     const insertfactura = await sequelize.query(
+      `insert into factura(codigo,codigoTercero,codigoComprobante,fechaCreacion,fechaEmision,fechaVencimiento,plazo,fechaCancelada,fechaAnulada,codigoUsuarioIngreso,codigoUsuarioAnulo,
+      codigoUsuarioCancelo,estado,pedido,ordenCompra,codigoVendedor,remision,observaciones,descuentoPieFactura,codigoCaja,saldo,totalFactura,
+      totalDescuentos,totalExenta,totalGravada,iva,iva16,iva10,iva19,base16,base10,base19,pagaCon,devuelta,reteIva,reteIca,reteFuente,codigoFactura,valorEfectivo,valorCredito,numeroTarjetaCredito,valorDebito
+      ,numeroTarjetaDebito,valorCheque,numeroCheque,valorBono,numeroBono,valorCXC) values(${(ultimoCodigo[0][0].ultimoCodigo+1)},${tercero.codigo},${req.session.usuario.codigoComprobateventa},current_timestamp(),
+      current_date(),current_date(),${tercero.plazo},'1990-01-01','1990-01-01',${req.session.usuario.codigousuario}
+      ,0,0,'ACTIVO','0','0',${req.session.usuario.codigoVendedor},' ','${observacion}',0,0,${totalPagar},${totalPagar},0,${totalPagar},0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,' ',0,' ',0,' ',0,' ',${totalPagar});`
+
+          );
+
+const faultimoCodigo = await sequelize.query(
+      `select max(codigo) as ultimoCodigo from factura where codigoComprobante=${req.session.usuario.codigoComprobateventa}`
+    );
+    
+    await this.insertaritemsfactura(itemsPedidos,sequelize,faultimoCodigo[0][0].ultimoCodigo,req)
+    //await insertartercerofactura(pedido.tercero,sequelize);
+  
+   return res.status(200).json({response:true, mensaje:"Factura creada correctamente", codigoFactura:ultimoCodigo+1});
+  
+  }
+
+  async insertaritemsfactura(itemspedido,sequelize,codigofactura,req){
+    let consulta = `insert into itemsfactura(codigo,codigoFactura,codigoProducto,precio,tasaIva,cantidad,descuento,descripcion,costo,codigoContable,
+    codigoMedida,referencia,presentacion,totalItem,codigoLinea,codigoCaja,codigoComprobante,
+    codigoGrupo,fechaCreacion,impoconsumo,codigoVendedor) values`;
+    console.log(itemspedido)
+        itemspedido.forEach((data, index) => {
+      if (data) {
+        consulta += `(0, ${codigofactura},${data.codigoProducto},${data.precio},'${data.tasaiva}',${data.cantidad},'${data.descuento}','${data.nombre}',${data.costo},${data.codigoContable},${data.codigoMedida},'${data.referencia}','${data.presentacion}',${data.total},${data.codigoLinea},0,
+        ${req.session.usuario.codigoComprobateventa},0,CURRENT_DATE(),
+        0,${req.session.usuario.codigoVendedor})`;
+        if (index < itemspedido.length - 1 && index !== itemspedido.length - 1) {
+          consulta += ",";
+        }
+      }
+
+    
+    });
+    const [result, affectedRows] = await sequelize.query(consulta, {
+      type: sequelize.QueryTypes.INSERT,
+    });
+
+    return affectedRows > 0;
+  }
+  async insertartercerofactura(tercero,sequelize){
+    const consulta = `insert into tercerofactura(codigo,identificacion,codigoTipoidentificacion,dv,nombre1,nombre2,apellido1,apellido2,razonSocial,tipoRegimen,
+    clasificacion,direccion,codigoDepartamento,codigoMunicipio,codigoPais,
+    direccion,ciudad,codigoDepartamento,codigoPais,telefonoFijo,
+    celulares,email,plazo,cupo,listaprecios,retefuente,reteIca,reteIva,codigoFactura,codigoComprobante))`
+      };
   /* async obtenernumeroregistrofactura(req,res){
        const { sequelize } = crearConexionPorNombre(req.session.usuario.db);
 
