@@ -47,7 +47,7 @@ productoServicio.consultar = (io, db, datoConsulta) => {
     cantidad = ` cantidad${(Number(usuario.almacen.slice(-1)) + 1).toString()}`;
   }
   var consulta = `SELECT ${cantidad} as cantidad ,codigo,descripcion,costo,costoPromedio,codigoUnidadMedida as codigoMedida,descuento
-            ,codigocontable,codigoBarra,referencia,${precioconsulta} as precio,tasaIva,presentacion,codigoLinea FROM productos `;
+            ,codigocontable,codigoBarra,referencia,${precioconsulta} as precio,tasaIva,presentacion,codigoLinea,costoPromedio,codigoGrupo FROM productos `;
   
   switch (datoConsulta.condicion.trim().toUpperCase()) {
     case "CODIGOBARRA":

@@ -132,7 +132,10 @@ ORDER BY cliente,f.fechaEmision `;
   async crearfactura(req,res){
     const { sequelize } = crearConexionPorNombre(req.session.usuario.db);
       const {tercero ,itemsPedidos,totalPagar,observacion} = req.body;
+      // codigoCaja
+      const codigoCajaUsuario=await this.verificarCajaUsuario(req,sequelize);
     //creacion de factura
+
     const ultimoCodigo = await sequelize.query(
       `select max(codigo) as ultimoCodigo from factura where codigoComprobante=${req.session.usuario.codigoComprobateventa}`
     );
@@ -143,7 +146,7 @@ ORDER BY cliente,f.fechaEmision `;
       totalDescuentos,totalExenta,totalGravada,iva,iva16,iva10,iva19,base16,base10,base19,pagaCon,devuelta,reteIva,reteIca,reteFuente,codigoFactura,valorEfectivo,valorCredito,numeroTarjetaCredito,valorDebito
       ,numeroTarjetaDebito,valorCheque,numeroCheque,valorBono,numeroBono,valorCXC) values(${(ultimoCodigo[0][0].ultimoCodigo+1)},${tercero.codigo},${req.session.usuario.codigoComprobateventa},current_timestamp(),
       current_date(),current_date(),${tercero.plazo},'1990-01-01','1990-01-01',${req.session.usuario.codigousuario}
-      ,0,0,'ACTIVO','0','0',${req.session.usuario.codigoVendedor},' ','${observacion}',0,0,${totalPagar},${totalPagar},0,${totalPagar},0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,' ',0,' ',0,' ',0,' ',${totalPagar});`
+      ,0,0,'ACTIVO','0','0',${req.session.usuario.codigoVendedor},' ','${observacion}',0,${codigoCajaUsuario},${totalPagar},${totalPagar},0,${totalPagar},0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,' ',0,' ',0,' ',0,' ',${totalPagar});`
 
           );
 
@@ -151,25 +154,37 @@ const faultimoCodigo = await sequelize.query(
       `select max(codigo) as ultimoCodigo from factura where codigoComprobante=${req.session.usuario.codigoComprobateventa}`
     );
     
-    await this.insertaritemsfactura(itemsPedidos,sequelize,faultimoCodigo[0][0].ultimoCodigo,req)
-    //await insertartercerofactura(pedido.tercero,sequelize);
+    await this.insertaritemsfactura(itemsPedidos,sequelize,faultimoCodigo[0][0].ultimoCodigo,req,codigoCajaUsuario)
+   if(await this.insertartercerofactura(tercero,sequelize,faultimoCodigo[0][0].ultimoCodigo,req)) {
+      return res.status(200).json({response:true, mensaje:"Factura creada correctamente", codigoFactura:ultimoCodigo+1});
+   }else{
+    return res.status(403).json({response:true,mensaje:"Huboun error al insertar la factura"})
+   };
   
-   return res.status(200).json({response:true, mensaje:"Factura creada correctamente", codigoFactura:ultimoCodigo+1});
+  
   
   }
 
-  async insertaritemsfactura(itemspedido,sequelize,codigofactura,req){
+  async insertaritemsfactura(itemspedido,sequelize,codigofactura,req,codigoCaja){
     let consulta = `insert into itemsfactura(codigo,codigoFactura,codigoProducto,precio,tasaIva,cantidad,descuento,descripcion,costo,codigoContable,
     codigoMedida,referencia,presentacion,totalItem,codigoLinea,codigoCaja,codigoComprobante,
     codigoGrupo,fechaCreacion,impoconsumo,codigoVendedor) values`;
+    let consultakardex='';
     console.log(itemspedido)
         itemspedido.forEach((data, index) => {
       if (data) {
-        consulta += `(0, ${codigofactura},${data.codigoProducto},${data.precio},'${data.tasaiva}',${data.cantidad},'${data.descuento}','${data.nombre}',${data.costo},${data.codigoContable},${data.codigoMedida},'${data.referencia}','${data.presentacion}',${data.total},${data.codigoLinea},0,
+        consulta += `(0, ${codigofactura},${data.codigoProducto},${data.precio},'${data.tasaiva}',${data.cantidad},'${data.descuento}','${data.nombre}',${data.costo},${data.codigoContable},${data.codigoMedida},'${data.referencia}','${data.presentacion}',${data.total},${data.codigoLinea},${codigoCaja},
         ${req.session.usuario.codigoComprobateventa},0,CURRENT_DATE(),
         0,${req.session.usuario.codigoVendedor})`;
+        consultakardex+=`(0,'SALIDA',${req.session.usuario.codigoComprobateventa},
+        ${data.codigoProducto},${data.cantidad},current_timestamp(),current_timestamp(),${req.session.usuario.codigousuario},
+        '1990-01-01',0,"ACTIVO",${data.precio},${data.costo},'${req.session.usuario.almacen}','VENTA', ${codigofactura},0,'VENTAS',${data.costoPromedio},${codigoCaja},
+        ${req.session.usuario.codigoComprobateventa},current_timestamp(),'${data.nombre}','${data.codigoContable}',${data.codigoLinea},${data.codigoGrupo},${req.session.usuario.codigoVendedor}
+        )`
+
         if (index < itemspedido.length - 1 && index !== itemspedido.length - 1) {
           consulta += ",";
+          consultakardex +=",";
         }
       }
 
@@ -178,15 +193,108 @@ const faultimoCodigo = await sequelize.query(
     const [result, affectedRows] = await sequelize.query(consulta, {
       type: sequelize.QueryTypes.INSERT,
     });
-
+  await  this.insertarKardeX(consultakardex,sequelize)
     return affectedRows > 0;
   }
-  async insertartercerofactura(tercero,sequelize){
-    const consulta = `insert into tercerofactura(codigo,identificacion,codigoTipoidentificacion,dv,nombre1,nombre2,apellido1,apellido2,razonSocial,tipoRegimen,
-    clasificacion,direccion,codigoDepartamento,codigoMunicipio,codigoPais,
-    direccion,ciudad,codigoDepartamento,codigoPais,telefonoFijo,
-    celulares,email,plazo,cupo,listaprecios,retefuente,reteIca,reteIva,codigoFactura,codigoComprobante))`
+  async insertartercerofactura(tercero,sequelize,ultimocodigo,req){
+
+    const cliente=await sequelize.query(`select * from tercero where  codigo=${tercero.codigo}`,{
+      type:sequelize.QueryTypes.SELECT
+    });
+    console.log("tercero",cliente)
+    const consulta = `insert into tercerofactura(codigo, identificacion, codigoTipoIdentificacion, dv, nombre1, 
+    nombre2, apellido1, apellido2, razonSocial, tipoRegimen, clasificacion, direccion, codigoDepartamento, codigoMunicipio, codigoPais, telefonoFijo,
+     celulares, email,
+     plazo, cupo, listaPrecios, reteFuente, reteIca, reteIva, codigoFactura, codigoComprobante)values (0,'${cliente[0].identificacion}',
+${cliente[0].codigoTipoIdentificacion},${cliente[0].dv},'${cliente[0].nombre1}','${cliente[0].nombre1}','${cliente[0].apellido1}',
+'${cliente[0].apellido2}','${cliente[0].razonSocial}','${cliente[0].tipoRegimen}','${cliente[0].clasificacion}',
+'${cliente[0].direccion}',${cliente[0]. codigoDepartamento},${cliente[0].codigoMunicipio},${cliente[0].codigoPais},
+'${cliente[0].telefonoFijo}','${cliente[0].celulares}','${cliente[0].email}',${cliente[0].plazo},
+${cliente[0].cupo},${cliente[0].listaPrecios},${cliente[0].reteFuente},${cliente[0].reteIca},${cliente[0].reteIva},${ultimocodigo},${req.session.usuario.codigoComprobateventa})`
+
+ const [result, affectedRows] = await sequelize.query(consulta, {
+      type: sequelize.QueryTypes.INSERT,
+    });
+     return affectedRows > 0;
       };
+
+
+  async insertarKardeX(queryInsertKardex, sequelize){
+  const consulta=`insert into kardex(codigo, transaccion,
+   codigoComprobante, codigoProducto, cantidad,
+    fechaTransaccion, fechaIngreso, codigoUsuarioIngreso, fechaAnulo, codigoUsuarioAnulo, estado, precioVenta, costo, origen, destino, codigoDocumento, codigoBodega, categoriaComprobante, costoPromedio, codigoCaja, codigoComprobanteDocumento, fechaCreacionDocumento, descripcion, codigoContable, codigoLinea,
+   codigoGrupo, codigoVendedor)values ${queryInsertKardex}`
+   const [result, affectedRows] = await sequelize.query(consulta, {
+      type: sequelize.QueryTypes.INSERT,
+    }); 
+     return affectedRows > 0;
+  }
+
+  fechaActual(){
+    const hoy = new Date();
+    const fechaActual = hoy.toISOString().split('T')[0];
+    console.log(fechaActual);  // Ejemplo: "2025-08-11"
+
+    return fechaActual;
+  }
+
+  async verificarCajaUsuario(req,sequelize) {
+    
+    
+    const consulta = `select *, date_format(fechaApertura,'%Y-%m-%d') as fechaCaja from caja where codigo = (select max(codigo) as ultimoCodigoCaja from caja where codigoUsuario=?)`;
+    const fecha=this.fechaActual();
+  
+    const result = await sequelize.query(consulta, {
+      replacements: [req.session.usuario.codigousuario],
+      type: sequelize.QueryTypes.SELECT,
+      logging: true,
+    });
+   console.log("consulta",result)
+    let codigoCajaUsuario=0;
+     let consecutivoCaja=0;
+    if (result.length > 0) {
+      if(result[0].fechaCaja==fecha){
+        codigoCajaUsuario=result[0].codigo;
+      }else if(result[0].fechaCaja<fecha){
+        consecutivoCaja=result[0].consecutivo+1;
+        const insertCaja = await sequelize.query(
+        `insert into caja(codigo,codigoUsuario,montoInicial,montoFinal,fechaApertura,fechaCierre,
+        estado,codigoComprobante,consecutivo,totalRecaudo,totalCosto) 
+        values (0,${req.session.usuario.codigousuario},0,0,current_timestamp(),'1990-01-01','ABIERTA',
+        ${req.session.usuario.codigoComprobateventa},${consecutivoCaja},0,0)` 
+        );
+       
+        const consulta2 = `select max(codigo) as ultimoCodigoCaja from caja where codigoUsuario=?`;
+        const result2 = await sequelize.query(consulta2, {
+          replacements: [req.session.usuario.codigousuario],
+          type: sequelize.QueryTypes.SELECT,
+          logging: true,
+        });
+        codigoCajaUsuario=result2[0][0].ultimoCodigoCaja;
+      }
+    }else{
+      consecutivoCaja=consecutivo+1;
+      const insertCaja = await sequelize.query(
+       `insert into caja(codigo,codigoUsuario,montoInicial,montoFinal,fechaApertura,fechaCierre,
+       estado,codigoComprobante,consecutivo,totalRecaudo,totalCosto) 
+       values (0,${req.session.usuario.codigousuario},0,0,current_timestamp(),'1990-01-01','ABIERTA',
+       ${req.session.usuario.codigoComprobateventa},${consecutivoCaja},0,0)` 
+      );
+          
+      const consulta2 = `select max(codigo) as ultimoCodigoCaja from caja where codigoUsuario=?`;
+      console.log("consulta2",consulta2)
+      const result2 = await sequelize.query(consulta2, {
+        replacements: [req.session.usuario.codigousuario],
+        type: sequelize.QueryTypes.SELECT,
+        logging: true,
+      });
+      codigoCajaUsuario=result2[0][0].ultimoCodigoCaja;;
+    }
+
+    
+    return codigoCajaUsuario
+  
+  }
   /* async obtenernumeroregistrofactura(req,res){
        const { sequelize } = crearConexionPorNombre(req.session.usuario.db);
 
