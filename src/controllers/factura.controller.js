@@ -170,6 +170,8 @@ const faultimoCodigo = await sequelize.query(
     codigoMedida,referencia,presentacion,totalItem,codigoLinea,codigoCaja,codigoComprobante,
     codigoGrupo,fechaCreacion,impoconsumo,codigoVendedor) values`;
     let consultakardex='';
+    let updateProductos='';
+    const replacements =[];
     console.log(itemspedido)
         itemspedido.forEach((data, index) => {
       if (data) {
@@ -182,20 +184,26 @@ const faultimoCodigo = await sequelize.query(
         ${req.session.usuario.codigoComprobateventa},current_timestamp(),'${data.nombre}','${data.codigoContable}',${data.codigoLinea},${data.codigoGrupo},${req.session.usuario.codigoVendedor}
         )`
 
+        updateProductos += `update producto 
+                            set ${req.session.usuario.almacen}=${req.session.usuario.almacen}-?, ultimaVenta = CURRENT_DATE()
+                            where codigo=?`;
+                            replacements.push(Number(data.cantidad),data.codigoProducto);
+
         if (index < itemspedido.length - 1 && index !== itemspedido.length - 1) {
           consulta += ",";
           consultakardex +=",";
         }
       }
-
-    
     });
     const [result, affectedRows] = await sequelize.query(consulta, {
       type: sequelize.QueryTypes.INSERT,
     });
   await  this.insertarKardeX(consultakardex,sequelize)
+  await this.actualizarSaldidaInventario(updateProductos,replacements);
     return affectedRows > 0;
   }
+
+
   async insertartercerofactura(tercero,sequelize,ultimocodigo,req){
 
     const cliente=await sequelize.query(`select * from tercero where  codigo=${tercero.codigo}`,{
@@ -295,6 +303,16 @@ ${cliente[0].cupo},${cliente[0].listaPrecios},${cliente[0].reteFuente},${cliente
     return codigoCajaUsuario
   
   }
+
+  async actualizarSaldidaInventario(queryUpdate,replacements){
+    await sequelize.query(
+        queryUpdate,
+        {
+          replacements
+        }
+      );
+  }
+
   /* async obtenernumeroregistrofactura(req,res){
        const { sequelize } = crearConexionPorNombre(req.session.usuario.db);
 
