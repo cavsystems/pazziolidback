@@ -28,6 +28,7 @@ const db = require("./config/db");
 const {
   enviarDataEmail,
   enviarDataingresos,
+    enviarDatafactura
 } = require("./servicios/servicio-email");
 const { midleware } = require("./libs/midleware");
 const { routerfactura } = require("./routes/factura.routes");
@@ -226,6 +227,11 @@ io.on("connection", (socket) => {
       case "EMAILINGRESO":
         console.log("entro aqui");
         enviarDataingresos(socket, data);
+      
+
+     case "EMAILFACTURA":
+        console.log("entro aqui");
+        enviarDatafactura(socket, data);
       default:
         break;
     }

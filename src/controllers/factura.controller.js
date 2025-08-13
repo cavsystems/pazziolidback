@@ -149,6 +149,7 @@ ORDER BY cliente,f.fechaEmision `;
       ,0,0,'ACTIVO','0','0',${req.session.usuario.codigoVendedor},' ','${observacion}',0,${codigoCajaUsuario},${totalPagar},${totalPagar},0,${totalPagar},0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,' ',0,' ',0,' ',0,' ',${totalPagar});`
 
           );
+      
 
 const faultimoCodigo = await sequelize.query(
       `select max(codigo) as ultimoCodigo from factura where codigoComprobante=${req.session.usuario.codigoComprobateventa}`
@@ -156,8 +157,15 @@ const faultimoCodigo = await sequelize.query(
     
     await this.insertaritemsfactura(itemsPedidos,sequelize,faultimoCodigo[0][0].ultimoCodigo,req,codigoCajaUsuario)
    if(await this.insertartercerofactura(tercero,sequelize,faultimoCodigo[0][0].ultimoCodigo,req)) {
-      return res.status(200).json({response:true, mensaje:"Factura creada correctamente", codigoFactura:ultimoCodigo+1});
+     const factura=await sequelize.query(`select  TIME(CONVERT_TZ(fechaCreacion, '+00:00', '-05:00')) AS horaCreacion,f.* from factura f where codigoUsuarioIngreso=${req.session.usuario.codigousuario} order by codigo desc limit 1`,{
+       type: sequelize.QueryTypes.SELECT,
+      logging: true,
+    })
+console.log("factura factura",factura)
+      return res.status(200).json({response:true, mensaje:"Factura creada correctamente", factura:factura[0],config:req.session.usuario.config,nombre:req.session.usuario.vendedor});
+
    }else{
+   
     return res.status(403).json({response:true,mensaje:"Huboun error al insertar la factura"})
    };
   
@@ -173,6 +181,7 @@ const faultimoCodigo = await sequelize.query(
     let updateProductos='';
     const replacements =[];
     console.log(itemspedido)
+    let etiquetaCantidad=this.obtenernombrecantidad(req);
         itemspedido.forEach((data, index) => {
       if (data) {
         consulta += `(0, ${codigofactura},${data.codigoProducto},${data.precio},'${data.tasaiva}',${data.cantidad},'${data.descuento}','${data.nombre}',${data.costo},${data.codigoContable},${data.codigoMedida},'${data.referencia}','${data.presentacion}',${data.total},${data.codigoLinea},${codigoCaja},
@@ -183,9 +192,9 @@ const faultimoCodigo = await sequelize.query(
         '1990-01-01',0,"ACTIVO",${data.precio},${data.costo},'${req.session.usuario.almacen}','VENTA', ${codigofactura},0,'VENTAS',${data.costoPromedio},${codigoCaja},
         ${req.session.usuario.codigoComprobateventa},current_timestamp(),'${data.nombre}','${data.codigoContable}',${data.codigoLinea},${data.codigoGrupo},${req.session.usuario.codigoVendedor}
         )`
-
-        updateProductos += `update producto 
-                            set ${req.session.usuario.almacen}=${req.session.usuario.almacen}-?, ultimaVenta = CURRENT_DATE()
+         
+        updateProductos += `update productos 
+                            set ${etiquetaCantidad}=${etiquetaCantidad}-?, ultimaVenta = CURRENT_DATE()
                             where codigo=?`;
                             replacements.push(Number(data.cantidad),data.codigoProducto);
 
@@ -199,9 +208,20 @@ const faultimoCodigo = await sequelize.query(
       type: sequelize.QueryTypes.INSERT,
     });
   await  this.insertarKardeX(consultakardex,sequelize)
-  await this.actualizarSaldidaInventario(updateProductos,replacements);
+  await this.actualizarSaldidaInventario(updateProductos,replacements,sequelize);
     return affectedRows > 0;
   }
+obtenernombrecantidad(req){
+   let cantidad = "";
+  if (req.session.usuario.almacen === "BODEGA") {
+    cantidad = "cantidad";
+     
+  } else {
+    
+    cantidad = ` cantidad${(Number(req.session.usuario.almacen.slice(-1)) + 1).toString()}`;
+  }
+  return cantidad
+}
 
 
   async insertartercerofactura(tercero,sequelize,ultimocodigo,req){
@@ -273,15 +293,17 @@ ${cliente[0].cupo},${cliente[0].listaPrecios},${cliente[0].reteFuente},${cliente
         );
        
         const consulta2 = `select max(codigo) as ultimoCodigoCaja from caja where codigoUsuario=?`;
-        const result2 = await sequelize.query(consulta2, {
+        const result2 = await sequelize.query(consulta2,{
           replacements: [req.session.usuario.codigousuario],
           type: sequelize.QueryTypes.SELECT,
+       
           logging: true,
         });
-        codigoCajaUsuario=result2[0][0].ultimoCodigoCaja;
+        console.log(result2)
+        codigoCajaUsuario=result2[0].ultimoCodigoCaja;
       }
     }else{
-      consecutivoCaja=consecutivo+1;
+     
       const insertCaja = await sequelize.query(
        `insert into caja(codigo,codigoUsuario,montoInicial,montoFinal,fechaApertura,fechaCierre,
        estado,codigoComprobante,consecutivo,totalRecaudo,totalCosto) 
@@ -294,9 +316,11 @@ ${cliente[0].cupo},${cliente[0].listaPrecios},${cliente[0].reteFuente},${cliente
       const result2 = await sequelize.query(consulta2, {
         replacements: [req.session.usuario.codigousuario],
         type: sequelize.QueryTypes.SELECT,
+         
         logging: true,
       });
-      codigoCajaUsuario=result2[0][0].ultimoCodigoCaja;;
+      console.log("consulta2",result2)
+      codigoCajaUsuario=result2[0].ultimoCodigoCaja;
     }
 
     
@@ -304,11 +328,11 @@ ${cliente[0].cupo},${cliente[0].listaPrecios},${cliente[0].reteFuente},${cliente
   
   }
 
-  async actualizarSaldidaInventario(queryUpdate,replacements){
+  async actualizarSaldidaInventario(queryUpdate,replacement, sequelize){
     await sequelize.query(
         queryUpdate,
         {
-          replacements
+         replacements: replacement,
         }
       );
   }
