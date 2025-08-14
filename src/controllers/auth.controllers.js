@@ -161,10 +161,11 @@ class Useraccioneauth {
                 }
 
                 const [resultParametrosComprobanteVentaEnNegativo] = await sequelize.query(
-                  "SELECT p.nombre,pc.* FROM parametroscomprobante pc JOIN parametros p ON pc.codigoParametro = p.codigo JOIN usuarioscomprobantes uc ON pc.codigoComprobante = uc.codigoComprobante WHERE p.nombre  LIKE ?  AND uc.codigoUsuario =? AND uc.categoria =?;",
+                  "SELECT p.nombre,pc.* FROM parametroscomprobante pc JOIN parametros p ON pc.codigoParametro = p.codigo JOIN usuarioscomprobantes uc ON pc.codigoComprobante = uc.codigoComprobante WHERE p.nombre  IN (?,?)  AND uc.codigoUsuario =? AND uc.categoria =?;",
                   {
                     replacements: [
-                      "%VENTA_EN_NEGATIVO%",
+                      "VENTA_EN_NEGATIVO",
+                      "FACTURAR_PEDIDOS",
                       usuario[0].codigo,
                       "VENTAS",
                     ],
@@ -172,11 +173,14 @@ class Useraccioneauth {
                 );
                 let codigoComprobateventa=0;
                 let nombrecomprobateventa=""
-                let ventaEnNegativo=0;
+                let ventaEnNegativo=0;let facturarPedidos=0;
                 if(resultParametrosComprobanteVentaEnNegativo.length>0){
                   resultParametrosComprobanteVentaEnNegativo.forEach(dato => {
                     if(dato.nombre === 'VENTA_EN_NEGATIVO'){
                       ventaEnNegativo=Number (dato.valor);
+                    }
+                    if(dato.nombre === 'FACTURAR_PEDIDOS'){
+                      facturarPedidos=Number (dato.valor);
                     }
                   })
                 }
@@ -204,6 +208,7 @@ class Useraccioneauth {
                   console.log("permisos",permisos);
                 console.log("codigo comprobante", resultcodigo);
                 console.log("codigo comprobante", resultcodigo[0][0]);
+                console.log("parametro factura pedido",facturarPedidos)
                 if(!resultcodigo[0][0]){
                   resultcodigo[0][0]={codigoComprobante:0};
                 }
@@ -228,6 +233,7 @@ class Useraccioneauth {
                   fecha: fecha,
                   precio,
                   ventaEnNegativo,
+                  facturarPedidos,
                 };
                 return res.json({ autenticado: true });
               } catch (error) {

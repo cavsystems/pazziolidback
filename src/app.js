@@ -149,6 +149,7 @@ console.log(user.codigoVendedor)
         permisos:user.permisos,
            codigoComprobanteReciboIngreso: user.codigoComprobanteReciboIngreso,
           ventaEnNegativo:user.ventaEnNegativo,
+           facturarPedidos:user.facturarPedidos,
 
     });
   } else {
@@ -205,6 +206,7 @@ io.on("connection", (socket) => {
             codigoVendedor: socket.request.session.usuario.codigoVendedor,
             codigoComprobanteReciboIngreso:socket.request.session.usuario.codigoComprobanteReciboIngreso,
             ventaEnNegativo:socket.request.session.usuario.ventaEnNegativo,
+            facturarPedidos:socket.request.session.usuario.facturarPedidos,
           });
         }
       } else {
