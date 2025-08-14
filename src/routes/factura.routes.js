@@ -16,7 +16,7 @@ routerfactura.get("/traersaldoactual", Factura. traersaldoactual);
 routerfactura.post("/insertariteminventario", Factura.insertaritmesinventario);
 routerfactura.get("/consultaritemsiventario", Factura.consultaritemsinventario);
 routerfactura.get("/traeritemsfactura", Factura.traeritemsfactura);
-
+routerfactura.get("/obtenertotalpornombrefactura",Factura.obtenertotalpornombrefactura)
 routerfactura.get("/consultaritems", Factura.consultaritems);
 routerfactura.post("/eliminariteminventario", Factura.eliminariteminventario);
 routerfactura.post("/realizarfactura", Factura.crearfactura.bind(Factura));

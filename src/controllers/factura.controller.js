@@ -116,7 +116,7 @@ ORDER BY cliente,f.fechaEmision `;
 
     sequelize.close();
 
-    let registros = Math.round(result2[0].nregistros / 15);
+    let registros = Math.ceil(result2[0].nregistros / 15);
 
     if (registros === 0) {
       registros = 1;
@@ -162,7 +162,7 @@ const faultimoCodigo = await sequelize.query(
       logging: true,
     })
 console.log("factura factura",factura)
-      return res.status(200).json({response:true, mensaje:"Factura creada correctamente", factura:factura[0],config:req.session.usuario.config,nombre:req.session.usuario.vendedor});
+      return res.status(200).json({response:true, mensaje:"Factura creada correctamente", factura:factura[0],config:req.session.usuario.config,nombre:req.session.usuario.vendedor,prefijo:req.session.usuario.nombrecomprobateventa});
 
    }else{
    
@@ -178,10 +178,12 @@ console.log("factura factura",factura)
     codigoMedida,referencia,presentacion,totalItem,codigoLinea,codigoCaja,codigoComprobante,
     codigoGrupo,fechaCreacion,impoconsumo,codigoVendedor) values`;
     let consultakardex='';
-    let updateProductos='';
+    let etiquetaCantidad=this.obtenernombrecantidad(req);
+    let updateProductos=`update productos  SET ${etiquetaCantidad} = CASE codigo`;
+    let clausulaWhen="";
+    let codigo="("
     const replacements =[];
     console.log(itemspedido)
-    let etiquetaCantidad=this.obtenernombrecantidad(req);
         itemspedido.forEach((data, index) => {
       if (data) {
         consulta += `(0, ${codigofactura},${data.codigoProducto},${data.precio},'${data.tasaiva}',${data.cantidad},'${data.descuento}','${data.nombre}',${data.costo},${data.codigoContable},${data.codigoMedida},'${data.referencia}','${data.presentacion}',${data.total},${data.codigoLinea},${codigoCaja},
@@ -192,11 +194,17 @@ console.log("factura factura",factura)
         '1990-01-01',0,"ACTIVO",${data.precio},${data.costo},'${req.session.usuario.almacen}','VENTA', ${codigofactura},0,'VENTAS',${data.costoPromedio},${codigoCaja},
         ${req.session.usuario.codigoComprobateventa},current_timestamp(),'${data.nombre}','${data.codigoContable}',${data.codigoLinea},${data.codigoGrupo},${req.session.usuario.codigoVendedor}
         )`
-         
-        updateProductos += `update productos 
-                            set ${etiquetaCantidad}=${etiquetaCantidad}-?, ultimaVenta = CURRENT_DATE()
-                            where codigo=?`;
-                            replacements.push(Number(data.cantidad),data.codigoProducto);
+        
+        clausulaWhen += ` WHEN ${data.codigoProducto} THEN ${etiquetaCantidad} - ${data.cantidad} `;
+
+          
+
+          if(index===itemspedido.length-1){
+            codigo+="?)"
+          }else{
+            codigo+="?,"
+          }
+                            replacements.push(data.codigoProducto);
 
         if (index < itemspedido.length - 1 && index !== itemspedido.length - 1) {
           consulta += ",";
@@ -204,6 +212,9 @@ console.log("factura factura",factura)
         }
       }
     });
+
+    updateProductos += clausulaWhen + " END, ultimaVenta = CURRENT_DATE() where codigo IN "+codigo
+
     const [result, affectedRows] = await sequelize.query(consulta, {
       type: sequelize.QueryTypes.INSERT,
     });
@@ -681,15 +692,24 @@ ${cliente[0].cupo},${cliente[0].listaPrecios},${cliente[0].reteFuente},${cliente
 
   }
 
+
+async obtenertotalpornombrefactura(req,res){
+  const {sequelize}=crearConexionPorNombre(req.session.usuario.db);
+  const datostotal= await sequelize.query(`select  sum(saldo) as sumatotal from  factura f inner join tercero t on f.codigoTercero=t.codigo where t.razonSocial='${req.query.nombret}'`)
+  console.log(datostotal);
+  return res.json({respuesta:datostotal[0]})
+}
  async traeritemsfactura(req,res){
   const {sequelize}=crearConexionPorNombre(req.session.usuario.db)
   console.log("codigo factura",req.query.codigo)
-  const consulta=`select i.descripcion,i.cantidad,i.presentacion , i.precio,i.totalItem     from factura f inner join itemsfactura i on f.codigo=i.codigoFactura where f.codigo=${req.query.codigo} && f.codigoComprobante=${req.query.codigoComprobante} `
+  const consulta=`select i.descripcion,i.cantidad,i.presentacion , i.precio,i.totalItem,i.codigoContable ,i.referencia, DATE_FORMAT(f.fechaCreacion, '%H:%i:%s')  as horacreacion,t.email,t.identificacion,t.telefonofijo ,f.codigo as codigofactura,f.observaciones from factura f inner join itemsfactura i on f.codigo=i.codigoFactura and f.codigoComprobante=i.codigoComprobante join tercerofactura as t on t.codigoFactura=i.codigoFactura and t.codigoComprobante=i.codigoComprobante  where f.codigo=${req.query.codigo} && f.codigoComprobante=${req.query.codigoComprobante} `
+
+
   const result=await sequelize.query(consulta,{
     type:sequelize.QueryTypes.SELECT,
     logging:true
   })
-  res.status(200).json({respuesta:result})
+  res.status(200).json({respuesta:result,config:req.session.usuario.config,prefijo:req.session.usuario.nombrecomprobateventa})
  }
 
    async insertaritmesinventario(req,res){
