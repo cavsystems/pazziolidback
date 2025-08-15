@@ -28,6 +28,7 @@ const db = require("./config/db");
 const {
   enviarDataEmail,
   enviarDataingresos,
+    enviarDatafactura
 } = require("./servicios/servicio-email");
 const { midleware } = require("./libs/midleware");
 const { routerfactura } = require("./routes/factura.routes");
@@ -151,6 +152,7 @@ console.log(user.codigoVendedor)
         permisos:user.permisos,
            codigoComprobanteReciboIngreso: user.codigoComprobanteReciboIngreso,
           ventaEnNegativo:user.ventaEnNegativo,
+           facturarPedidos:user.facturarPedidos,
 
     });
   } else {
@@ -207,6 +209,7 @@ io.on("connection", (socket) => {
             codigoVendedor: socket.request.session.usuario.codigoVendedor,
             codigoComprobanteReciboIngreso:socket.request.session.usuario.codigoComprobanteReciboIngreso,
             ventaEnNegativo:socket.request.session.usuario.ventaEnNegativo,
+            facturarPedidos:socket.request.session.usuario.facturarPedidos,
           });
         }
       } else {
@@ -229,6 +232,11 @@ io.on("connection", (socket) => {
       case "EMAILINGRESO":
         console.log("entro aqui");
         enviarDataingresos(socket, data);
+      
+
+     case "EMAILFACTURA":
+        console.log("entro aqui");
+        enviarDatafactura(socket, data);
       default:
         break;
     }
