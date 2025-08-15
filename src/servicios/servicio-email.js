@@ -201,8 +201,9 @@ async function enviarDatafactura(io, data) {
             sistema: "POS",
             estadoPeticion: "ERROR",
             mensajePeticion:
-              "pedido realizado pero correo no enviado quieres intentar",
+              "pedido factura pero correo no enviado quieres intentar",
             tipoConsulta: "PEDIDO",
+            error
             //canalUsuario: canalUsuario,
           };
           io.emit("estadocorreoingreso", respuesta);
@@ -211,7 +212,7 @@ async function enviarDatafactura(io, data) {
           respuesta = {
             sistema: "POS",
             estadoPeticion: "Done",
-            mensajePeticion: "pedido realizado",
+            mensajePeticion: "pedido facturado",
             tipoConsulta: "PEDIDO",
             // canalUsuario: canalUsuario,
           };

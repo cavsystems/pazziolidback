@@ -65,6 +65,24 @@ const pedido = new mongoose.Schema({
   codigoContable: {
     type: String,
   },
+  costo:{
+    type:Number,
+  },
+  codigoGrupo:{
+    type:Number
+  },
+  
+codigoLinea:{
+  type:Number
+
+},
+
+costoPromedio:{
+  type:Number
+}
+
+
+
 });
 
 const pedidoreservado = new mongoose.Schema(
