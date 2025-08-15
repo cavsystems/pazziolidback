@@ -183,7 +183,7 @@ async function enviarDatafactura(io, data) {
         subject: `Comprobante de factura solicitada`,
         attachments: [
           {
-            filename: "pedido.pdf", //nombre del archivo
+            filename: "factura.pdf", //nombre del archivo
             content: Buffer.from(data.data.pdf, "base64"),
             contentType: "application/pdf",
           },
