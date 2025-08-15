@@ -76,8 +76,10 @@ app.use("/api", routerfactura);
 app.get("/api/traerempresas", async (req, res) => {
   try {
     const { documento } = req.query;
+    console.log("documento",documento);
     if (/^\d+$/.test(documento)) {
       if (documento.length < 8) {
+        
         return res.status(401).json({
           autenticado: false,
           mensaje: "Numero de identificacion muy corto",
@@ -88,6 +90,7 @@ app.get("/api/traerempresas", async (req, res) => {
         {
           replacements: [documento],
           type: dbs.sequelize.QueryTypes.SELECT,
+          logging: true,
         }
       );
       //toma un objeto y devuelve un array con los valores de sus propiedades

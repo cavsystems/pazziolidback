@@ -138,7 +138,7 @@ class Useraccioneauth {
                   sequelize
                 );
                 const resultcodigo = await sequelize.query(
-                  `select codigoComprobante,comprobantes.nombre from usuariosComprobantes join comprobantes ON comprobantes.codigo=usuariosComprobantes.codigoComprobante where codigoUsuario=${usuario[0].codigo} && usuariosComprobantes.categoria='INGRESOS'`
+                  `select codigoComprobante,comprobantes.nombre from usuarioscomprobantes join comprobantes ON comprobantes.codigo=usuariosComprobantes.codigoComprobante where codigoUsuario=${usuario[0].codigo} && usuariosComprobantes.categoria='INGRESOS'`
                 );
                 const [resultParametrosComprobanteUsuario] = await sequelize.query(
                   "SELECT p.nombre,pc.* FROM parametroscomprobante pc JOIN parametros p ON pc.codigoParametro = p.codigo JOIN usuarioscomprobantes uc ON pc.codigoComprobante = uc.codigoComprobante WHERE p.nombre  LIKE ?  AND uc.codigoUsuario =? AND uc.categoria =?;",
