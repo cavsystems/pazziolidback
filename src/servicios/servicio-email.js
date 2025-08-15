@@ -112,10 +112,10 @@ async function enviarDataingresos(io, data) {
         html: mensaje,
         cc: [`${io.request.session.usuario.config.CORREO_ENVIO_PEDIDO}`],
         bcc: [`${io.request.session.usuario.config.CORREO_ENVIO_PEDIDO}`],
-        subject: `Comprobante de pedido solicitado`,
+        subject: `Comprobante resibo ingreso`,
         attachments: [
           {
-            filename: "pedido.pdf", //nombre del archivo
+            filename: "recibo.pdf", //nombre del archivo
             content: Buffer.from(data.data.pdf, "base64"),
             contentType: "application/pdf",
           },
@@ -170,7 +170,7 @@ async function enviarDatafactura(io, data) {
       io.emit("estadocorreo", respuesta);
     } else {
       let mensaje = `<p>
-      factura 
+    Comprobante de factura solicitada
     </p>`;
       let message = {
         from: `${io.request.session.usuario.config.CORREO_ENVIO_PEDIDO}`,
@@ -180,7 +180,7 @@ async function enviarDatafactura(io, data) {
         html: mensaje,
         cc: [`${io.request.session.usuario.config.CORREO_ENVIO_PEDIDO}`],
         bcc: [`${io.request.session.usuario.config.CORREO_ENVIO_PEDIDO}`],
-        subject: `Comprobante de pedido solicitado`,
+        subject: `Comprobante de factura solicitada`,
         attachments: [
           {
             filename: "pedido.pdf", //nombre del archivo
