@@ -9,11 +9,12 @@ var respuesta = {};
  * @param {*} db es la variable que tiene la conexion a la bd del pos y ejecuta las consultas
  * @param {*} datoConsulta es la variable que envia el cliente Dashboard de la data para consultar el producto
  */
-productoServicio.consultar = (io, db, datoConsulta) => {
-  console.log(io.request.session);
+productoServicio.consultar = async (io, db, datoConsulta) => {
+  
   const sesion = io.request.session;
   const usuario = sesion?.usuario;
   const precio = usuario.precio;
+  let registro=0
   let precioconsulta = "precio1";
   switch (precio) {
     case 1:
@@ -41,9 +42,9 @@ productoServicio.consultar = (io, db, datoConsulta) => {
   let cantidad = "";
   if (usuario.almacen === "BODEGA") {
     cantidad = "cantidad";
-      console.log(usuario.almacen)
+      
   } else {
-    console.log(usuario.almacen)
+    
     cantidad = ` cantidad${(Number(usuario.almacen.slice(-1)) + 1).toString()}`;
   }
   var consulta = `SELECT ${cantidad} as cantidad ,codigo,descripcion,costo,costoPromedio,codigoUnidadMedida as codigoMedida,descuento
@@ -61,6 +62,36 @@ productoServicio.consultar = (io, db, datoConsulta) => {
       break;
     case "DESCRIPCION":
       consulta += ` WHERE descripcion LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' OR  referencia LIKE '%${datoConsulta.datoCondicion.toString().trim()}%'  OR codigoBarra LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' order by descripcion limit 10`;
+
+      break;
+
+
+
+       case "DESCRIPCIONINVENTARIO":
+         consulta = `SELECT ${cantidad} as cantidad ,codigo,descripcion,costo,costoPromedio,codigoUnidadMedida as codigoMedida,descuento
+            ,codigocontable,codigoBarra,referencia,precio1,precio2,precio3,tasaIva,presentacion,codigoLinea,costoPromedio,codigoGrupo FROM productos `;
+      consulta += ` WHERE descripcion LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' OR  referencia LIKE '%${datoConsulta.datoCondicion.toString().trim()}%'  OR codigoBarra LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' order by descripcion limit 50`;
+
+      break;
+
+
+      case "INVENTARIO":
+          const inicio =datoConsulta.pagina> 0 ? datoConsulta.pagina * 15 - 15 : 0;
+         consulta = `SELECT ${cantidad} as cantidad ,codigo,descripcion,costo,costoPromedio,codigoUnidadMedida as codigoMedida,descuento
+            ,codigocontable,codigoBarra,referencia,precio1,precio2,precio3,tasaIva,presentacion,codigoLinea,costoPromedio,codigoGrupo FROM productos limit ${inicio},15 `;
+        
+                    consulta2=`  select count(codigo) as total from productos`
+        const re= await sequelize
+    .query(consulta2, { type: sequelize.QueryTypes.SELECT ,logging:true})
+
+    console.log("consulta2",re)
+    registro= Math.round(re[0].total / 15)
+    if(registro===0){
+      registro=1
+    }
+
+
+    
 
       break;
     case "CODIGO":
@@ -83,7 +114,7 @@ productoServicio.consultar = (io, db, datoConsulta) => {
   sequelize
     .query(consulta, { type: sequelize.QueryTypes.SELECT ,logging:true})
     .then((producto) => {
-      console.log(producto);
+      ;
       if (producto.length > 0) {
         respuesta = {
           sistema: "POS",
@@ -91,11 +122,12 @@ productoServicio.consultar = (io, db, datoConsulta) => {
           mensajePeticion: producto,
           tipoConsulta: "PRODUCTO",
           canalUsuario: canalUsuario,
+          registro
         };
 
         io.emit(process.env.CANALSERVIDOR, JSON.stringify(respuesta));
       } else {
-        console.log("error aqui");
+        ;
         respuesta = {
           sistema: "POS",
           estadoPeticion: "ERROR",
@@ -109,8 +141,9 @@ productoServicio.consultar = (io, db, datoConsulta) => {
       }
     })
     .catch((err) => {
-      console.log(err);
-      console.log(err);
+      ;
+      ;
+      console.log(err)
       respuesta = {
         sistema: "POS",
         estadoPeticion: "ERROR",
@@ -140,7 +173,7 @@ productoServicio.actulizar = async (io, db, datoConsulta) => {
       break;
   }
   //await db.sequelize.query(update,{ type: db.sequelize.QueryTypes.UPDATE})
-  console.log(consulta)
+  
   let resul = await db.sequelize.query(consulta, {
     type: db.sequelize.QueryTypes.SELECT,
     logging:true

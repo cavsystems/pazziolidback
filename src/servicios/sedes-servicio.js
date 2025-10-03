@@ -4,7 +4,7 @@ const sedeservi = {}
 sedeservi.consultar = (io, db,datoConsulta)=>{
     consulta=`SELECT * FROM aliasalmacen`
     db.sequelize.query(consulta, { type: db.sequelize.QueryTypes.SELECT}).then((sede) => {
-        console.log(sede.length)
+        
         if (sede.length > 0) {
             respuesta = {
                 sistema: 'POS',
@@ -34,7 +34,7 @@ sedeservi.consultar = (io, db,datoConsulta)=>{
            
         }
         
-        console.log(respuesta)
+        
         io.emit(datoConsulta.canalserver,respuesta);
     });
 }

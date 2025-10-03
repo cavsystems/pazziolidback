@@ -195,7 +195,7 @@ class Useraccioneauth {
                   }
                 );
                        if(resultComprobanteVenta.length>0){
-                          console.log("resultComprobanteVenta",resultComprobanteVenta[0].codigo);
+                          ;
                           codigoComprobateventa=resultComprobanteVenta[0].codigo;
                          
                           nombrecomprobateventa=resultComprobanteVenta[0].nombre;
@@ -205,10 +205,9 @@ class Useraccioneauth {
            
                  let permisos=await this.obtenerPermisoUsuario(usuario[0].codigo,sequelize);
                  permisos=JSON.stringify(permisos);
-                  console.log("permisos",permisos);
-                console.log("codigo comprobante", resultcodigo);
-                console.log("codigo comprobante", resultcodigo[0][0]);
-                console.log("parametro factura pedido",facturarPedidos)
+                  ;
+                
+                
                 if(!resultcodigo[0][0]){
                   resultcodigo[0][0]={codigoComprobante:0};
                 }
@@ -235,9 +234,11 @@ class Useraccioneauth {
                   ventaEnNegativo,
                   facturarPedidos,
                 };
+                console.log("autenticado")
                 return res.json({ autenticado: true });
               } catch (error) {
-                console.log(error);
+                
+                console.log(error)
                 return res.status(400).json({
                   autenticado: false,
                   mensaje: "error de servidor",
@@ -263,7 +264,7 @@ class Useraccioneauth {
   }
 
   async verificarauth(req, res) {
-    console.log(req.session);
+    ;
     const { usuario } = req.session;
 
     if (usuario) {
@@ -320,8 +321,7 @@ class Useraccioneauth {
   }
 
   async logout(req, res) {
-    console.log(req.session.usuario);
-    console.log("entro a deslogguiarse");
+   
 
     if (req.session.usuario) {
       const saveduser = await modeluser.findOneAndUpdate(
@@ -448,7 +448,7 @@ class Useraccioneauth {
         replacements: ["%LISTA_PREDETERMINADA%", codigousuario, "VENTAS"],
       }
     );
-    console.log(result);
+    ;
 
     if (result.length <= 0) {
       return 1;

@@ -87,7 +87,7 @@ ORDER BY cliente,f.fechaEmision `;
 
   async traersaldoactual(req,res){
     const {sequelize}=crearConexionPorNombre(req.session.usuario.db)
-    console.log("tercero",req.query.codigotercero)
+    
   const [result] = await sequelize.query(`select sum(saldo) as suma from factura where  codigoTercero=${req.query.codigotercero}`,{logging:true})
     res.json({respuesta:result, usuario:req.session.usuario.nombre})
   }
@@ -139,7 +139,7 @@ ORDER BY cliente,f.fechaEmision `;
     const ultimoCodigo = await sequelize.query(
       `select max(codigo) as ultimoCodigo from factura where codigoComprobante=${req.session.usuario.codigoComprobateventa}`
     );
-    console.log(ultimoCodigo)
+    
      const insertfactura = await sequelize.query(
       `insert into factura(codigo,codigoTercero,codigoComprobante,fechaCreacion,fechaEmision,fechaVencimiento,plazo,fechaCancelada,fechaAnulada,codigoUsuarioIngreso,codigoUsuarioAnulo,
       codigoUsuarioCancelo,estado,pedido,ordenCompra,codigoVendedor,remision,observaciones,descuentoPieFactura,codigoCaja,saldo,totalFactura,
@@ -161,7 +161,7 @@ const faultimoCodigo = await sequelize.query(
        type: sequelize.QueryTypes.SELECT,
       logging: true,
     })
-console.log("factura factura",factura)
+
       return res.status(200).json({response:true, mensaje:"Factura creada correctamente", factura:factura[0],config:req.session.usuario.config,nombre:req.session.usuario.vendedor,prefijo:req.session.usuario.nombrecomprobateventa});
 
    }else{
@@ -183,7 +183,7 @@ console.log("factura factura",factura)
     let clausulaWhen="";
     let codigo="("
     const replacements =[];
-    console.log(itemspedido)
+    
         itemspedido.forEach((data, index) => {
       if (data) {
         consulta += `(0, ${codigofactura},${data.codigoProducto},${data.precio},'${data.tasaiva}',${data.cantidad},'${data.descuento}','${data.nombre}',${data.costo},${data.codigoContable},${data.codigoMedida},'${data.referencia}','${data.presentacion}',${data.total},${data.codigoLinea},${codigoCaja},
@@ -240,7 +240,7 @@ obtenernombrecantidad(req){
     const cliente=await sequelize.query(`select * from tercero where  codigo=${tercero.codigo}`,{
       type:sequelize.QueryTypes.SELECT
     });
-    console.log("tercero",cliente)
+    
     const consulta = `insert into tercerofactura(codigo, identificacion, codigoTipoIdentificacion, dv, nombre1, 
     nombre2, apellido1, apellido2, razonSocial, tipoRegimen, clasificacion, direccion, codigoDepartamento, codigoMunicipio, codigoPais, telefonoFijo,
      celulares, email,
@@ -272,7 +272,7 @@ ${cliente[0].cupo},${cliente[0].listaPrecios},${cliente[0].reteFuente},${cliente
   fechaActual(){
     const hoy = new Date();
     const fechaActual = hoy.toISOString().split('T')[0];
-    console.log(fechaActual);  // Ejemplo: "2025-08-11"
+    ;  // Ejemplo: "2025-08-11"
 
     return fechaActual;
   }
@@ -288,7 +288,7 @@ ${cliente[0].cupo},${cliente[0].listaPrecios},${cliente[0].reteFuente},${cliente
       type: sequelize.QueryTypes.SELECT,
       logging: true,
     });
-   console.log("consulta",result)
+   
     let codigoCajaUsuario=0;
      let consecutivoCaja=0;
     if (result.length > 0) {
@@ -310,7 +310,7 @@ ${cliente[0].cupo},${cliente[0].listaPrecios},${cliente[0].reteFuente},${cliente
        
           logging: true,
         });
-        console.log(result2)
+        
         codigoCajaUsuario=result2[0].ultimoCodigoCaja;
       }
     }else{
@@ -323,14 +323,14 @@ ${cliente[0].cupo},${cliente[0].listaPrecios},${cliente[0].reteFuente},${cliente
       );
           
       const consulta2 = `select max(codigo) as ultimoCodigoCaja from caja where codigoUsuario=?`;
-      console.log("consulta2",consulta2)
+      
       const result2 = await sequelize.query(consulta2, {
         replacements: [req.session.usuario.codigousuario],
         type: sequelize.QueryTypes.SELECT,
          
         logging: true,
       });
-      console.log("consulta2",result2)
+      
       codigoCajaUsuario=result2[0].ultimoCodigoCaja;
     }
 
@@ -357,7 +357,7 @@ ${cliente[0].cupo},${cliente[0].listaPrecios},${cliente[0].reteFuente},${cliente
        const resultado=await  sequelize.query(`)select COUNT(*) from factura where `)
     }
       
-      console.log(resultado)
+      
       let result = Math.round(resultado[0][0].nregistros / 15);
 
       if (result === 0) {
@@ -480,11 +480,11 @@ ${cliente[0].cupo},${cliente[0].listaPrecios},${cliente[0].reteFuente},${cliente
   async ingresarRecibosFacturas(codigoReciboIngreso, facturas, sequelize, req) {
     let consulta =
       "insert into recibosfacturas(codigo,codigoFactura,codigoComprobante,codigoReciboCaja,codigoReciboCajaComprobante,valor)values";
-    console.log("datos data ", facturas);
+    ;
 
     facturas.forEach((data, index) => {
       if (data) {
-        console.log("entro a actulizar recibos");
+        ;
         consulta += `(0, ${data.codigo},${data.codigoComprobante},${codigoReciboIngreso}, ${req.session.usuario.codigoComprobanteReciboIngreso},${data.abono})`;
         if (index < facturas.length - 1 && index !== facturas.length - 1) {
           consulta += ",";
@@ -566,7 +566,7 @@ ${cliente[0].cupo},${cliente[0].listaPrecios},${cliente[0].reteFuente},${cliente
   async traerbancos(req, res) {
     const { sequelize } = crearConexionPorNombre(req.session.usuario.db);
     const bancos = await sequelize.query("select * from categoriasingresos");
-
+ 
     res.json({
       respuesta: bancos[0],
       razon: req.session.usuario.config.RAZON_SOCIAL,
@@ -630,7 +630,7 @@ ${cliente[0].cupo},${cliente[0].listaPrecios},${cliente[0].reteFuente},${cliente
   }
 
   async insertaritmesinventario(req,res){
-    console.log(req.body)
+    
   const {sequelize}=crearConexionPorNombre(req.session.usuario.db)
    await sequelize.query(`insert into itemsinventariofisico(codigo, codigoProducto,
      codigoInventario, cantidad, fechaIngreso, codigoUsuario, estado, codigoUsuarioAnulo, 
@@ -645,7 +645,7 @@ ${cliente[0].cupo},${cliente[0].listaPrecios},${cliente[0].reteFuente},${cliente
   const inicio =
       req.query.pagina && req.query.pagina > 0 ? req.query.pagina * 15 - 15 : 0;
   const {sequelize}=crearConexionPorNombre(req.session.usuario.db);
-  console.log(req.query.cliente)
+  
     if(req.query.cliente && req.query.cliente!==""){
     const consulta=`select  sum(i.cantidad) as cantidad ,p.descripcion from itemsinventariofisico i inner join productos  p on i.codigoProducto=p.codigo where i.estado='CONTABILIZADO' && p.descripcion='${req.query.cliente}'  group by p.descripcion limit ${inicio},15 ;`
     const todo=`SELECT COUNT(*) AS suma FROM (
@@ -659,7 +659,7 @@ ${cliente[0].cupo},${cliente[0].listaPrecios},${cliente[0].reteFuente},${cliente
      type:sequelize.QueryTypes.SELECT,
      logging:true
    })
-   console.log("resultado",result)
+   
    const [result2]=await sequelize.query(todo,{
      type:sequelize.QueryTypes.SELECT,
      logging:true
@@ -684,7 +684,7 @@ ${cliente[0].cupo},${cliente[0].listaPrecios},${cliente[0].reteFuente},${cliente
      type:sequelize.QueryTypes.SELECT,
      logging:true
    })
-   console.log('result2',result2)
+   
    res.json({respuesta:result,nregistros:result2});
   }
  
@@ -696,12 +696,12 @@ ${cliente[0].cupo},${cliente[0].listaPrecios},${cliente[0].reteFuente},${cliente
 async obtenertotalpornombrefactura(req,res){
   const {sequelize}=crearConexionPorNombre(req.session.usuario.db);
   const datostotal= await sequelize.query(`select  sum(saldo) as sumatotal from  factura f inner join tercero t on f.codigoTercero=t.codigo where t.razonSocial='${req.query.nombret}'`)
-  console.log(datostotal);
+  ;
   return res.json({respuesta:datostotal[0]})
 }
  async traeritemsfactura(req,res){
   const {sequelize}=crearConexionPorNombre(req.session.usuario.db)
-  console.log("codigo factura",req.query.codigo)
+  
   const consulta=`select i.descripcion,i.cantidad,i.presentacion , i.precio,i.totalItem,i.codigoContable ,i.referencia, DATE_FORMAT(f.fechaCreacion, '%H:%i:%s')  as horacreacion,t.email,t.identificacion,t.telefonofijo ,f.codigo as codigofactura,f.observaciones from factura f inner join itemsfactura i on f.codigo=i.codigoFactura and f.codigoComprobante=i.codigoComprobante join tercerofactura as t on t.codigoFactura=i.codigoFactura and t.codigoComprobante=i.codigoComprobante  where f.codigo=${req.query.codigo} && f.codigoComprobante=${req.query.codigoComprobante} `
 
 
@@ -713,7 +713,7 @@ async obtenertotalpornombrefactura(req,res){
  }
 
    async insertaritmesinventario(req,res){
-    console.log(req.body)
+    
   const {sequelize}=crearConexionPorNombre(req.session.usuario.db)
    await sequelize.query(`insert into itemsinventariofisico(codigo, codigoProducto,
      codigoInventario, cantidad, fechaIngreso, codigoUsuario, estado, codigoUsuarioAnulo, 
@@ -728,7 +728,7 @@ async obtenertotalpornombrefactura(req,res){
   const inicio =
       req.query.pagina && req.query.pagina > 0 ? req.query.pagina * 15 - 15 : 0;
   const {sequelize}=crearConexionPorNombre(req.session.usuario.db);
-  console.log(req.query.cliente)
+  
     if(req.query.cliente && req.query.cliente!==""){
     const consulta=`select  sum(i.cantidad) as cantidad ,p.descripcion from itemsinventariofisico i inner join productos  p on i.codigoProducto=p.codigo where i.estado='CONTABILIZADO' && p.descripcion='${req.query.cliente}'  group by p.descripcion limit ${inicio},15 ;`
     const todo=`SELECT COUNT(*) AS suma FROM (
@@ -742,7 +742,7 @@ async obtenertotalpornombrefactura(req,res){
      type:sequelize.QueryTypes.SELECT,
      logging:true
    })
-   console.log("resultado",result)
+   
    const [result2]=await sequelize.query(todo,{
      type:sequelize.QueryTypes.SELECT,
      logging:true
@@ -767,7 +767,7 @@ async obtenertotalpornombrefactura(req,res){
      type:sequelize.QueryTypes.SELECT,
      logging:true
    })
-   console.log('result2',result2)
+   
    res.json({respuesta:result,nregistros:result2});
   }
  
@@ -781,7 +781,7 @@ async obtenertotalpornombrefactura(req,res){
     const inicio =
         req.query.pagina && req.query.pagina > 0 ? req.query.pagina * 15 - 15 : 0;
     const {sequelize}=crearConexionPorNombre(req.session.usuario.db);
-    console.log('ubicacion',req.query)
+    
       if(req.query.ubicacion && req.query.ubicacion!==""){
       
       const consulta=`select  i.cantidad ,p.descripcion ,i.codigo,i.ubicacion from itemsinventariofisico i inner join productos  p on i.codigoProducto=p.codigo where i.estado='CONTABILIZADO' && p.descripcion='${req.query.descripcion}' &&  i.ubicacion='${req.query.ubicacion}' limit ${inicio},15 ;`
@@ -796,7 +796,7 @@ async obtenertotalpornombrefactura(req,res){
        type:sequelize.QueryTypes.SELECT,
        logging:true
      })
-     console.log("resultado",result)
+     
      const [result2]=await sequelize.query(todo,{
        type:sequelize.QueryTypes.SELECT,
        logging:true
@@ -818,7 +818,7 @@ async obtenertotalpornombrefactura(req,res){
        type:sequelize.QueryTypes.SELECT,
        logging:true
      })
-     console.log('result2',result2)
+     
      res.json({respuesta:result,nregistros:result2});
     }
    
@@ -828,7 +828,7 @@ async obtenertotalpornombrefactura(req,res){
 
     eliminariteminventario(req,res){
       const {sequelize}=crearConexionPorNombre(req.session.usuario.db)
-      console.log('eliminar item',req.body)
+      
       sequelize.query(`update itemsinventariofisico set estado='ANULADO', codigoUsuarioAnulo=${req.session.usuario.codigousuario}, fechaAnulo=current_date() where codigo=${req.body.codigo}`,{logging:true})
       .then(()=>{
         res.json({response:true})

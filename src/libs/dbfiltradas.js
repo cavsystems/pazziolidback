@@ -4,7 +4,7 @@ const { crearConexionPorNombre } = require('./dbhelpers');
 const dbfiltradas= async (dbs,documento)=>{
      let arraydb=[]
           let pertenece=[]
-          console.log(documento)
+          
          
            const result=await dbs.sequelize.query(`CALL BuscarIdentificacion(?)`,{
             replacements:[documento],
@@ -19,7 +19,7 @@ const dbfiltradas= async (dbs,documento)=>{
            if(arraydb.length>0){
                let consulta=""
               arraydb.map((db,index)=>{
-                console.log(db)
+                
                consulta+=`SELECT '${db.TABLE_SCHEMA}' as nombredb,identificacion FROM ${db.TABLE_SCHEMA}.vendedores WHERE identificacion = ? `
                if(index!==arraydb.length-1){
                  consulta+=" "+"UNION ALL" +" "
