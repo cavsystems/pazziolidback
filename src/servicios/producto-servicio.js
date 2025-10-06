@@ -14,6 +14,7 @@ productoServicio.consultar = async (io, db, datoConsulta) => {
   const sesion = io.request.session;
   const usuario = sesion?.usuario;
   const precio = usuario.precio;
+  let  inventariototal=0;
   let registro=0
   let precioconsulta = "precio1";
   switch (precio) {
@@ -87,7 +88,8 @@ productoServicio.consultar = async (io, db, datoConsulta) => {
       consulta += ` WHERE p.descripcion LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' OR  p.referencia LIKE '%${datoConsulta.datoCondicion.toString().trim()}%'  OR p.codigoBarra LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' order by p.descripcion limit 50`;
 
         }else{
-         consulta = `select p.*,((cantidad+cantidad2+cantidad3)*costo) as cantidadtotal from productos   p   `;
+         consulta = `select p.descripcion,(cantidad+cantidad2+cantidad3+cantidad4+cantidad5+cantidad6+cantidad7+cantidad8+cantidad9+cantidad10) as cantidad,p.costo
+         ,p.precio1,p.precio2,p.precio3,p.referencia,((cantidad+cantidad2+cantidad3+cantidad4+cantidad5+cantidad6+cantidad7+cantidad8+cantidad9+cantidad10)*costo) as cantidadtotal from productos   p   `;
       consulta += ` WHERE p.descripcion LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' OR  p.referencia LIKE '%${datoConsulta.datoCondicion.toString().trim()}%'  OR p.codigoBarra LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' order by p.descripcion limit 50`;
     }
 
@@ -96,6 +98,7 @@ productoServicio.consultar = async (io, db, datoConsulta) => {
 
       case "INVENTARIO":
           const inicio =datoConsulta.pagina> 0 ? datoConsulta.pagina * 15 - 15 : 0;
+          let consultotalinventario=''
           if(datoConsulta.bodega!==''){
              if(datoConsulta.bodega==="BODEGA"){
               invencan="cantidad"
@@ -106,16 +109,24 @@ productoServicio.consultar = async (io, db, datoConsulta) => {
           }
               
                       consulta = `select p.*,${invencan} as Cantidad,${invencan}*costo as cantidadtotal from productos   p    order by cantidadtotal desc limit ${inicio},15  `;
+                       
+                  consultotalinventario=` select SUM(${invencan}*costo) as totalInventario from productos `
           }else{
-               consulta = `select p.*,((cantidad+cantidad2+cantidad3)*costo) as cantidadtotal from productos   p    order by cantidadtotal desc limit ${inicio},15  `;
+              consulta = `select p.descripcion,(cantidad+cantidad2+cantidad3+cantidad4+cantidad5+cantidad6+cantidad7+cantidad8+cantidad9+cantidad10) as cantidad,p.costo
+         ,p.precio1,p.precio2,p.precio3,p.referencia,((cantidad+cantidad2+cantidad3+cantidad4+cantidad5+cantidad6+cantidad7+cantidad8+cantidad9+cantidad10)*costo) as cantidadtotal from productos   p order by p.descripcion desc limit ${inicio},15    `;
+         consultotalinventario=` select SUM((cantidad+cantidad2+cantidad3+cantidad4+cantidad5+cantidad6+cantidad7+cantidad8+cantidad9+cantidad10)*costo) as totalInventario from productos `
           }
-      
+                 
         
-                    consulta2=`  select count(codigo) as total from productos`
-        const re= await sequelize
-    .query(consulta2, { type: sequelize.QueryTypes.SELECT ,logging:true})
 
-    console.log("consulta2",re)
+
+                    consulta2=`  select count(codigo) as total from productos`
+        const resumentotal= await sequelize
+    .query(consultotalinventario, { type: sequelize.QueryTypes.SELECT ,logging:true})
+     inventariototal=resumentotal[0]. totalInventario
+   const re= await sequelize
+    .query(consulta2, { type: sequelize.QueryTypes.SELECT ,logging:true})
+    console.log("consulta2",resumentotal)
     registro= Math.round(re[0].total / 15)
     if(registro===0){
       registro=1
@@ -153,7 +164,9 @@ productoServicio.consultar = async (io, db, datoConsulta) => {
           mensajePeticion: producto,
           tipoConsulta: "PRODUCTO",
           canalUsuario: canalUsuario,
-          registro
+          registro,
+          inventariototal
+        
         };
           
         io.emit(process.env.CANALSERVIDOR, JSON.stringify(respuesta));
