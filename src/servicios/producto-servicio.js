@@ -40,6 +40,7 @@ productoServicio.consultar = async (io, db, datoConsulta) => {
   }
   const { sequelize } = crearConexionPorNombre(usuario.db);
   let cantidad = "";
+  let invencan
   if (usuario.almacen === "BODEGA") {
     cantidad = "cantidad";
       
@@ -65,20 +66,50 @@ productoServicio.consultar = async (io, db, datoConsulta) => {
 
       break;
 
+        case "BODEGA":
+      consulta = `select * from aliasalmacen`;
+
+      break;
+
 
 
        case "DESCRIPCIONINVENTARIO":
-         consulta = `SELECT ${cantidad} as cantidad ,codigo,descripcion,costo,costoPromedio,codigoUnidadMedida as codigoMedida,descuento
-            ,codigocontable,codigoBarra,referencia,precio1,precio2,precio3,tasaIva,presentacion,codigoLinea,costoPromedio,codigoGrupo FROM productos `;
-      consulta += ` WHERE descripcion LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' OR  referencia LIKE '%${datoConsulta.datoCondicion.toString().trim()}%'  OR codigoBarra LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' order by descripcion limit 50`;
+         console.log("datos",datoConsulta,'bodegas')
+        if(datoConsulta.bodega!==''){
+          if(datoConsulta.bodega==="BODEGA"){
+              invencan="cantidad"
+          }else{
+           
+                    invencan= `cantidad${(Number(datoConsulta.bodega.slice(-1)) + 1).toString()}`;
+          }
+
+           consulta = `select p.*,${invencan} as Cantidad,${invencan}*costo as cantidadtotal from productos   p   `;
+      consulta += ` WHERE p.descripcion LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' OR  p.referencia LIKE '%${datoConsulta.datoCondicion.toString().trim()}%'  OR p.codigoBarra LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' order by p.descripcion limit 50`;
+
+        }else{
+         consulta = `select p.*,((cantidad+cantidad2+cantidad3)*costo) as cantidadtotal from productos   p   `;
+      consulta += ` WHERE p.descripcion LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' OR  p.referencia LIKE '%${datoConsulta.datoCondicion.toString().trim()}%'  OR p.codigoBarra LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' order by p.descripcion limit 50`;
+    }
 
       break;
 
 
       case "INVENTARIO":
           const inicio =datoConsulta.pagina> 0 ? datoConsulta.pagina * 15 - 15 : 0;
-         consulta = `SELECT ${cantidad} as cantidad ,codigo,descripcion,costo,costoPromedio,codigoUnidadMedida as codigoMedida,descuento
-            ,codigocontable,codigoBarra,referencia,precio1,precio2,precio3,tasaIva,presentacion,codigoLinea,costoPromedio,codigoGrupo FROM productos limit ${inicio},15 `;
+          if(datoConsulta.bodega!==''){
+             if(datoConsulta.bodega==="BODEGA"){
+              invencan="cantidad"
+
+          }else{
+              invencan= `cantidad${(Number(datoConsulta.bodega.slice(-1)) + 1).toString()}`;
+             
+          }
+              
+                      consulta = `select p.*,${invencan} as Cantidad,${invencan}*costo as cantidadtotal from productos   p    order by cantidadtotal desc limit ${inicio},15  `;
+          }else{
+               consulta = `select p.*,((cantidad+cantidad2+cantidad3)*costo) as cantidadtotal from productos   p    order by cantidadtotal desc limit ${inicio},15  `;
+          }
+      
         
                     consulta2=`  select count(codigo) as total from productos`
         const re= await sequelize
@@ -124,7 +155,7 @@ productoServicio.consultar = async (io, db, datoConsulta) => {
           canalUsuario: canalUsuario,
           registro
         };
-
+          
         io.emit(process.env.CANALSERVIDOR, JSON.stringify(respuesta));
       } else {
         ;
