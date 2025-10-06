@@ -164,7 +164,7 @@ async function crearPedido(
         tipoConsulta: "PEDIDO",
         canalUsuario: canalUsuario,
       };
-      console.log("canal usuario", canalUsuario);
+      ;
       io.emit(canalserver, JSON.stringify(respuesta));
     });
 }
@@ -224,7 +224,7 @@ function crearItemsPedido(
         io.emit(canalserver, respuesta);
       })
       .catch((err) => {
-        console.log(err);
+        ;
         eliminarPedido(io, db, canalUsuario, idPedido);
       });
   });

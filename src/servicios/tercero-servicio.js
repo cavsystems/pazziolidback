@@ -42,7 +42,7 @@ terceroServicio.consultar = (io, db, datoConsulta) => {
   sequelize
     .query(consulta, { type: sequelize.QueryTypes.SELECT ,logging:true})
     .then((tercero) => {
-      console.log(tercero)
+      
       respuesta = {
         sistema: "POS",
         estadoPeticion: "SUCCESS",
@@ -61,7 +61,7 @@ terceroServicio.consultar = (io, db, datoConsulta) => {
         tipoConsulta: "TERCERO",
         canalUsuario: canalUsuario,
       };
-      console.log(respuesta);
+      ;
       io.emit(datoConsulta.canalserver, respuesta);
     });
 };

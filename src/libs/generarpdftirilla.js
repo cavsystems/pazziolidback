@@ -1,8 +1,8 @@
 const PDFDocument = require("pdfkit");
 
 async function generarTirillaPDF(usuario, productos, idpedido, cliente, fecha) {
-  console.log(cliente);
-  console.log("pedidos", productos[0]);
+  ;
+  ;
   const getStream = (await import("get-stream")).default;
   const total = productos.reduce((sum, data) => {
     return sum + data.total;

@@ -9,11 +9,12 @@ var respuesta = {};
  * @param {*} db es la variable que tiene la conexion a la bd del pos y ejecuta las consultas
  * @param {*} datoConsulta es la variable que envia el cliente Dashboard de la data para consultar el producto
  */
-productoServicio.consultar = (io, db, datoConsulta) => {
-  console.log(io.request.session);
+productoServicio.consultar = async (io, db, datoConsulta) => {
+  
   const sesion = io.request.session;
   const usuario = sesion?.usuario;
   const precio = usuario.precio;
+  let registro=0
   let precioconsulta = "precio1";
   switch (precio) {
     case 1:
@@ -39,11 +40,12 @@ productoServicio.consultar = (io, db, datoConsulta) => {
   }
   const { sequelize } = crearConexionPorNombre(usuario.db);
   let cantidad = "";
+  let invencan
   if (usuario.almacen === "BODEGA") {
     cantidad = "cantidad";
-      console.log(usuario.almacen)
+      
   } else {
-    console.log(usuario.almacen)
+    
     cantidad = ` cantidad${(Number(usuario.almacen.slice(-1)) + 1).toString()}`;
   }
   var consulta = `SELECT ${cantidad} as cantidad ,codigo,descripcion,costo,costoPromedio,codigoUnidadMedida as codigoMedida,descuento
@@ -61,6 +63,66 @@ productoServicio.consultar = (io, db, datoConsulta) => {
       break;
     case "DESCRIPCION":
       consulta += ` WHERE descripcion LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' OR  referencia LIKE '%${datoConsulta.datoCondicion.toString().trim()}%'  OR codigoBarra LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' order by descripcion limit 10`;
+
+      break;
+
+        case "BODEGA":
+      consulta = `select * from aliasalmacen`;
+
+      break;
+
+
+
+       case "DESCRIPCIONINVENTARIO":
+         console.log("datos",datoConsulta,'bodegas')
+        if(datoConsulta.bodega!==''){
+          if(datoConsulta.bodega==="BODEGA"){
+              invencan="cantidad"
+          }else{
+           
+                    invencan= `cantidad${(Number(datoConsulta.bodega.slice(-1)) + 1).toString()}`;
+          }
+
+           consulta = `select p.*,${invencan} as Cantidad,${invencan}*costo as cantidadtotal from productos   p   `;
+      consulta += ` WHERE p.descripcion LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' OR  p.referencia LIKE '%${datoConsulta.datoCondicion.toString().trim()}%'  OR p.codigoBarra LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' order by p.descripcion limit 50`;
+
+        }else{
+         consulta = `select p.*,((cantidad+cantidad2+cantidad3)*costo) as cantidadtotal from productos   p   `;
+      consulta += ` WHERE p.descripcion LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' OR  p.referencia LIKE '%${datoConsulta.datoCondicion.toString().trim()}%'  OR p.codigoBarra LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' order by p.descripcion limit 50`;
+    }
+
+      break;
+
+
+      case "INVENTARIO":
+          const inicio =datoConsulta.pagina> 0 ? datoConsulta.pagina * 15 - 15 : 0;
+          if(datoConsulta.bodega!==''){
+             if(datoConsulta.bodega==="BODEGA"){
+              invencan="cantidad"
+
+          }else{
+              invencan= `cantidad${(Number(datoConsulta.bodega.slice(-1)) + 1).toString()}`;
+             
+          }
+              
+                      consulta = `select p.*,${invencan} as Cantidad,${invencan}*costo as cantidadtotal from productos   p    order by cantidadtotal desc limit ${inicio},15  `;
+          }else{
+               consulta = `select p.*,((cantidad+cantidad2+cantidad3)*costo) as cantidadtotal from productos   p    order by cantidadtotal desc limit ${inicio},15  `;
+          }
+      
+        
+                    consulta2=`  select count(codigo) as total from productos`
+        const re= await sequelize
+    .query(consulta2, { type: sequelize.QueryTypes.SELECT ,logging:true})
+
+    console.log("consulta2",re)
+    registro= Math.round(re[0].total / 15)
+    if(registro===0){
+      registro=1
+    }
+
+
+    
 
       break;
     case "CODIGO":
@@ -83,7 +145,7 @@ productoServicio.consultar = (io, db, datoConsulta) => {
   sequelize
     .query(consulta, { type: sequelize.QueryTypes.SELECT ,logging:true})
     .then((producto) => {
-      console.log(producto);
+      ;
       if (producto.length > 0) {
         respuesta = {
           sistema: "POS",
@@ -91,11 +153,12 @@ productoServicio.consultar = (io, db, datoConsulta) => {
           mensajePeticion: producto,
           tipoConsulta: "PRODUCTO",
           canalUsuario: canalUsuario,
+          registro
         };
-
+          
         io.emit(process.env.CANALSERVIDOR, JSON.stringify(respuesta));
       } else {
-        console.log("error aqui");
+        ;
         respuesta = {
           sistema: "POS",
           estadoPeticion: "ERROR",
@@ -109,8 +172,9 @@ productoServicio.consultar = (io, db, datoConsulta) => {
       }
     })
     .catch((err) => {
-      console.log(err);
-      console.log(err);
+      ;
+      ;
+      console.log(err)
       respuesta = {
         sistema: "POS",
         estadoPeticion: "ERROR",
@@ -140,7 +204,7 @@ productoServicio.actulizar = async (io, db, datoConsulta) => {
       break;
   }
   //await db.sequelize.query(update,{ type: db.sequelize.QueryTypes.UPDATE})
-  console.log(consulta)
+  
   let resul = await db.sequelize.query(consulta, {
     type: db.sequelize.QueryTypes.SELECT,
     logging:true

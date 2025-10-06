@@ -102,7 +102,7 @@ app.get("/api/traerempresas", async (req, res) => {
       res.json({ response: true, data: [] });
     }
   } catch (error) {
-    console.log(error);
+    ;
     res.json({
       response: false,
       message: "ocurrio un error al ejecutar el procedimiento",
@@ -131,7 +131,7 @@ app.get("/api/obtenerdbfiltradas", midleware, async (req, res) => {
 app.get("/api/selectempresa", midleware, async (req, res) => {
   const session = req.session;
   const user = session?.usuario;
-console.log(user.codigoVendedor)
+
   if (user?.db) {
     if (!user?.documento) {
       return res.json({
@@ -191,11 +191,11 @@ io.on("connection", (socket) => {
     const sesion = socket.request.session;
     const usuario = sesion?.usuario;
     if (!usuario) {
-      console.log("el error fue aqui");
+      ;
       return socket.disconnect();
     } else {
       if (!usuario.documento) {
-        console.log("el error fue aqui");
+        ;
         return socket.disconnect();
       }
       if (usuario.db) {
@@ -230,12 +230,12 @@ io.on("connection", (socket) => {
         enviarDataEmail(socket, data);
         break;
       case "EMAILINGRESO":
-        console.log("entro aqui");
+        ;
         enviarDataingresos(socket, data);
       
 
      case "EMAILFACTURA":
-        console.log("entro aqui");
+        ;
         enviarDatafactura(socket, data);
       default:
         break;
@@ -247,5 +247,5 @@ io.on("connection", (socket) => {
     });*/
 });
 server.listen(process.env.PORT || 3000, "0.0.0.0", () => {
-  console.log("escuchando en el puerto 3000");
+  ;
 });

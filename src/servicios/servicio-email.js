@@ -58,10 +58,10 @@ async function enviarDataEmail(io, data) {
         io.request.session.usuario.config.CORREO_ENVIO_PEDIDO,
         io.request.session.usuario.config.CONTRASENA_ENVIO_PEDIDO
       );
-      console.log(io.request.session.usuario.config);
+      ;
       transpor.sendMail(message, (error) => {
         if (error) {
-          console.log(error);
+          ;
           respuesta = {
             sistema: "POS",
             estadoPeticion: "ERROR",
@@ -72,7 +72,7 @@ async function enviarDataEmail(io, data) {
           };
           io.emit("estadocorreo", respuesta);
         } else {
-          console.log("correo enviado");
+          ;
           respuesta = {
             sistema: "POS",
             estadoPeticion: "Done",
@@ -85,7 +85,7 @@ async function enviarDataEmail(io, data) {
       });
     }
   } catch (error) {
-    console.log(error);
+    ;
   }
 }
 
@@ -112,10 +112,10 @@ async function enviarDataingresos(io, data) {
         html: mensaje,
         cc: [`${io.request.session.usuario.config.CORREO_ENVIO_PEDIDO}`],
         bcc: [`${io.request.session.usuario.config.CORREO_ENVIO_PEDIDO}`],
-        subject: `Comprobante de pedido solicitado`,
+        subject: `Comprobante resibo ingreso`,
         attachments: [
           {
-            filename: "pedido.pdf", //nombre del archivo
+            filename: "recibo.pdf", //nombre del archivo
             content: Buffer.from(data.data.pdf, "base64"),
             contentType: "application/pdf",
           },
@@ -125,10 +125,10 @@ async function enviarDataingresos(io, data) {
         io.request.session.usuario.config.CORREO_ENVIO_PEDIDO,
         io.request.session.usuario.config.CONTRASENA_ENVIO_PEDIDO
       );
-      console.log(io.request.session.usuario.config);
+      ;
       transpor.sendMail(message, (error) => {
         if (error) {
-          console.log(error);
+          ;
           respuesta = {
             sistema: "POS",
             estadoPeticion: "ERROR",
@@ -139,7 +139,7 @@ async function enviarDataingresos(io, data) {
           };
           io.emit("estadocorreoingreso", respuesta);
         } else {
-          console.log("correo enviado");
+          ;
           respuesta = {
             sistema: "POS",
             estadoPeticion: "Done",
@@ -152,7 +152,7 @@ async function enviarDataingresos(io, data) {
       });
     }
   } catch (error) {
-    console.log(error);
+    ;
   }
 }
 
@@ -170,7 +170,7 @@ async function enviarDatafactura(io, data) {
       io.emit("estadocorreo", respuesta);
     } else {
       let mensaje = `<p>
-      factura 
+    Comprobante de factura solicitada
     </p>`;
       let message = {
         from: `${io.request.session.usuario.config.CORREO_ENVIO_PEDIDO}`,
@@ -180,10 +180,10 @@ async function enviarDatafactura(io, data) {
         html: mensaje,
         cc: [`${io.request.session.usuario.config.CORREO_ENVIO_PEDIDO}`],
         bcc: [`${io.request.session.usuario.config.CORREO_ENVIO_PEDIDO}`],
-        subject: `Comprobante de pedido solicitado`,
+        subject: `Comprobante de factura solicitada`,
         attachments: [
           {
-            filename: "pedido.pdf", //nombre del archivo
+            filename: "factura.pdf", //nombre del archivo
             content: Buffer.from(data.data.pdf, "base64"),
             contentType: "application/pdf",
           },
@@ -193,10 +193,10 @@ async function enviarDatafactura(io, data) {
         io.request.session.usuario.config.CORREO_ENVIO_PEDIDO,
         io.request.session.usuario.config.CONTRASENA_ENVIO_PEDIDO
       );
-      console.log(io.request.session.usuario.config);
+      ;
       transpor.sendMail(message, (error) => {
         if (error) {
-          console.log(error);
+          ;
           respuesta = {
             sistema: "POS",
             estadoPeticion: "ERROR",
@@ -208,7 +208,7 @@ async function enviarDatafactura(io, data) {
           };
           io.emit("estadocorreoingreso", respuesta);
         } else {
-          console.log("correo enviado");
+          ;
           respuesta = {
             sistema: "POS",
             estadoPeticion: "Done",
@@ -221,7 +221,7 @@ async function enviarDatafactura(io, data) {
       });
     }
   } catch (error) {
-    console.log(error);
+    ;
   }
 }
 

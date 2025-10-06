@@ -13,7 +13,7 @@ const indexServicio = {};
  * @param {*} datos es la variable que envia el cliente Dashboard de la data para consultar
  */
 indexServicio.consultar = (io, db, datos) => {
-    console.log(datos.consulta)
+    
     switch (datos.consulta.toUpperCase()) {
         
         case 'TERCEROS':
@@ -27,7 +27,7 @@ indexServicio.consultar = (io, db, datos) => {
          break;
         case 'INVENTARIO':
             
-        console.log(datos)
+        
             inventarioservi.consultaritems(io, null, datos);
           break;
         default:

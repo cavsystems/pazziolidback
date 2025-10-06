@@ -20,7 +20,7 @@ class tercero {
           { new: true }
         );
 
-        console.log(updatedcliente);
+        ;
         return res
           .status(200)
           .json({ mensaje: "cliente actulizado", response: true });
@@ -34,7 +34,7 @@ class tercero {
           .json({ mensaje: "cliente guardado", response: true });
       }
     } catch (error) {
-      console.log(error);
+      ;
       return res.status(400).json({
         mensaje: "error a lahora de guardar el cliente error en el servidor",
         response: true,
@@ -53,7 +53,7 @@ class tercero {
   }
 
   async eliminarcliente(req, res) {
-    // console.log(req.params.id);
+    // ;
     if (!req.params.id) {
       return res
         .status(404)
