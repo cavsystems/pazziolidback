@@ -20,6 +20,9 @@ routerfactura.get("/obtenertotalpornombrefactura",Factura.obtenertotalpornombref
 routerfactura.get("/consultaritems", Factura.consultaritems);
 routerfactura.post("/eliminariteminventario", Factura.eliminariteminventario);
 routerfactura.post("/realizarfactura", Factura.crearfactura.bind(Factura));
+routerfactura.get("/consultarfacturasxusuario",Factura.consultarfacturasxusuario)
+routerfactura.get("/consultarreciboaux",Factura.consultarreciboaux)
+routerfactura.get("/consultarauxiliarcliente",Factura.consultarauxiliarcliente)
 module.exports = {
   routerfactura,
 };

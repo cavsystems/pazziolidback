@@ -838,6 +838,122 @@ async obtenertotalpornombrefactura(req,res){
         res.status(500).json({respuesta:false, error: 'Error al eliminar el item de inventario'});
       })
     }
+
+
+
+    consultarfacturasxusuario(req,res){
+      console.log(req.session)
+         const {sequelize}=crearConexionPorNombre(req.session.usuario.db)
+     const {codigousuario,fechainicio,fechafin}=req.query
+ console.log(req.query)
+     const consulta=`select f.*,c.nombre from factura f join comprobantes c on c.codigo=f.codigoComprobante 
+where  f.codigoTercero=${codigousuario} and f.estado='ACTIVO'  and f.fechaEmision between  '${fechainicio}'  and '${fechafin}'`;
+       sequelize.query( consulta,{
+       type:sequelize.QueryTypes.SELECT,
+       logging:true
+     }).then(data=>{
+      res.status(200).json({
+        factura:data
+      })
+     }
+
+     )
+    }
+
+    consultarreciboaux(req,res){
+      const {codigofa,codigocom}=req.query
+       const {sequelize}=crearConexionPorNombre(req.session.usuario.db)
+      const consulta=`select r.codigo,r.codigoComprobante,c.nombre,r.fechaIngreso,rf.valor from reciboingreso r inner join comprobantes  c on  r.codigoComprobante=c.codigo  inner join recibosfacturas
+rf on rf.codigoReciboCaja=r.codigo and rf.codigoReciboCajaComprobante=r.codigoComprobante where rf.codigoFactura=${codigofa} and rf.codigoComprobante=${codigocom}
+order by  r.fechaIngreso `
+         sequelize.query( consulta,{
+       type:sequelize.QueryTypes.SELECT,
+       logging:true
+     }).then(data=>{
+      res.status(200).json({
+        recibos:data
+      })
+     }
+
+     )
+    }
+
+
+    consultarauxiliarcliente(req,res){
+      console.log(req.session)
+         const {sequelize}=crearConexionPorNombre(req.session.usuario.db)
+     const {codigotercero,fechainicio,fechafin}=req.query
+
+      const consulta=`SELECT c.nombre,datos.* FROM (
+SELECT 
+    r.codigo,
+    r.codigoComprobante,
+    r.fechaIngreso AS fechaEmision,
+    r.valor AS totalDocumento,
+    'RECIBO' AS tipoDocumento
+FROM reciboingreso r 
+WHERE 
+    r.codigoTercero =${codigotercero}
+    AND r.estado = 'ACTIVO' 
+    AND r.fechaIngreso BETWEEN '${fechainicio}' AND '${fechafin}'
+
+UNION ALL
+
+SELECT 
+    f.codigo,
+    f.codigoComprobante,
+    f.fechaEmision,
+    f.valorCXC AS totalDocumento,
+    'FACTURA' AS tipoDocumento
+FROM factura f
+WHERE 
+    f.codigoTercero = ${codigotercero}
+    AND f.estado = 'ACTIVO' 
+    AND f.fechaEmision BETWEEN '${fechainicio}' AND '${fechafin}'
+    AND f.valorCXC > 0
+
+UNION ALL
+
+SELECT 
+    d.codigo,
+    d.codigoComprobante,
+    d.fechaIngreso AS fechaEmision,
+    (td.valor - IFNULL(tds.valor, 0)) AS totalDocumento,
+    'DEVOLUCION' AS tipoDocumento
+FROM devoluciones d 
+JOIN (
+    SELECT codigoDevolucion, codigoComprobante, valor 
+    FROM totalesDevolucion 
+    WHERE item = 'TOTAL_DEVOLUCION'
+) AS td 
+    ON td.codigoDevolucion = d.codigo 
+    AND td.codigoComprobante = d.codigoComprobante
+LEFT JOIN (
+    SELECT codigoDevolucion, codigoComprobante, valor 
+    FROM totalesDevolucion 
+    WHERE item = 'TOTAL_DESCUENTOS'
+) AS tds 
+    ON tds.codigoDevolucion = d.codigo 
+    AND tds.codigoComprobante = d.codigoComprobante
+WHERE 
+    d.codigoTercero = ${codigotercero}
+    AND d.fechaIngreso BETWEEN '${fechainicio}' AND '${fechafin}'
+
+ORDER BY fechaEmision ) AS datos 
+join comprobantes c on c.codigo=datos.codigocomprobante;`
+
+
+      sequelize.query( consulta,{
+       type:sequelize.QueryTypes.SELECT,
+       logging:true
+     }).then(data=>{
+      res.status(200).json({
+        datosaux:data
+      })
+     }
+
+     ) 
+    }
 }
 
 module.exports = {
