@@ -954,6 +954,111 @@ join comprobantes c on c.codigo=datos.codigocomprobante;`
 
      ) 
     }
+
+    consultarTotalesVentasXUsuarioXRangoFechas(req,res){
+      console.log(req.session)
+      const {sequelize}=crearConexionPorNombre(req.session.usuario.db)
+      const {codigotercero,fechainicio,fechafin}=req.query
+
+      const consultaTotalFacturas=`select 
+                                      sum(f.totalExenta) as ftExenta,
+                                        sum(f.totalGravada) as ftGravada,
+                                        sum(f.iva) as ftIva,
+                                        sum(f.valorEfectivo) as ftEfectivo,
+                                        sum(f.valorDebito) as ftDebito,
+                                        sum(f.valorCredito) as ftCredito,
+                                        sum(f.valorCheque) as ftCheque,
+                                        sum(f.valorBono) as ftBono,
+                                        sum(f.valorCXC) as ftCxc
+                                    from 
+                                      factura f 
+                                    where 
+                                      codigoCaja 
+                                        in (
+                                          SELECT codigo as codigoCaja 
+                                                FROM caja 
+                                                where DATE_FORMAT(fechaApertura, '%Y-%m-%d') between '${fechainicio}' and '${fechafin}'
+                                                );`
+        sequelize.query( consultaTotalFacturas,{
+        type:sequelize.QueryTypes.SELECT,
+        logging:true
+     }).then(data=>{
+      res.status(200).json({
+        datosaux:data
+      })
+     }
+
+     ) 
+    }
+
+    consultarTotalesRecibosIngresoXUsuarioXRangoFechas(req,res){
+      console.log(req.session)
+         const {sequelize}=crearConexionPorNombre(req.session.usuario.db)
+     const {codigoUsuario,fechainicio,fechafin}=req.query
+
+      const consultaTotalRecibosIngreso=`select 
+                                      sum(tp.valorEfectivo) as TEfectivo,
+                                      sum(tp.valorDebito) as TDebito,
+                                      sum(tp.valorCredito) as TCredito,
+                                      sum(tp.valorCheque) as TCheque,
+                                      sum(tp.valorBono) as TBancos,
+                                      sum(tp.valorCxc) as TDescuentos
+                                    from 
+                                      reciboingreso r
+                                    join 
+	                                    tipopagoreciboingreso tp on tp.codigoReciboIngreso=r.codigo and tp.codigoComprobante=r.codigoComprobant 
+                                    where 
+                                      codigoCaja 
+                                        in (
+                                          SELECT codigo as codigoCaja 
+                                                FROM caja 
+                                                where DATE_FORMAT(fechaApertura, '%Y-%m-%d') between '${fechainicio}' and '${fechafin}'
+                                                );`
+
+
+      sequelize.query( consultaTotalRecibosIngreso,{
+       type:sequelize.QueryTypes.SELECT,
+       logging:true
+     }).then(data=>{
+      res.status(200).json({
+        datosaux:data
+      })
+     }
+
+     ) 
+    }
+
+    consultarTotalesRecibosEgresoXUsuarioXRangoFechas(req,res){
+      console.log(req.session)
+         const {sequelize}=crearConexionPorNombre(req.session.usuario.db)
+     const {codigoUsuario,fechainicio,fechafin}=req.query
+
+      const consultaTotalRecibosEgreso=`select 
+                                      sum(re.descuento) as tDescuentos,
+                                        sum(re.valor) as tEgresos
+                                    from 
+                                      gase.reciboegreso re
+                                    where 
+                                      codigoCaja 
+                                        in (
+                                          SELECT codigo as codigoCaja 
+                                                FROM caja 
+                                                where DATE_FORMAT(fechaApertura, '%Y-%m-%d') between '${fechainicio}' and '${fechafin}'
+                                                );`
+
+
+      sequelize.query( consultaTotalRecibosEgreso,{
+       type:sequelize.QueryTypes.SELECT,
+       logging:true
+     }).then(data=>{
+      res.status(200).json({
+        datosaux:data
+      })
+     }
+
+     ) 
+    }
+    
 }
 
 module.exports = {

@@ -93,13 +93,14 @@ app.get("/api/traerempresas", async (req, res) => {
       );
       //toma un objeto y devuelve un array con los valores de sus propiedades
       datos = Object.values(datos[0]);
-
+      console.log('Datos encontrados: ',datos)
       res.json({ response: true, data: datos });
     } else {
       res.json({ response: true, data: [] });
     }
   } catch (error) {
     ;
+    console.log('Entre catch...',error)
     res.json({
       response: false,
       message: "ocurrio un error al ejecutar el procedimiento",
@@ -144,6 +145,7 @@ app.get("/api/selectempresa", midleware, async (req, res) => {
       nombre: user.vendedor,
       identificacion: user.documento,
       nombreusuario: user.nombre,
+      nivel: user.nivel,
       codigoVendedor:user.codigoVendedor,
         modificarPrecio:user.modificarPrecio,
         permisos:user.permisos,
@@ -207,6 +209,7 @@ io.on("connection", (socket) => {
             codigoComprobanteReciboIngreso:socket.request.session.usuario.codigoComprobanteReciboIngreso,
             ventaEnNegativo:socket.request.session.usuario.ventaEnNegativo,
             facturarPedidos:socket.request.session.usuario.facturarPedidos,
+            nivel:socket.request.sesion.usuario.nivel,
           });
         }
       } else {
