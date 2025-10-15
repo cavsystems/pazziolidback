@@ -26,6 +26,8 @@ routerfactura.get("/consultarauxiliarcliente",Factura.consultarauxiliarcliente)
 routerfactura.get("/consultarTotalesVentasXUsuarioXRangoFechas",Factura.consultarTotalesVentasXUsuarioXRangoFechas)
 routerfactura.get("/consultarTotalesRecibosIngresoXUsuarioXRangoFechas",Factura.consultarTotalesRecibosIngresoXUsuarioXRangoFechas)
 routerfactura.get("/consultarTotalesRecibosEgresoXUsuarioXRangoFechas",Factura.consultarTotalesRecibosEgresoXUsuarioXRangoFechas)
+routerfactura.get("/consultarusuario",Factura.consultarusuario)
+routerfactura.get("/consultarTotalesDevolucionesXUsuarioXRangoFechas",Factura.consultarTotalesDevolucionesXUsuarioXRangoFechas)
 module.exports = {
   routerfactura,
 };

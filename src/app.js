@@ -137,6 +137,7 @@ app.get("/api/selectempresa", midleware, async (req, res) => {
       });
     }
     const db = user.db;
+    console.log("consultar usuario",user )
     return res.json({
       response: true,
       db: db,
@@ -152,6 +153,8 @@ app.get("/api/selectempresa", midleware, async (req, res) => {
            codigoComprobanteReciboIngreso: user.codigoComprobanteReciboIngreso,
           ventaEnNegativo:user.ventaEnNegativo,
            facturarPedidos:user.facturarPedidos,
+           codigobodega:user.codigobodega,
+            codigousuario:user.codigousuario
 
     });
   } else {
@@ -209,7 +212,7 @@ io.on("connection", (socket) => {
             codigoComprobanteReciboIngreso:socket.request.session.usuario.codigoComprobanteReciboIngreso,
             ventaEnNegativo:socket.request.session.usuario.ventaEnNegativo,
             facturarPedidos:socket.request.session.usuario.facturarPedidos,
-            nivel:socket.request.sesion.usuario.nivel,
+            nivel:socket.request.session.usuario.nivel,
           });
         }
       } else {

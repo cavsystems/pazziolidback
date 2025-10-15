@@ -98,7 +98,7 @@ class Useraccioneauth {
                   },
                   {
                     model: almacen,
-                    attributes: ["almacen", "alias"],
+                    attributes: ["almacen", "alias","codigo"],
                     required: true,
                   },
                 ],
@@ -228,6 +228,7 @@ class Useraccioneauth {
                   codigousuario: usuario[0].codigo,
                   nombre: usuario[0].nombre,
                   alias: usuarioauth[0].almacen.alias,
+                  codigobodega: usuarioauth[0].almacen.codigo,
                   permisos,
                   fecha: fecha,
                   precio,
