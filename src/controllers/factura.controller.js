@@ -2,6 +2,7 @@ const sequelize = require("sequelize");
 const { crearConexionPorNombre } = require("../libs/dbhelpers");
 const { Sequelize } = require("../config/db");
 const { Types } = require("mysql2");
+const almacen = require("../models/almacen");
 
 class Factura {
 
@@ -456,14 +457,21 @@ ${cliente[0].cupo},${cliente[0].listaPrecios},${cliente[0].reteFuente},${cliente
     sequelize,
     req
   ) {
+
+
     const ultimoCodigo = await sequelize.query(
       `select max(codigo) as ultimoCodigo from reciboingreso where codigoComprobante=${req.session.usuario.codigoComprobanteReciboIngreso}`
     );
+    let codigoCajaUsuario=0
+    if(req.session.usuario.nivel===4){
+    codigoCajaUsuario=await this.verificarCajaUsuario(req,sequelize);
+    }
+     
     let codigoReciboUsar = ultimoCodigo[0][0].ultimoCodigo + 1;
     const consulta = `insert into reciboingreso(codigo, codigoComprobante, valor, codigoCaja, concepto, recibidoDe, estado, fechaIngreso, usuarioIngreso,
     fechaAnulo, usuarioAnulo, codigoFactura, codigoComprobanteFactura, codigoTercero, consecutivoContable, descuento, baseiva, 
     baseretencion, reteiva, reteica, retefuente, codigocuentapago,
-    observacion, codigoVendedor) values(${codigoReciboUsar},${req.session.usuario.codigoComprobanteReciboIngreso},${totalrecibo},0,'${concepto}','${cliente.nombre}','ACTIVO',CURRENT_TIMESTAMP(),
+    observacion, codigoVendedor) values(${codigoReciboUsar},${req.session.usuario.codigoComprobanteReciboIngreso},${totalrecibo},${codigoCajaUsuario},'${concepto}','${cliente.nombre}','ACTIVO',CURRENT_TIMESTAMP(),
     ${req.session.usuario.codigousuario},'1990-01-01',0,0,0,${cliente.codigo},${codigoReciboUsar},${descuento},
     0,0,0,0,0,${codigoCuentaOtrosRC},'${observacion}',${req.session.usuario.codigoVendedor})`;
     const [result, affectedRows] = await sequelize.query(consulta, {
@@ -977,20 +985,6 @@ join comprobantes c on c.codigo=datos.codigocomprobante;`
                                         sum(f.totalFactura) as totalVentas
                                     from 
                                       factura f 
-                                      join
-                                      usuario u
-                                      join
-                                      usuariosaliasalmacen ua
-                                      join
-                                      aliasalmacen al
-                                      on
-                                      f.codigoUsuarioIngreso=u.codigo
-                                      and
-                                      ua.codigoUsuario =f.codigoUsuarioIngreso
-                                      and
-                                      al.codigo=ua.codigoAliasAlmacen
-
-
                                     where 
                                       f.codigoCaja 
                                         in (
@@ -1012,20 +1006,7 @@ join comprobantes c on c.codigo=datos.codigocomprobante;`
                                         sum(f.totalDescuentos) as ftDescuentos,
                                         sum(f.totalFactura) as totalVentas
                                     from 
-                                     
                                       factura f 
-                                      join
-                                      usuario u
-                                      join
-                                      usuariosaliasalmacen ua
-                                      join
-                                      aliasalmacen al
-                                      on
-                                      f.codigoUsuarioIngreso=u.codigo
-                                      and
-                                      ua.codigoUsuario= f.codigoUsuarioIngreso
-                                      and
-                                      al.codigo=ua.codigoAliasAlmacen
                                     where 
                                      f.codigoUsuarioIngreso=${codigoUsuario} and
                                       codigoCaja 
@@ -1064,7 +1045,6 @@ join comprobantes c on c.codigo=datos.codigocomprobante;`
                                       ua.codigoUsuario =f.codigoUsuarioIngreso
                                       and
                                       al.codigo=ua.codigoAliasAlmacen
-                                      
                                     where 
                                       al.codigo=${Number(codigobodega)}
                                       and
@@ -1089,21 +1069,7 @@ join comprobantes c on c.codigo=datos.codigocomprobante;`
                                         sum(f.totalFactura) as totalVentas
                                     from 
                                         factura f 
-                                      join
-                                      usuario u
-                                      join
-                                      usuariosaliasalmacen ua
-                                      join
-                                      aliasalmacen al
-                                      on
-                                      f.codigoUsuarioIngreso=u.codigo
-                                      and
-                                      ua.codigoUsuario =f.codigoUsuarioIngreso
-                                      and
-                                      al.codigo=ua.codigoAliasAlmacen
                                     where 
-                                      al.codigo=${Number(codigobodega)}
-                                      and
                                      f.codigoUsuarioIngreso=${codigoUsuario} and
                                       codigoCaja 
                                         in (
@@ -1179,7 +1145,7 @@ join usuario u inner join aliasalmacen a  on u.codigo=ual.codigoUsuario and ual.
          const {sequelize}=crearConexionPorNombre(req.session.usuario.db)
      const {codigoUsuario,codigobodega,fechainicio,fechafin}=req.query
      let  consultaTotalRecibosIngreso=''
-      if(Number(codigobodega)===0){
+      if(Number(codigobodega)!==0){
            if(Number(codigoUsuario)!==0){
           console.log(typeof codigotercero )
   consultaTotalRecibosIngreso=`select 
@@ -1195,9 +1161,8 @@ join usuario u inner join aliasalmacen a  on u.codigo=ual.codigoUsuario and ual.
 
                                     join 
 	                                    tipopagoreciboingreso tp on tp.codigoReciboIngreso=r.codigo and tp.codigoComprobante=r.codigoComprobante join
-                                      usuario u on  u.codigo=r.usuarioIngreso   join   usuariosaliasalmacen ua on ua.codigoUsuario=u.codigo join 
-                                       aliasalmacen al on al.codigo=ua.codigoAliasAlmacen
-                                    where 
+                                      usuario u on  u.codigo=r.usuarioIngreso  
+                                    where
                                       r.usuarioIngreso=${codigoUsuario}
                                       and
                                       r.codigoCaja 
@@ -1222,9 +1187,11 @@ join usuario u inner join aliasalmacen a  on u.codigo=ual.codigoUsuario and ual.
 
                                     join 
 	                                    tipopagoreciboingreso tp on tp.codigoReciboIngreso=r.codigo and tp.codigoComprobante=r.codigoComprobante join
-                                      usuario u on  u.codigo=r.usuarioIngreso   join   usuariosaliasalmacen ua on ua.codigoUsuario=u.codigo join 
+                                      usuario u on  u.codigo=r.usuarioIngreso join usuariosaliasalmacen ua on ua.codigoUsuario=u.codigo join 
                                        aliasalmacen al on al.codigo=ua.codigoAliasAlmacen
-                                    where DATE_FORMAT(r.fechaIngreso, '%Y-%m-%d') between '${fechainicio}' and '${fechafin}'`
+                                    where 
+                                    al.codigo=${Number(codigobodega)} and 
+                                    DATE_FORMAT(r.fechaIngreso, '%Y-%m-%d') between '${fechainicio}' and '${fechafin}'`
 
       }
      
@@ -1244,11 +1211,8 @@ join usuario u inner join aliasalmacen a  on u.codigo=ual.codigoUsuario and ual.
 
                                     join 
 	                                    tipopagoreciboingreso tp on tp.codigoReciboIngreso=r.codigo and tp.codigoComprobante=r.codigoComprobante join
-                                      usuario u on  u.codigo=r.usuarioIngreso   join   usuariosaliasalmacen ua on ua.codigoUsuario=u.codigo join 
-                                       aliasalmacen al on al.codigo=ua.codigoAliasAlmacen
+                                      usuario u on  u.codigo=r.usuarioIngreso 
                                     where 
-                                        al.codigo=${Number(codigobodega)} and
-
                                       r.usuarioIngreso=${codigoUsuario}
                                       and
                                       r.codigoCaja 
@@ -1272,10 +1236,10 @@ join usuario u inner join aliasalmacen a  on u.codigo=ual.codigoUsuario and ual.
                                       reciboingreso r
 
                                     join 
-	                                    tipopagoreciboingreso tp on tp.codigoReciboIngreso=r.codigo and tp.codigoComprobante=r.codigoComprobante join
-                                      usuario u on  u.codigo=r.usuarioIngreso   join   usuariosaliasalmacen ua on ua.codigoUsuario=u.codigo join 
-                                       aliasalmacen al on al.codigo=ua.codigoAliasAlmacen
-                                    where  al.codigo=${Number(codigobodega)} and DATE_FORMAT(r.fechaIngreso, '%Y-%m-%d') between '${fechainicio}' and '${fechafin}'`
+	                                    tipopagoreciboingreso tp on tp.codigoReciboIngreso=r.codigo and tp.codigoComprobante=r.codigoComprobante 
+                                    where  
+                                    
+                                      DATE_FORMAT(r.fechaIngreso, '%Y-%m-%d') between '${fechainicio}' and '${fechafin}'`
 
       }
 
@@ -1306,18 +1270,7 @@ join usuario u inner join aliasalmacen a  on u.codigo=ual.codigoUsuario and ual.
                                          coalesce(sum(re.valor),0) as tEgresos
                                     from 
                                       reciboegreso re
-                                       join
-                                      usuario u
-                                      join
-                                      usuariosaliasalmacen ua
-                                      join
-                                      aliasalmacen al
-                                      on
-                                       re.usuarioIngreso=u.codigo
-                                      and
-                                      ua.codigoUsuario =re.usuarioIngreso
-                                      and
-                                      al.codigo=ua.codigoAliasAlmacen
+                                     
                                     where 
                                     re.usuarioIngreso=${codigoUsuario}
                                     and
@@ -1334,18 +1287,7 @@ join usuario u inner join aliasalmacen a  on u.codigo=ual.codigoUsuario and ual.
                                       coalesce(sum(re.valor),0) as tEgresos
                                     from 
                                   reciboegreso re
-                                       join
-                                      usuario u
-                                      join
-                                      usuariosaliasalmacen ua
-                                      join
-                                      aliasalmacen al
-                                      on
-                                       re.usuarioIngreso=u.codigo
-                                      and
-                                      ua.codigoUsuario =re.usuarioIngreso
-                                      and
-                                      al.codigo=ua.codigoAliasAlmacen
+                                   
                                    where DATE_FORMAT(fechaIngreso, '%Y-%m-%d') between '${fechainicio}' and '${fechafin}'`
     }
       
@@ -1356,20 +1298,9 @@ join usuario u inner join aliasalmacen a  on u.codigo=ual.codigoUsuario and ual.
                                          coalesce(sum(re.valor),0) as tEgresos
                                     from 
                                       reciboegreso re
-                                       join
-                                      usuario u
-                                      join
-                                      usuariosaliasalmacen ua
-                                      join
-                                      aliasalmacen al
-                                      on
-                                       re.usuarioIngreso=u.codigo
-                                      and
-                                      ua.codigoUsuario =re.usuarioIngreso
-                                      and
-                                      al.codigo=ua.codigoAliasAlmacen
+                                      
                                     where 
-                                       al.codigo=${codigobodega} and
+                                     
                                     re.usuarioIngreso=${codigoUsuario}
                                     and
                                  
@@ -1434,9 +1365,7 @@ join usuario u inner join aliasalmacen a  on u.codigo=ual.codigoUsuario and ual.
                                 from 
                                   devoluciones d
                                 join
-                                  totalesdevolucion td on td.codigoDevolucion=d.codigo and td.codigoComprobante=d.codigoComprobante  join
-                                      usuario u on  u.codigo=d.usuarioIngreso   join   usuariosaliasalmacen ua on ua.codigoUsuario=u.codigo join 
-                                       aliasalmacen al on al.codigo=ua.codigoAliasAlmacen
+                                  totalesdevolucion td on td.codigoDevolucion=d.codigo and td.codigoComprobante=d.codigoComprobante 
 
                                 where
                                     d.usuarioIngreso=${codigoUsuario}
@@ -1454,9 +1383,7 @@ join usuario u inner join aliasalmacen a  on u.codigo=ual.codigoUsuario and ual.
                                 from 
                                   devoluciones d
                                 join
-                                  totalesdevolucion td on td.codigoDevolucion=d.codigo and td.codigoComprobante=d.codigoComprobante join
-                                      usuario u on  u.codigo=d.usuarioIngreso   join   usuariosaliasalmacen ua on ua.codigoUsuario=u.codigo join 
-                                       aliasalmacen al on al.codigo=ua.codigoAliasAlmacen
+                                  totalesdevolucion td on td.codigoDevolucion=d.codigo and td.codigoComprobante=d.codigoComprobante
                                 where
                                    DATE_FORMAT(d.fechaIngreso, '%Y-%m-%d') between '${fechainicio}' and '${fechafin}';`
     }
@@ -1473,12 +1400,9 @@ join usuario u inner join aliasalmacen a  on u.codigo=ual.codigoUsuario and ual.
                                 from 
                                   devoluciones d
                                 join
-                                  totalesdevolucion td on td.codigoDevolucion=d.codigo and td.codigoComprobante=d.codigoComprobante  join
-                                      usuario u on  u.codigo=d.usuarioIngreso   join   usuariosaliasalmacen ua on ua.codigoUsuario=u.codigo join 
-                                       aliasalmacen al on al.codigo=ua.codigoAliasAlmacen
-
+                                  totalesdevolucion td on td.codigoDevolucion=d.codigo and td.codigoComprobante=d.codigoComprobante  
                                 where
-                                    al.codigo=${codigobodega} and
+                                  
                                     d.usuarioIngreso=${codigoUsuario}
                                     and
                                     DATE_FORMAT(d.fechaIngreso, '%Y-%m-%d') between '${fechainicio}' and '${fechafin}';`
