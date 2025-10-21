@@ -920,6 +920,8 @@ WHERE
     AND f.fechaEmision BETWEEN '${fechainicio}' AND '${fechafin}'
     AND f.valorCXC > 0
 
+  
+
 UNION ALL
 
 SELECT 
@@ -948,7 +950,7 @@ WHERE
     AND d.fechaIngreso BETWEEN '${fechainicio}' AND '${fechafin}'
 
 ORDER BY fechaEmision ) AS datos 
-join comprobantes c on c.codigo=datos.codigocomprobante;`
+join comprobantes c on c.codigo=datos.codigocomprobante ORDER BY datos.fechaEmision;`
 
 
       sequelize.query( consulta,{
