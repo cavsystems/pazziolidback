@@ -945,6 +945,14 @@ LEFT JOIN (
 ) AS tds 
     ON tds.codigoDevolucion = d.codigo 
     AND tds.codigoComprobante = d.codigoComprobante
+
+JOIN (
+	SELECT itd.* FROM itemsdevolucion itd 
+    JOIN factura fd ON fd.codigo=itd.codigoFactura AND fd.codigoComprobante=itd.codigoComprobanteFactura
+    WHERE fd.valorCXC>0
+) AS itemsd 
+	ON itemsd.codigoDevolucion=d.codigo
+    AND itemsd.codigoComprobanteDevolucion=d.codigoComprobante    
 WHERE 
     d.codigoTercero = ${codigotercero}
     AND DATE_FORMAT(d.fechaIngreso, '%Y-%m-%d') BETWEEN '${fechainicio}' AND '${fechafin}'
