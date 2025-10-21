@@ -896,14 +896,14 @@ order by  r.fechaIngreso `
 SELECT 
     r.codigo,
     r.codigoComprobante,
-    r.fechaIngreso AS fechaEmision,
+    DATE_FORMAT(r.fechaIngreso, '%Y-%m-%d') AS fechaEmision,
     r.valor AS totalDocumento,
     'RECIBO' AS tipoDocumento
 FROM reciboingreso r 
 WHERE 
     r.codigoTercero =${codigotercero}
     AND r.estado = 'ACTIVO' 
-    AND r.fechaIngreso BETWEEN '${fechainicio}' AND '${fechafin}'
+    AND DATE_FORMAT(r.fechaIngreso, '%Y-%m-%d') BETWEEN '${fechainicio}' AND '${fechafin}'
 
 UNION ALL
 
@@ -927,7 +927,7 @@ UNION ALL
 SELECT 
     d.codigo,
     d.codigoComprobante,
-    d.fechaIngreso AS fechaEmision,
+    DATE_FORMAT(d.fechaIngreso, '%Y-%m-%d') AS fechaEmision,
     (td.valor - IFNULL(tds.valor, 0)) AS totalDocumento,
     'DEVOLUCION' AS tipoDocumento
 FROM devoluciones d 
@@ -947,7 +947,7 @@ LEFT JOIN (
     AND tds.codigoComprobante = d.codigoComprobante
 WHERE 
     d.codigoTercero = ${codigotercero}
-    AND d.fechaIngreso BETWEEN '${fechainicio}' AND '${fechafin}'
+    AND DATE_FORMAT(d.fechaIngreso, '%Y-%m-%d') BETWEEN '${fechainicio}' AND '${fechafin}'
 
 ORDER BY fechaEmision ) AS datos 
 join comprobantes c on c.codigo=datos.codigocomprobante ORDER BY datos.fechaEmision;`
