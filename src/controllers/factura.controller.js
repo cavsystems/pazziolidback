@@ -16,9 +16,9 @@ class Factura {
     const inicio =
       req.query.pagina && req.query.pagina > 0 ? req.query.pagina * 15 - 15 : 0;
     const consulta = `select f.codigo, f.codigoComprobante, c.nombre, f.fechaEmision as fechaEmision, f.fechaVencimiento 
-    as fechaVencimiento,  DATEDIFF(fechavencimiento,CURRENT_DATE) AS dias,
+    as fechaVencimiento,  IFNULL(DATEDIFF(fechavencimiento,CURRENT_DATE), 0) AS dias,
     f.totalFactura as totalFactura , f.saldo as saldo, f.observaciones ,
-     v.nombre as vendedor, t.razonSocial as cliente, false as selected, 0 as abono from  factura f inner join vendedores v inner join 
+     v.nombre as vendedor, t.razonSocial as cliente, t.identificacion, t.telefonoFijo, t.celulares, t.direccion, false as selected, 0 as abono from  factura f inner join vendedores v inner join 
     comprobantes c inner join tercero t on 
     v.codigo=f.codigoVendedor and  f.codigoComprobante=c.codigo and f.codigoTercero=t.codigo where t.codigo=? && saldo<>0 && f.estado='ACTIVO' limit ?,15 ;`;
     const consultatotal = `select  COUNT(f.codigo) as nregistros  , sum(f.saldo)   as saldo  from  factura f inner join vendedores v inner join 
@@ -50,35 +50,129 @@ class Factura {
   }
   async pdffactura(req, res) {
     const { sequelize } = crearConexionPorNombre(req.session.usuario.db);
-    const consulta = `SELECT 
-    f.codigo,
-    f.codigoComprobante,
-    c.nombre,
-    f.fechaEmision,
-    f.fechaVencimiento,
-    DATEDIFF(f.fechaVencimiento, CURRENT_DATE) AS dias,
-    f.totalFactura,
-    f.saldo,
-    f.observaciones,
-    v.nombre AS vendedor,
-    t.razonSocial AS cliente,
-    totales.totalCliente,
-    totales.totalSaldoCliente
-FROM factura f
-INNER JOIN vendedores v ON v.codigo = f.codigoVendedor
-INNER JOIN comprobantes c ON f.codigoComprobante = c.codigo
-INNER JOIN tercero t ON f.codigoTercero = t.codigo
-INNER JOIN (
+    const {codigousuario}=req.query;
+    let consulta;
+if(!codigousuario){
+consulta = `(
     SELECT 
-        f2.codigoTercero,
-        SUM(f2.totalFactura) AS totalCliente,
-        SUM(f2.saldo) AS totalSaldoCliente
-    FROM factura f2
-    WHERE f2.saldo <> 0 AND f2.estado = 'ACTIVO' and  f2.codigoVendedor<>0
-    GROUP BY f2.codigoTercero
-) AS totales ON totales.codigoTercero = f.codigoTercero
-WHERE f.saldo <> 0 AND f.estado = 'ACTIVO'
-ORDER BY cliente,f.fechaEmision `;
+        NULL AS codigo,
+        NULL AS codigoComprobante,
+        NULL AS nombre,
+        NULL AS fechaEmision,
+        NULL AS fechaVencimiento,
+        NULL AS dias,
+        NULL AS totalFactura,
+        NULL AS saldo,
+        NULL AS observaciones,
+        NULL AS vendedor,
+        t.razonSocial AS cliente,
+        t.identificacion,
+        t.direccion,
+        t.telefonoFijo,
+        t.celulares,
+        m.municipio,
+        SUM(f.totalFactura) AS totalCliente,
+        SUM(f.saldo) AS totalSaldoCliente,
+        0 AS orden
+    FROM factura f
+    INNER JOIN tercero t ON f.codigoTercero = t.codigo
+    JOIN municipios m ON m.codigoDepartamento=t.codigoDepartamento AND m.codigoMunicipio=t.codigoMunicipio
+    WHERE f.saldo <> 0 AND f.estado = 'ACTIVO' 
+    GROUP BY t.codigo,    cliente,  t.identificacion,   t.direccion,  t.telefonoFijo,  t.celulares, m.municipio
+)
+UNION ALL
+(
+    SELECT 
+        f.codigo,
+        f.codigoComprobante,
+        c.nombre,
+        f.fechaEmision,
+        f.fechaVencimiento,
+       IFNULL(DATEDIFF(fechavencimiento,CURRENT_DATE), 0) AS dias,
+        f.totalFactura,
+        f.saldo,
+        f.observaciones,
+        v.nombre AS vendedor,
+        t.razonSocial AS cliente,
+        t.identificacion AS id,
+        t.direccion,
+        t.telefonoFijo,
+        t.celulares,
+        m.municipio,
+        NULL AS totalCliente,
+        NULL AS totalSaldoCliente,
+        1 AS orden
+    FROM factura f
+    INNER JOIN vendedores v ON v.codigo = f.codigoVendedor
+    INNER JOIN comprobantes c ON f.codigoComprobante = c.codigo
+    INNER JOIN tercero t ON f.codigoTercero = t.codigo
+    JOIN municipios m ON m.codigoDepartamento=t.codigoDepartamento AND m.codigoMunicipio=t.codigoMunicipio
+    WHERE f.saldo <> 0 AND f.estado = 'ACTIVO'
+)
+ ORDER BY cliente, orden, fechaEmision ;`;
+}else{
+  consulta = `(
+    SELECT 
+        NULL AS codigo,
+        NULL AS codigoComprobante,
+        NULL AS nombre,
+        NULL AS fechaEmision,
+        NULL AS fechaVencimiento,
+        NULL AS dias,
+        NULL AS totalFactura,
+        NULL AS saldo,
+        NULL AS observaciones,
+        NULL AS vendedor,
+        t.razonSocial AS cliente,
+        t.identificacion,
+        t.direccion,
+        t.telefonoFijo,
+        t.celulares,
+        m.municipio,
+        SUM(f.totalFactura) AS totalCliente,
+        SUM(f.saldo) AS totalSaldoCliente,
+        0 AS orden
+    FROM factura f
+    INNER JOIN tercero t ON f.codigoTercero = t.codigo
+    JOIN municipios m ON m.codigoDepartamento=t.codigoDepartamento AND m.codigoMunicipio=t.codigoMunicipio
+    WHERE f.saldo <> 0 AND f.estado = 'ACTIVO' and t.codigo=${codigousuario}
+    GROUP BY t.codigo,    cliente,  t.identificacion,   t.direccion,  t.telefonoFijo,  t.celulares, m.municipio 
+)
+UNION ALL
+(
+    SELECT 
+        f.codigo,
+        f.codigoComprobante,
+        c.nombre,
+        f.fechaEmision,
+        f.fechaVencimiento,
+       IFNULL(DATEDIFF(fechavencimiento,CURRENT_DATE), 0) AS dias,
+        f.totalFactura,
+        f.saldo,
+        f.observaciones,
+        v.nombre AS vendedor,
+        t.razonSocial AS cliente,
+        t.identificacion AS id,
+        t.direccion,
+        t.telefonoFijo,
+        t.celulares,
+        m.municipio,
+        NULL AS totalCliente,
+        NULL AS totalSaldoCliente,
+        1 AS orden
+    FROM factura f
+    INNER JOIN vendedores v ON v.codigo = f.codigoVendedor
+    INNER JOIN comprobantes c ON f.codigoComprobante = c.codigo
+    INNER JOIN tercero t ON f.codigoTercero = t.codigo
+    JOIN municipios m ON m.codigoDepartamento=t.codigoDepartamento AND m.codigoMunicipio=t.codigoMunicipio
+    WHERE f.saldo <> 0 AND f.estado = 'ACTIVO' AND t.codigo=${codigousuario}
+)
+ ORDER BY cliente, orden, fechaEmision  ;`;
+}
+
+      
+    
+    
     const result = await sequelize.query(consulta, {
       type: sequelize.QueryTypes.SELECT,
       logging: true,
@@ -96,11 +190,13 @@ ORDER BY cliente,f.fechaEmision `;
     const { sequelize } = crearConexionPorNombre(req.session.usuario.db);
     const inicio = req.query.pagina > 0 ? req.query.pagina * 15 - 15 : 0;
     const consulta = `select f.codigo, f.codigoComprobante, c.nombre, f.fechaEmision as fechaEmision, f.fechaVencimiento 
-    as fechaVencimiento,  DATEDIFF(fechavencimiento,CURRENT_DATE) AS dias,
+    as fechaVencimiento,  IFNULL(DATEDIFF(fechavencimiento,CURRENT_DATE), 0) AS dias,
     f.totalFactura as totalFactura , f.saldo as saldo, f.observaciones ,
-     v.nombre as vendedor, t.razonSocial as cliente from  factura f inner join vendedores v inner join 
+     v.nombre as vendedor, t.razonSocial as cliente, t.identificacion, t.telefonoFijo, t.celulares, t.direccion, m.municipio from  factura f inner join vendedores v inner join 
     comprobantes c inner join tercero t on 
-    v.codigo=f.codigoVendedor and  f.codigoComprobante=c.codigo and f.codigoTercero=t.codigo where saldo<>0 && f.estado='ACTIVO' order by cliente, fechaEmision limit ?,15 ;`;
+    v.codigo=f.codigoVendedor and  f.codigoComprobante=c.codigo and f.codigoTercero=t.codigo 
+    JOIN municipios m ON m.codigoDepartamento=t.codigoDepartamento AND m.codigoMunicipio=t.codigoMunicipio
+    where saldo<>0 && f.estado='ACTIVO' order by cliente, fechaEmision limit ?,15 ;`;
     const consultatotal = `select  COUNT(*) as nregistros,  sum(f.saldo)   as saldo from  factura f inner join vendedores v inner join 
     comprobantes c inner join tercero t on 
     v.codigo=f.codigoVendedor and  f.codigoComprobante=c.codigo and f.codigoTercero=t.codigo where saldo<>0 && f.estado='ACTIVO'`;
@@ -712,12 +808,28 @@ async obtenertotalpornombrefactura(req,res){
   
   const consulta=`select i.descripcion,i.cantidad,i.presentacion , i.precio,i.totalItem,i.codigoContable ,i.referencia, DATE_FORMAT(f.fechaCreacion, '%H:%i:%s')  as horacreacion,t.email,t.identificacion,t.telefonofijo ,f.codigo as codigofactura,f.observaciones from factura f inner join itemsfactura i on f.codigo=i.codigoFactura and f.codigoComprobante=i.codigoComprobante join tercerofactura as t on t.codigoFactura=i.codigoFactura and t.codigoComprobante=i.codigoComprobante  where f.codigo=${req.query.codigo} && f.codigoComprobante=${req.query.codigoComprobante} `
 
+   
 
   const result=await sequelize.query(consulta,{
     type:sequelize.QueryTypes.SELECT,
     logging:true
   })
-  res.status(200).json({respuesta:result,config:req.session.usuario.config,prefijo:req.session.usuario.nombrecomprobateventa})
+
+  if(result.length>0){
+     res.status(200).json({respuesta:result,config:req.session.usuario.config,prefijo:req.session.usuario.nombrecomprobateventa})
+   }else{
+     const consulta2=`select  DATE_FORMAT(f.fechaCreacion, '%H:%i:%s')  as horacreacion,t.email,t.identificacion,t.telefonofijo ,f.codigo as codigofactura,f.observaciones from factura f inner join tercerofactura as t on t.codigoFactura=f.codigoFactura and t.codigoComprobante=f.codigoComprobante  where f.codigo=${req.query.codigo} && f.codigoComprobante=${req.query.codigoComprobante} `
+     const result2=await sequelize.query(consulta2,{
+    type:sequelize.QueryTypes.SELECT,
+    logging:true
+
+  })
+
+     res.status(200).json({respuesta:result2,config:req.session.usuario.config,prefijo:req.session.usuario.nombrecomprobateventa})
+   
+   }
+
+ 
  }
 
    async insertaritmesinventario(req,res){
