@@ -183,7 +183,7 @@ UNION ALL
   async traersaldoactual(req,res){
     const {sequelize}=crearConexionPorNombre(req.session.usuario.db)
     
-  const [result] = await sequelize.query(`select sum(saldo) as suma from factura where  codigoTercero=${req.query.codigotercero}`,{logging:true})
+  const [result] = await sequelize.query(`select sum(saldo) as suma from factura where  codigoTercero=${req.query.codigotercero} and estado='ACTIVO'`,{logging:true})
     res.json({respuesta:result, usuario:req.session.usuario.nombre})
   }
   async traerfacturasSaldo(req, res) {
