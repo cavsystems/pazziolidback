@@ -799,7 +799,7 @@ ${cliente[0].cupo},${cliente[0].listaPrecios},${cliente[0].reteFuente},${cliente
 
 async obtenertotalpornombrefactura(req,res){
   const {sequelize}=crearConexionPorNombre(req.session.usuario.db);
-  const datostotal= await sequelize.query(`select  sum(saldo) as sumatotal from  factura f inner join tercero t on f.codigoTercero=t.codigo where t.razonSocial='${req.query.nombret}'`)
+  const datostotal= await sequelize.query(`select  sum(saldo) as sumatotal from  factura f inner join tercero t on f.codigoTercero=t.codigo where t.razonSocial='${req.query.nombret}' AND f.estado='ACTIVO' `)
   ;
   return res.json({respuesta:datostotal[0]})
 }
