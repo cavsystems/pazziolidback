@@ -105,11 +105,13 @@ productoServicio.consultar = async (io, db, datoConsulta) => {
       case "INVENTARIO":
           const inicio =datoConsulta.pagina> 0 ? datoConsulta.pagina * 15 - 15 : 0;
           let consultotalinventario=''
+          console.log("bodega seleccionada",datoConsulta.bodega)
           if(datoConsulta.bodega!==''){
+            
              if(datoConsulta.bodega==="BODEGA"){
               invencan="cantidad"
 
-          }else{
+          }else {
               invencan= `cantidad${(Number(datoConsulta.bodega.slice(-1)) + 1).toString()}`;
              
           }

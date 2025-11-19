@@ -424,6 +424,29 @@ async totalPedidosVendedorMes(req, res){
     return res.status(200).json({ response:true, tPedidosVsTRecibosISemas: result });
   }
 
+  moverProductosABodegaEspecifica(almaceOrigen,almacenDestino){
+    
+  }
+
+  async insertarKardeX(queryInsertKardex, sequelize){
+  const consulta=`insert into kardex(codigo, transaccion,
+   codigoComprobante, codigoProducto, cantidad,
+    fechaTransaccion, fechaIngreso, codigoUsuarioIngreso, fechaAnulo, codigoUsuarioAnulo, estado, precioVenta, costo, origen, destino, codigoDocumento, codigoBodega, categoriaComprobante, costoPromedio, codigoCaja, codigoComprobanteDocumento, fechaCreacionDocumento, descripcion, codigoContable, codigoLinea,
+   codigoGrupo, codigoVendedor)values ${queryInsertKardex}`
+   const [result, affectedRows] = await sequelize.query(consulta, {
+      type: sequelize.QueryTypes.INSERT,
+    }); 
+     return affectedRows > 0;
+  }
+
+  async actualizarInventario(queryUpdate,replacement, sequelize){
+    await sequelize.query(
+        queryUpdate,
+        {
+         replacements: replacement,
+        }
+      );
+  }
 }
 
 module.exports = {

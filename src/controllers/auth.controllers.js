@@ -161,11 +161,13 @@ class Useraccioneauth {
                 }
 
                 const [resultParametrosComprobanteVentaEnNegativo] = await sequelize.query(
-                  "SELECT p.nombre,pc.* FROM parametroscomprobante pc JOIN parametros p ON pc.codigoParametro = p.codigo JOIN usuarioscomprobantes uc ON pc.codigoComprobante = uc.codigoComprobante WHERE p.nombre  IN (?,?)  AND uc.codigoUsuario =? AND uc.categoria =?;",
+                  "SELECT p.nombre,pc.* FROM parametroscomprobante pc JOIN parametros p ON pc.codigoParametro = p.codigo JOIN usuarioscomprobantes uc ON pc.codigoComprobante = uc.codigoComprobante WHERE p.nombre  IN (?,?,?,?)  AND uc.codigoUsuario =? AND uc.categoria =?;",
                   {
                     replacements: [
                       "VENTA_EN_NEGATIVO",
                       "FACTURAR_PEDIDOS",
+                      "SEPARAR_PRODUCTOS_PEDIDO",
+                      "MANEJAR_ENTREGAS",
                       usuario[0].codigo,
                       "VENTAS",
                     ],
@@ -173,8 +175,11 @@ class Useraccioneauth {
                 );
                 let codigoComprobateventa=0;
                 let nombrecomprobateventa=""
+                let separarproductospedido=0
+                let manejarEntregas=0;
                 let ventaEnNegativo=0;let facturarPedidos=0;
                 if(resultParametrosComprobanteVentaEnNegativo.length>0){
+                  console.log("parametros comprobantes",resultParametrosComprobanteVentaEnNegativo)
                   resultParametrosComprobanteVentaEnNegativo.forEach(dato => {
                     if(dato.nombre === 'VENTA_EN_NEGATIVO'){
                       ventaEnNegativo=Number (dato.valor);
@@ -182,9 +187,18 @@ class Useraccioneauth {
                     if(dato.nombre === 'FACTURAR_PEDIDOS'){
                       facturarPedidos=Number (dato.valor);
                     }
+
+                    if(dato.nombre === 'SEPARAR_PRODUCTOS_PEDIDO'){
+                      separarproductospedido=Number (dato.valor);
+                    }
+                    if(dato.nombre === 'MANEJAR_ENTREGAS'){
+                      manejarEntregas=Number (dato.valor);
+                    }
                   })
                 }
                 
+                let almacenSeparado = await this.cargarAliasAlmaceXAlias("SEPARADO", sequelize)
+                console.log("almacen separado",almacenSeparado)
                 const [resultComprobanteVenta] = await sequelize.query(
                   "SELECT c.* FROM usuarioscomprobantes uc JOIN comprobantes c ON uc.codigoComprobante = c.codigo WHERE uc.codigoUsuario =? AND uc.categoria =?;",
                   {
@@ -211,9 +225,25 @@ class Useraccioneauth {
                 if(!resultcodigo[0][0]){
                   resultcodigo[0][0]={codigoComprobante:0};
                 }
+                
+                let entregaPendiente = await this.traerEntregaPendiente(usuario[0].codigo,sequelize);
+                console.log("entrega pendiente",entregaPendiente)
+
+                if(entregaPendiente){
+                                  entregaPendiente=JSON.stringify(entregaPendiente);
+                }else{
+                   entregaPendiente=''
+                }
+              
+
                 req.session.usuario = {
+                    ...req.session.usuario,
                   codigoComprobateventa,
                   nombrecomprobateventa,
+                  separarproductospedido,
+                  manejarEntregas,
+                  entregaPendiente,
+                  almacenSeparado:almacenSeparado.almacen,
                   modificarPrecio,
                   documento: documento,
                   db: db,
@@ -477,7 +507,30 @@ class Useraccioneauth {
       }
     );
    return result;
-} 
+}
+
+async cargarAliasAlmaceXAlias(alias, sequelize){
+  const [result] = await sequelize.query(
+      "SELECT almacen FROM aliasalmacen WHERE alias like ?;",
+      {
+        replacements: [`%${alias}%`],
+      }
+    );
+   return result[0];
+}
+
+async traerEntregaPendiente(codigoUsuarioEntrega, sequelize){
+  const [result] = await sequelize.query(
+      "SELECT * FROM entregas WHERE codigo=(SELECT max(codigo) FROM entregas WHERE codigo_usuario_entrega = ? and estado='ACTIVO');",
+      {
+        replacements: [codigoUsuarioEntrega],
+      }
+    );
+
+    console.log("entrega pendiente result",result)
+   return result[0];
+}
+
 }
 
 

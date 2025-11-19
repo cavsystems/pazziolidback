@@ -520,17 +520,24 @@ ${cliente[0].cupo},${cliente[0].listaPrecios},${cliente[0].reteFuente},${cliente
         const [resultado] = await sequelize.query(
           `select * from reciboingreso where codigo=${codigoReciboCreado} && codigoComprobante=${req.session.usuario.codigoComprobanteReciboIngreso}`
         );
+
         const [countcliente] = await sequelize.query(
           `select sum(saldo) AS saldo from factura where codigoTercero=${cliente.codigo}`
         );
-        res.status(200).json({
-          mensaje: "recibo de ingreso creado correctamente",
-          datos: resultado,
-          saldoactual: countcliente[0].saldo,
-          vendedor: req.session.usuario.vendedor,
-          usuario: req.session.usuario.nombre,
-          nombreComprobanteRI:req.session.usuario.nombreComprobanteRI,
-        });
+         
+        if(req.session.usuario.manejarEntregas>0 && req.session.usuario.nivel===4 ){
+         await this.procesarEntrega(totalrecibo,sequelize,req,res);
+        }
+
+     
+      return res.status(200).json({
+        mensaje: "recibo de ingreso creado correctamente",
+        datos: resultado,
+        saldoactual: countcliente[0].saldo,
+        vendedor: req.session.usuario.vendedor,
+        usuario: req.session.usuario.nombre,
+        nombreComprobanteRI: req.session.usuario.nombreComprobanteRI,
+    });
       }
     } else {
       res.status(400).json({ mensaje: "recibo de ingreso no se pudo crear" });
@@ -1562,6 +1569,64 @@ join usuario u inner join aliasalmacen a  on u.codigo=ual.codigoUsuario and ual.
      }
 
      ) 
+    }
+
+    async procesarEntrega(totalrecibo, sequelize, req,res){
+      if(req.session.usuario.entregaPendiente !==''){
+        let entrega=JSON.parse(req.session.usuario.entregaPendiente)
+          const [actualizaEntrega] = await sequelize.query(
+            `update entregas set valor_recaudado=valor_recaudado+${totalrecibo}, valor_entregado=valor_entregado+${totalrecibo} where codigo=${entrega.codigo}`
+            ,{type:sequelize.QueryTypes.UPDATE})
+            console.log("Actualizo valores de entrega pendiente")
+      }else{
+        const newentrega=`insert into entregas (codigo, codigo_usuario_entrega, fecha_Inicio, fecha_Final, valor_recaudado, valor_descontado, valor_entregado, codigo_usuario_autorizo, observaciones, estado) 
+        values(0, ${req.session.usuario.codigousuario}, 
+        current_timestamp, null, ${totalrecibo},
+         0, ${totalrecibo}, 0, 
+        '', 'ACTIVO')`;
+          const [Insertarentrega] = await sequelize.query(newentrega,{type:sequelize.QueryTypes.INSERT})
+        console.log("Inserto registro nuevo entrega.")
+
+        let entregaPendiente = await this.traerEntregaPendiente(req.session.usuario.codigousuario,sequelize)
+ 
+    // REASIGNAR EL OBJETO COMPLETO
+ 
+let datosusuario = {...req.session.usuario,entregaPendiente:JSON.stringify(entregaPendiente)}
+
+ req.session.touch();
+await new Promise((resolve, reject) => {
+  //SOLUCION FINAL REGERAR LA SESSION
+req.session.regenerate(err => {
+  if (err) console.log(err);
+
+  req.session.usuario = datosusuario;
+
+  req.session.save(err => {
+    if (err) console.log("Error guardando nueva sesión:", err);
+    console.log("Sesión regenerada");
+   resolve()
+  });
+});
+
+});
+
+console.log("Sesión actualizada:", req.session.usuario);
+
+
+      }
+        
+    }
+
+    async traerEntregaPendiente(codigoUsuarioEntrega, sequelize){
+      const [result] = await sequelize.query(
+          "SELECT * FROM entregas WHERE codigo=(SELECT max(codigo) FROM entregas WHERE codigo_usuario_entrega = ? and estado='ACTIVO');",
+          {
+            replacements: [codigoUsuarioEntrega],
+          }
+        );
+    
+        console.log("entrega pendiente result",result)
+       return result[0];
     }
     
 }

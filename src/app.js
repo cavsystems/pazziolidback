@@ -44,11 +44,13 @@ app.use(
   })
 );
 app.use(express.json());
-app.use(express.static(path.join(__dirname, "img")));
+
 //app.set("trust proxy", 1);
 const midlewaraseccion = seccion({
   secret: "fazt", // como va empezar a guardar las secciones
-  resave: false, //para que no se empiense a rrenoar la seccion
+rolling: false,
+
+ resave: false, //para que no se empiense a rrenoar la seccion
   saveUninitialized: false, //para que se vuelva a establecer la seccion
   store: new MySQLStore({
     host: process.env.HOST,
@@ -59,10 +61,15 @@ const midlewaraseccion = seccion({
   }), //endonde guardar la seccion
   //http es para que cookie se accesible desde document.cookie
   cookie: {
+     /*  path: "/",
     //sameSite: "none",
     sameSite: "lax", // ⬅️ obligatorio si tu frontend y backend están en dominios distintos
     // secure: true, // ⬅️ obligatorio para que se envíe por HTTPS
-    httpOnly: true, // ⬅️ recomendado para seguridad (aunque puedes poner false si necesitas leerla en JS)
+    httpOnly: true, // ⬅️ recomendado para seguridad (aunque puedes poner false si necesitas leerla en JS)*/
+    path: "/",
+    sameSite: "lax",
+    secure: false,            // Tu backend está en HTTP local
+    httpOnly: true,
   },
 });
 
@@ -107,7 +114,14 @@ app.get("/api/traerempresas", async (req, res) => {
     });
   }
 });
-
+app.use(express.static(path.join(__dirname, "img")));
+app.use((req,res,next)=>{
+  if (req.session.usuario) {
+    console.log("RUTA:", req.originalUrl);
+    console.log("SESION ANTES:", req.session.usuario.entregaPendiente);
+  }
+  next();
+});
 app.use("/api", midleware, routerpedido);
 app.use("/api", midleware, routerterceo);
 
@@ -137,7 +151,7 @@ app.get("/api/selectempresa", midleware, async (req, res) => {
       });
     }
     const db = user.db;
-    console.log("consultar usuario",user )
+   
     return res.json({
       response: true,
       db: db,
@@ -154,7 +168,11 @@ app.get("/api/selectempresa", midleware, async (req, res) => {
           ventaEnNegativo:user.ventaEnNegativo,
            facturarPedidos:user.facturarPedidos,
            codigobodega:user.codigobodega,
-            codigousuario:user.codigousuario
+            codigousuario:user.codigousuario,
+            separarproductospedido:user.separarproductospedido,
+            almacenSeparado:user.almacenSeparado,
+             manejarEntregas:user.manejarEntregas,
+             entregaPendiente:user.entregaPendiente
 
     });
   } else {
@@ -213,6 +231,10 @@ io.on("connection", (socket) => {
             ventaEnNegativo:socket.request.session.usuario.ventaEnNegativo,
             facturarPedidos:socket.request.session.usuario.facturarPedidos,
             nivel:socket.request.session.usuario.nivel,
+              separarproductospedido:socket.request.session.usuario.separarproductospedido,
+              almacenSeparado:socket.request.session.usuario.almacenSeparado,
+              manejarEntregas:socket.request.session.usuario.manejarEntregas,
+              entregaPendiente:socket.request.session.usuario.entregaPendiente
           });
         }
       } else {
