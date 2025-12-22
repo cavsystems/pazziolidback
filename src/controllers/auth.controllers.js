@@ -197,8 +197,14 @@ class Useraccioneauth {
                   })
                 }
                 
-                let almacenSeparado = await this.cargarAliasAlmaceXAlias("SEPARADO", sequelize)
+                let almacenSeparado=''
+                let  almacenSeparadoFinal= await this.cargarAliasAlmaceXAlias("SEPARADO", sequelize)
                 console.log("almacen separado",almacenSeparado)
+                try {
+                  almacenSeparado=almacenSeparadoFinal.almacen
+                } catch (error) {
+                  almacenSeparado=''
+                }
                 const [resultComprobanteVenta] = await sequelize.query(
                   "SELECT c.* FROM usuarioscomprobantes uc JOIN comprobantes c ON uc.codigoComprobante = c.codigo WHERE uc.codigoUsuario =? AND uc.categoria =?;",
                   {
@@ -243,7 +249,7 @@ class Useraccioneauth {
                   separarproductospedido,
                   manejarEntregas,
                   entregaPendiente,
-                  almacenSeparado:almacenSeparado.almacen,
+                  almacenSeparado:almacenSeparado,
                   modificarPrecio,
                   documento: documento,
                   db: db,
