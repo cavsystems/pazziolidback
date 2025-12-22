@@ -28,7 +28,9 @@ const db = require("./config/db");
 const {
   enviarDataEmail,
   enviarDataingresos,
-    enviarDatafactura
+    enviarDatafactura,
+    enviarDatafacturapediente
+
 } = require("./servicios/servicio-email");
 const { midleware } = require("./libs/midleware");
 const { routerfactura } = require("./routes/factura.routes");
@@ -251,17 +253,24 @@ io.on("connection", (socket) => {
         break;
       case "ACTULIZAR":
         indexServicio.actulizar(socket, dbs, data);
+        break;
       case "EMAIL":
         enviarDataEmail(socket, data);
         break;
       case "EMAILINGRESO":
-        ;
-        enviarDataingresos(socket, data);
+         enviarDataingresos(socket, data);
+          break;
+       
       
 
      case "EMAILFACTURA":
-        ;
-        enviarDatafactura(socket, data);
+       enviarDatafactura(socket, data);
+            break;
+
+        case "EMAILFACTURAPEDIENTE":
+       enviarDatafacturapediente(socket, data);
+            break;
+       
       default:
         break;
     }
