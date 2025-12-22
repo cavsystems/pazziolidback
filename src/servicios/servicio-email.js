@@ -201,7 +201,77 @@ async function enviarDatafactura(io, data) {
             sistema: "POS",
             estadoPeticion: "ERROR",
             mensajePeticion:
-              "pedido factura pero correo no enviado quieres intentar",
+              "pedido facturado pero correo no enviado quieres intentar",
+            tipoConsulta: "PEDIDO",
+            error
+            //canalUsuario: canalUsuario,
+          };
+          io.emit("estadocorreoingreso", respuesta);
+        } else {
+          ;
+          respuesta = {
+            sistema: "POS",
+            estadoPeticion: "Done",
+            mensajePeticion: "pedido facturado",
+            tipoConsulta: "PEDIDO",
+            // canalUsuario: canalUsuario,
+          };
+          io.emit("estadocorreoingreso", respuesta);
+        }
+      });
+    }
+  } catch (error) {
+    ;
+  }
+}
+
+
+async function enviarDatafacturapediente(io, data) {
+  console.log("email...................................",data.data.email)
+  try {
+    if (data.data.pdf === null) {
+      respuesta = {
+        sistema: "POS",
+        estadoPeticion: "Done",
+        mensajePeticion: "rezibode caja realizado",
+        tipoConsulta: "PEDIDO",
+        // canalUsuario: canalUsuario,
+      };
+      io.emit("estadocorreo", respuesta);
+    } else {
+      let mensaje = `<p>
+   Tienes facturas pedientes por pagar mira tu estado de cuenta
+    </p>`;
+      let message = {
+        from: `${io.request.session.usuario.config.CORREO_ENVIO_PEDIDO}`,
+        to: [`${data.data.cliente.email}`, `${data.data.email}`],
+        subject: "Message title",
+        text: "Plaintext version of the message",
+        html: mensaje,
+        cc: [`${io.request.session.usuario.config.CORREO_ENVIO_PEDIDO}`],
+        bcc: [`${io.request.session.usuario.config.CORREO_ENVIO_PEDIDO}`],
+        subject: `Estado de cartera`,
+        attachments: [
+          {
+            filename: "factura.pdf", //nombre del archivo
+            content: Buffer.from(data.data.pdf, "base64"),
+            contentType: "application/pdf",
+          },
+        ],
+      };
+      let transpor = await crearcorreo(
+        io.request.session.usuario.config.CORREO_ENVIO_PEDIDO,
+        io.request.session.usuario.config.CONTRASENA_ENVIO_PEDIDO
+      );
+      ;
+      transpor.sendMail(message, (error) => {
+        if (error) {
+          ;
+          respuesta = {
+            sistema: "POS",
+            estadoPeticion: "ERROR",
+            mensajePeticion:
+              "pedido facturado pero correo no enviado quieres intentar",
             tipoConsulta: "PEDIDO",
             error
             //canalUsuario: canalUsuario,
@@ -228,5 +298,6 @@ async function enviarDatafactura(io, data) {
 module.exports = {
   enviarDataEmail,
   enviarDataingresos,
-  enviarDatafactura
+  enviarDatafactura,
+  enviarDatafacturapediente
 };

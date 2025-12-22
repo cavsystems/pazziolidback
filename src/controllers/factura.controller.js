@@ -48,6 +48,12 @@ class Factura {
       saldo: result2[0].saldo,
     });
   }
+
+  async enviarmensajewhasapp(req,res){
+   const {mensaje}=req.query
+
+
+  }
   async pdffactura(req, res) {
     const { sequelize } = crearConexionPorNombre(req.session.usuario.db);
     const {codigousuario}=req.query;
@@ -192,7 +198,7 @@ UNION ALL
     const consulta = `select f.codigo, f.codigoComprobante, c.nombre, f.fechaEmision as fechaEmision, f.fechaVencimiento 
     as fechaVencimiento,  IFNULL(DATEDIFF(fechavencimiento,CURRENT_DATE), 0) AS dias,
     f.totalFactura as totalFactura , f.saldo as saldo, f.observaciones ,
-     v.nombre as vendedor, t.razonSocial as cliente, t.identificacion, t.telefonoFijo, t.celulares, t.direccion, m.municipio from  factura f inner join vendedores v inner join 
+     v.nombre as vendedor, t.razonSocial as cliente,t.email as email,t.codigo as codigotercero, t.identificacion, t.telefonoFijo, t.celulares, t.direccion, m.municipio from  factura f inner join vendedores v inner join 
     comprobantes c inner join tercero t on 
     v.codigo=f.codigoVendedor and  f.codigoComprobante=c.codigo and f.codigoTercero=t.codigo 
     JOIN municipios m ON m.codigoDepartamento=t.codigoDepartamento AND m.codigoMunicipio=t.codigoMunicipio
@@ -1098,8 +1104,10 @@ join comprobantes c on c.codigo=datos.codigocomprobante ORDER BY datos.fechaEmis
       const {codigoUsuario,codigobodega,fechainicio,fechafin}=req.query
 
   let consultaTotalFacturas;
+   
     if(Number(codigobodega)===0){
  if(Number(codigoUsuario)===0){
+    console.log("fechas", fechainicio,fechafin)
            consultaTotalFacturas=`select 
                                       sum(f.totalExenta) as ftExenta,
                                         sum(f.totalGravada) as ftGravada,
@@ -1277,6 +1285,7 @@ join usuario u inner join aliasalmacen a  on u.codigo=ual.codigoUsuario and ual.
       if(Number(codigobodega)!==0){
            if(Number(codigoUsuario)!==0){
           console.log(typeof codigotercero )
+          
   consultaTotalRecibosIngreso=`select 
                                        coalesce(sum(tp.valorEfectivo),0) as TEfectivo,
                                        coalesce(sum(tp.valorDebito),0) as TDebito,
