@@ -447,6 +447,212 @@ async totalPedidosVendedorMes(req, res){
         }
       );
   }
+
+  async totalFacturasMes(req, res){
+    const { sequelize } = crearConexionPorNombre(req.session.usuario.db);
+    let consulta = ''
+    const { almacenConsulta } = req.query
+    if(almacenConsulta === "Todo"){
+      consulta = `SELECT 
+                        count(f.codigo) AS total_facturas_mes
+                      FROM 
+                        factura f
+                      WHERE 
+                        f.estado != 'ANULADO'
+                        AND MONTH(f.fechaCreacion) = MONTH(CURDATE())
+                        AND YEAR(f.fechaCreacion) = YEAR(CURDATE());`
+    }else{
+      consulta = `SELECT 
+                        count(f.codigo) AS total_facturas_mes
+                      FROM 
+                        factura f
+                      WHERE 
+                        f.estado != 'ANULADO'
+                        AND MONTH(f.fechaCreacion) = MONTH(CURDATE()) 
+                        AND YEAR(f.fechaCreacion) = YEAR(CURDATE()) 
+                        AND f.codigoComprobante in (SELECT pc.codigoComprobante FROM parametrosComprobante pc 
+	                          WHERE pc.codigoParametro = (SELECT codigo FROM parametros WHERE nombre = 'ALMACEN')
+		                            and pc.valor=:almacen);`
+    }
+    
+  
+                    
+    const result = await sequelize.query(consulta, {
+     replacements: { almacen: almacenConsulta },
+      type: sequelize.QueryTypes.SELECT,
+    });
+    sequelize.close();
+    return res.status(200).json({ response:true, cantidadTotalFacturasMes: result });
+  }
+
+  async cantidad_TotalFacturasPorSemana(req, res){
+    const { sequelize } = crearConexionPorNombre(req.session.usuario.db);
+    const { almacenConsulta } = req.query
+    let consulta = ''
+    if(almacenConsulta === "Todo"){
+      consulta = `SELECT 
+                        dias.nombre_dia AS dia_semana,
+                        COUNT(f.fechaCreacion) AS cantidad_facturas,
+                        COALESCE(SUM(f.totalFactura),0) AS total_Facturas_Dia
+                      FROM (
+                        SELECT 'Lunes' AS nombre_dia, 0 AS dia_num UNION
+                        SELECT 'Martes', 1 UNION
+                        SELECT 'Miercoles', 2 UNION
+                        SELECT 'Jueves', 3 UNION
+                        SELECT 'Viernes', 4 UNION
+                        SELECT 'Sabado', 5 UNION
+                        SELECT 'Domingo', 6
+                      ) AS dias
+                      LEFT JOIN factura f
+                        ON WEEKDAY(f.fechaCreacion) = dias.dia_num
+                        AND YEARWEEK(f.fechaCreacion, 1) = YEARWEEK(CURDATE(), 1)
+                      GROUP BY dias.nombre_dia, dias.dia_num
+                      ORDER BY dias.dia_num;`
+    }else{
+      consulta = `SELECT 
+                        dias.nombre_dia AS dia_semana,
+                        COUNT(f.fechaCreacion) AS cantidad_facturas,
+                        COALESCE(SUM(f.totalFactura),0) AS total_Facturas_Dia
+                      FROM (
+                        SELECT 'Lunes' AS nombre_dia, 0 AS dia_num UNION
+                        SELECT 'Martes', 1 UNION
+                        SELECT 'Miercoles', 2 UNION
+                        SELECT 'Jueves', 3 UNION
+                        SELECT 'Viernes', 4 UNION
+                        SELECT 'Sabado', 5 UNION
+                        SELECT 'Domingo', 6
+                      ) AS dias
+                      LEFT JOIN factura f
+                        ON WEEKDAY(f.fechaCreacion) = dias.dia_num
+                        AND YEARWEEK(f.fechaCreacion, 1) = YEARWEEK(CURDATE(), 1)
+                        AND f.codigoComprobante in (SELECT pc.codigoComprobante FROM parametrosComprobante pc 
+	                          WHERE pc.codigoParametro = (SELECT codigo FROM parametros WHERE nombre = 'ALMACEN')
+		                            and pc.valor=:almacen)
+                      GROUP BY dias.nombre_dia, dias.dia_num
+                      ORDER BY dias.dia_num;`
+    }
+    
+    console.log(consulta)
+
+    const result = await sequelize.query(consulta, {
+      replacements: { almacen: almacenConsulta },
+      type: sequelize.QueryTypes.SELECT,
+    });
+    sequelize.close(result);
+    return res.status(200).json({ response:true, facturasSemana: result });
+
+  }
+
+  async topProductosMasFacturadosSemana(req, res){
+    const { sequelize } = crearConexionPorNombre(req.session.usuario.db);
+    const { almacenConsulta } = req.query
+    let top = Number(req.query.top);
+    let consulta = ''
+
+    if (!Number.isInteger(top) || top <= 0) {
+      top = 5;
+    }
+
+    if(almacenConsulta === "Todo"){
+      consulta = `SELECT 
+                        pr.codigo AS codigo_producto,
+                        pr.descripcion AS descripcion_producto,
+                        SUM(itf.cantidad) AS total_facturada
+                      FROM factura f
+                      JOIN itemsfactura itf 
+                        ON itf.codigoFactura = f.codigo
+                      AND itf.codigoComprobante = f.codigoComprobante
+                      JOIN productos pr 
+                        ON pr.codigo = itf.codigoProducto
+                      WHERE f.estado != 'ANULADO'
+                        AND f.fechaCreacion >= DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY)
+                        AND f.fechaCreacion < DATE_ADD(
+                            DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY),
+                            INTERVAL 7 DAY
+                        )
+                      GROUP BY pr.codigo, pr.descripcion
+                      ORDER BY total_facturada DESC
+                      LIMIT ${top};`
+    }else{
+      consulta = `SELECT 
+                      pr.codigo AS codigo_producto,
+                      pr.descripcion AS descripcion_producto,
+                      SUM(itf.cantidad) AS total_facturada
+                  FROM factura f
+                  JOIN itemsfactura itf
+                      ON itf.codigoFactura = f.codigo
+                    AND itf.codigoComprobante = f.codigoComprobante
+                  JOIN productos pr
+                      ON pr.codigo = itf.codigoProducto
+                  JOIN parametrosComprobante pc
+                      ON f.codigoComprobante = pc.codigoComprobante
+                  JOIN parametros p
+                      ON pc.codigoParametro = p.codigo
+                  WHERE f.estado != 'ANULADO'
+                    AND f.fechaCreacion >= DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY)
+                    AND f.fechaCreacion < DATE_ADD(
+                          DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY),
+                          INTERVAL 7 DAY
+                    )
+                    AND p.nombre = 'ALMACEN'
+                    AND pc.valor = :almacen
+                  GROUP BY pr.codigo, pr.descripcion
+                  ORDER BY total_facturada DESC
+                  LIMIT ${top};`
+    }
+
+    console.log(consulta)
+    
+    const result = await sequelize.query(consulta, {
+      replacements: { almacen: almacenConsulta, top: top },
+      type: sequelize.QueryTypes.SELECT,
+    });
+    sequelize.close();
+    return res.status(200).json({ response:true, TopProductosSemana: result });
+  }
+
+  async cantidad_TotalFacturasDeLaSemana(req, res){
+    const { sequelize } = crearConexionPorNombre(req.session.usuario.db);
+    const consulta = `SELECT 
+                        dias.nombre_dia AS dia_semana,
+                        COUNT(f.fechaCreacion) AS cantidad_facturas,
+                        COALESCE(SUM(f.totalFactura),0) AS total_Facturas_Dia
+                      FROM (
+                        SELECT 'Lunes' AS nombre_dia, 0 AS dia_num UNION
+                        SELECT 'Martes', 1 UNION
+                        SELECT 'Miercoles', 2 UNION
+                        SELECT 'Jueves', 3 UNION
+                        SELECT 'Viernes', 4 UNION
+                        SELECT 'Sabado', 5 UNION
+                        SELECT 'Domingo', 6
+                      ) AS dias
+                      LEFT JOIN factura f
+                        ON WEEKDAY(f.fechaCreacion) = dias.dia_num
+                        AND YEARWEEK(f.fechaCreacion, 1) = YEARWEEK(CURDATE(), 1)
+                      GROUP BY dias.nombre_dia, dias.dia_num
+                      ORDER BY dias.dia_num;`
+
+    const result = await sequelize.query(consulta, {
+      type: sequelize.QueryTypes.SELECT,
+    });
+    sequelize.close(result);
+    return res.status(200).json({ response:true, facturasSemana: result });
+
+  }
+
+  async cargarAlmacenes(req, res){
+    const { sequelize } = crearConexionPorNombre(req.session.usuario.db);
+    const consulta = `SELECT 
+                        almacen
+                      FROM 
+                        aliasalmacen;`
+                    
+    const result = await sequelize.query(consulta, {
+      type: sequelize.QueryTypes.SELECT,
+    });
+    sequelize.close();
+    return res.status(200).json({ response:true, almacenes: result });
+  }
 }
 
 module.exports = {

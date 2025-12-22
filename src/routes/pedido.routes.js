@@ -23,5 +23,10 @@ routerpedido.get("/traerPedidosPorSemana", pedidocontroller.cantidad_TotalPedido
 routerpedido.get("/topProductosMasPedidosSemana", pedidocontroller.topProductosMasPedidosSemana);
 routerpedido.get("/totalPedidosVendedorMes", pedidocontroller.totalPedidosVendedorMes);
 routerpedido.get("/cargarTotalPedidosVsTotalRecibosIngresoMes", pedidocontroller.cargarTotalPedidosVsTotalRecibosIngresoMes);
+routerpedido.get("/totalFacturasMes",pedidocontroller.totalFacturasMes);
+routerpedido.get("/traerFacturasPorSemana", pedidocontroller.cantidad_TotalFacturasPorSemana);
+routerpedido.get("/topProductosMasFacturadosSemana", pedidocontroller.topProductosMasFacturadosSemana);
+routerpedido.get("/traerFacturasDeLaSemana", pedidocontroller.cantidad_TotalFacturasDeLaSemana);
+routerpedido.get("/cargarAlmacenes", pedidocontroller.cargarAlmacenes);
 
 module.exports = routerpedido;
