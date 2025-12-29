@@ -174,7 +174,8 @@ app.get("/api/selectempresa", midleware, async (req, res) => {
             separarproductospedido:user.separarproductospedido,
             almacenSeparado:user.almacenSeparado,
              manejarEntregas:user.manejarEntregas,
-             entregaPendiente:user.entregaPendiente
+             entregaPendiente:user.entregaPendiente,
+             cteAuxiliares:user.cteAuxiliares
 
     });
   } else {
@@ -236,7 +237,9 @@ io.on("connection", (socket) => {
               separarproductospedido:socket.request.session.usuario.separarproductospedido,
               almacenSeparado:socket.request.session.usuario.almacenSeparado,
               manejarEntregas:socket.request.session.usuario.manejarEntregas,
-              entregaPendiente:socket.request.session.usuario.entregaPendiente
+              entregaPendiente:socket.request.session.usuario.entregaPendiente,
+                 cteAuxiliares:socket.request.session.usuario.cteAuxiliares
+
           });
         }
       } else {

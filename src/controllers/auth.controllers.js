@@ -241,6 +241,9 @@ class Useraccioneauth {
                    entregaPendiente=''
                 }
               
+                // Verificando comprobantes auxiliares
+                let cteAuxiliares = await this.cargarComprobantesAuxiliares(sequelize);
+                console.log("Cte auxiliares:",cteAuxiliares);
 
                 req.session.usuario = {
                     ...req.session.usuario,
@@ -270,6 +273,7 @@ class Useraccioneauth {
                   precio,
                   ventaEnNegativo,
                   facturarPedidos,
+                  cteAuxiliares:JSON.stringify(cteAuxiliares),
                 };
                 console.log("autenticado")
                 return res.json({ autenticado: true });
@@ -536,6 +540,22 @@ async traerEntregaPendiente(codigoUsuarioEntrega, sequelize){
     console.log("entrega pendiente result",result)
    return result[0];
 }
+
+async cargarComprobantesAuxiliares(sequelize){
+      let consulta =  `select 
+                          DISTINCT valor 
+                        from 
+                          gilsas.parametrosComprobante 
+                        where 
+                          codigoParametro in (select codigo from gilsas.parametros where nombre like 'COMPROBANTE_AUXILIAR');`;
+
+      const result = await sequelize.query(consulta, {
+      type: sequelize.QueryTypes.SELECT,
+      logging: true,
+    });
+
+    return {respuesta: result};
+    }
 
 }
 
