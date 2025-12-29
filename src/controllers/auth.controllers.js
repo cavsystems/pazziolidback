@@ -545,9 +545,9 @@ async cargarComprobantesAuxiliares(sequelize){
       let consulta =  `select 
                           DISTINCT valor 
                         from 
-                          gilsas.parametrosComprobante 
+                          parametrosComprobante 
                         where 
-                          codigoParametro in (select codigo from gilsas.parametros where nombre like 'COMPROBANTE_AUXILIAR');`;
+                          codigoParametro in (select codigo from parametros where nombre like 'COMPROBANTE_AUXILIAR');`;
 
       const result = await sequelize.query(consulta, {
       type: sequelize.QueryTypes.SELECT,
