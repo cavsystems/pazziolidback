@@ -1105,9 +1105,16 @@ join comprobantes c on c.codigo=datos.codigocomprobante ORDER BY datos.fechaEmis
 
   let consultaTotalFacturas;
   console.log( req)
-  let objetoauxiliar= JSON.parse(req.session.usuario.cteAuxiliares)
+  let objetoauxiliar= null;
+  try {
+    objetoauxiliar= JSON.parse(req.session.usuario.cteAuxiliares)
+  } catch (error) {
+    objetoauxiliar={respuesta:[{valor:0}]};
+  }
+  
   let ctesAux=''
   console.log( 'objeto auxiliar:',objetoauxiliar)
+  
  objetoauxiliar.respuesta.forEach((element,index) => {
   if(index==0){
     ctesAux += ''+ element.valor
