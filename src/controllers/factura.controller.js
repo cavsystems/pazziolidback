@@ -1263,9 +1263,9 @@ join comprobantes c on c.codigo=datos.codigocomprobante ORDER BY datos.fechaEmis
 	u.*
 from 
 	usuariosaliasalmacen ual 
-join usuario u inner join aliasalmacen a  on u.codigo=ual.codigoUsuario and ual.codigoAliasAlmacen=a.codigo where a.codigo=${Number(codigobodega)} ;`
+join usuario u inner join aliasalmacen a  on u.codigo=ual.codigoUsuario and ual.codigoAliasAlmacen=a.codigo where a.codigo=${Number(codigobodega)} AND u.estado='ACTIVO';`
           }else{
-           consulta=`select * from usuario`          
+           consulta=`select * from usuario WHERE estado='ACTIVO' ;`          
           }
 
              sequelize.query( consulta,{
