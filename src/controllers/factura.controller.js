@@ -1108,6 +1108,9 @@ join comprobantes c on c.codigo=datos.codigocomprobante ORDER BY datos.fechaEmis
   let objetoauxiliar= null;
   try {
     objetoauxiliar= JSON.parse(req.session.usuario.cteAuxiliares)
+    if(objetoauxiliar.respuesta.length==0){
+      objetoauxiliar={respuesta:[{valor:0}]};
+    }
   } catch (error) {
     objetoauxiliar={respuesta:[{valor:0}]};
   }
