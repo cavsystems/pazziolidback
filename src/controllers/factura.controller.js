@@ -195,17 +195,41 @@ UNION ALL
   async traerfacturasSaldo(req, res) {
     const { sequelize } = crearConexionPorNombre(req.session.usuario.db);
     const inicio = req.query.pagina > 0 ? req.query.pagina * 15 - 15 : 0;
-    const consulta = `select f.codigo, f.codigoComprobante, c.nombre, f.fechaEmision as fechaEmision, f.fechaVencimiento 
-    as fechaVencimiento,  IFNULL(DATEDIFF(fechavencimiento,CURRENT_DATE), 0) AS dias,
-    f.totalFactura as totalFactura , f.saldo as saldo, f.observaciones ,
-     v.nombre as vendedor, t.razonSocial as cliente,t.email as email,t.codigo as codigotercero, t.identificacion, t.telefonoFijo, t.celulares, t.direccion, m.municipio from  factura f inner join vendedores v inner join 
-    comprobantes c inner join tercero t on 
-    v.codigo=f.codigoVendedor and  f.codigoComprobante=c.codigo and f.codigoTercero=t.codigo 
-    JOIN municipios m ON m.codigoDepartamento=t.codigoDepartamento AND m.codigoMunicipio=t.codigoMunicipio
-    where saldo<>0 && f.estado='ACTIVO' order by cliente, fechaEmision limit ?,15 ;`;
-    const consultatotal = `select  COUNT(*) as nregistros,  sum(f.saldo)   as saldo from  factura f inner join vendedores v inner join 
-    comprobantes c inner join tercero t on 
-    v.codigo=f.codigoVendedor and  f.codigoComprobante=c.codigo and f.codigoTercero=t.codigo where saldo<>0 && f.estado='ACTIVO'`;
+    console.log("entro aqui a cargar todonmmd wjdnedne")
+    const consulta = `SELECT 
+    f.codigo, 
+    f.codigoComprobante, 
+    c.nombre, 
+    f.fechaEmision AS fechaEmision, 
+    f.fechaVencimiento AS fechaVencimiento,  
+    IFNULL(DATEDIFF(f.fechaVencimiento,CURRENT_DATE), 0) AS dias,
+    f.totalFactura AS totalFactura, 
+    f.saldo AS saldo, 
+    f.observaciones,
+    COALESCE(v.nombre, 'SIN VENDEDOR') AS vendedor, -- Si no hay vendedor, mostrar texto
+    t.razonSocial AS cliente,
+    t.email AS email,
+    t.codigo AS codigotercero, 
+    t.identificacion, 
+    t.telefonoFijo, 
+    t.celulares, 
+    t.direccion, 
+    m.municipio
+FROM factura f
+INNER JOIN comprobantes c ON f.codigoComprobante = c.codigo
+INNER JOIN tercero t ON f.codigoTercero = t.codigo
+LEFT JOIN vendedores v ON v.codigo = f.codigoVendedor  -- LEFT JOIN mantiene facturas sin vendedor
+JOIN municipios m ON m.codigoDepartamento = t.codigoDepartamento 
+                 AND m.codigoMunicipio = t.codigoMunicipio
+WHERE f.saldo <> 0 
+  AND f.estado = 'ACTIVO'
+ORDER BY cliente, fechaEmision
+LIMIT ?,15;`;
+    const consultatotal = `select  COUNT(*) as nregistros,  sum(f.saldo)   as saldo from  factura f INNER JOIN comprobantes c ON f.codigoComprobante = c.codigo
+INNER JOIN tercero t ON f.codigoTercero = t.codigo
+LEFT JOIN vendedores v ON v.codigo = f.codigoVendedor  -- LEFT JOIN mantiene facturas sin vendedor
+JOIN municipios m ON m.codigoDepartamento = t.codigoDepartamento 
+                 AND m.codigoMunicipio = t.codigoMunicipio where saldo<>0 && f.estado='ACTIVO'`;
     const result = await sequelize.query(consulta, {
       replacements: [inicio],
       type: sequelize.QueryTypes.SELECT,
