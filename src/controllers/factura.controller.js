@@ -109,7 +109,7 @@ UNION ALL
         NULL AS totalSaldoCliente,
         1 AS orden
     FROM factura f
-    INNER JOIN vendedores v ON v.codigo = f.codigoVendedor
+    LEFT JOIN vendedores v ON v.codigo = f.codigoVendedor
     INNER JOIN comprobantes c ON f.codigoComprobante = c.codigo
     INNER JOIN tercero t ON f.codigoTercero = t.codigo
     JOIN municipios m ON m.codigoDepartamento=t.codigoDepartamento AND m.codigoMunicipio=t.codigoMunicipio
@@ -193,7 +193,7 @@ UNION ALL
     res.json({respuesta:result, usuario:req.session.usuario.nombre})
   }
   async traerfacturasSaldo(req, res) {
-    const { sequelize } = crearConexionPorNombre(req.session.usuario.db);
+    const { sequelize } = crearConexionPorNombre(req.session.usuario.db)
     const inicio = req.query.pagina > 0 ? req.query.pagina * 15 - 15 : 0;
     console.log("entro aqui a cargar todonmmd wjdnedne")
     const consulta = `SELECT 
