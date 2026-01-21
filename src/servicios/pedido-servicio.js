@@ -303,6 +303,9 @@ function crearItemsPedido(
                   queryValues.updateProductosSalida,{ replacements:queryValues.replacementsalida, type: db.QueryTypes.UPDATE}).then((itemupdatesalida)=>{
                     db.query(queryValues.queryKardexEntrada, { type: db.QueryTypes.INSERT }).then((itementrada)=>{
                       db.query(queryValues.updateProductosEntrada,{  replacements: queryValues.replacemententrada,type: db.QueryTypes.UPDATE}).then((itemupdateentrada)=>{
+                     
+                              db.query(queryValues.updateProductosEntrada,{  replacements: queryValues.replacemententrada,type: db.QueryTypes.UPDATE}).then((itemupdateentrada)=>{})
+                                 
                             respuesta = {
                             sistema: "POS",
                             estadoPeticion: "SUCCESS",
