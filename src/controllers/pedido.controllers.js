@@ -4,8 +4,14 @@ const { modelpedidoreservado } = require("../models/models/pedidos");
 const fs = require("fs/promises");
 const escpos = require("escpos");
 const { response } = require("express");
+const { log } = require("console");
 class Pedidocontrol {
-  constructor() {}
+  constructor() {
+   
+  this.devolveritemsbodega = this.devolveritemsbodega.bind(this);
+  this.anularpedido = this.anularpedido.bind(this); // 👈 AGREGA ESTO
+}
+  
 
   async obtenerpedido(req, res) {
     const { sequelize } = crearConexionPorNombre(req.session.usuario.db);
@@ -230,17 +236,174 @@ class Pedidocontrol {
           ],
         }
       );
+      const productosdevolver = await sequelize.query(
+  `SELECT *,i.cantidad as cantidadproduct 
+   FROM itemspedido i
+   INNER JOIN pedido p ON p.codigo = i.codigoPedido
+   INNER JOIN productos r ON i.codigoProducto = r.codigo
+   WHERE p.codigo = ?`,
+  {
+    replacements: [Number(req.query.codigo)],
+    type: sequelize.QueryTypes.SELECT
+  }
+);
+
+      console.log("productos devolver",productosdevolver)
+      await this.devolveritemsbodega(req,res, productosdevolver,sequelize)
+
       res.status(200).json({
         response: true,
         mensaje: "Pedido anulado",
       });
     } catch (error) {
       ;
+      console.log("log eror",error)
       res.status(400).json({
         response: true,
         mensaje: "Ocurrio un erro inesperado",
       });
     }
+  }
+obtenernombrecantidad(almacenMovimiento) {
+       let cantidad = "";
+       console.log("movimiento almacen",almacenMovimiento)
+      if (almacenMovimiento === "BODEGA") {
+        cantidad = "cantidad";
+         
+      } else {
+        
+        cantidad = ` cantidad${(Number(almacenMovimiento.slice(-1)) + 1).toString()}`;
+      }
+      return cantidad
+    }
+   async devolveritemsbodega(req,res,itemsproducts,db){
+      if( req.session.usuario.separarproductospedido === 1 && req.session.usuario.almacenSeparado.trim()!="" && itemsproducts[0].separado){
+              
+         let queryKardexSalida ="insert into kardex(codigo, transaccion,codigoComprobante, codigoProducto, cantidad,fechaTransaccion, fechaIngreso, codigoUsuarioIngreso, fechaAnulo, codigoUsuarioAnulo, estado, precioVenta, costo, origen, destino, codigoDocumento, codigoBodega, categoriaComprobante, costoPromedio, codigoCaja, codigoComprobanteDocumento, fechaCreacionDocumento, descripcion, codigoContable, codigoLinea,codigoGrupo, codigoVendedor)values"; 
+  var queryKardexEntrada="insert into kardex(codigo, transaccion,codigoComprobante, codigoProducto, cantidad,fechaTransaccion, fechaIngreso, codigoUsuarioIngreso, fechaAnulo, codigoUsuarioAnulo, estado, precioVenta, costo, origen, destino, codigoDocumento, codigoBodega, categoriaComprobante, costoPromedio, codigoCaja, codigoComprobanteDocumento, fechaCreacionDocumento, descripcion, codigoContable, codigoLinea,codigoGrupo, codigoVendedor)values";
+  let updateProductosSalida=``;
+  let updateProductosEntrada=``;
+  let index=0
+
+  let con=0;
+
+
+
+
+ let insertItems = new Promise((resolve, reject) => {
+         let replacemententrada=[]
+         let replacementsalida=[]
+             let almacenOrigen=req.session.usuario.almacen;
+          let almacenDestino=req.session.usuario.almacenSeparado;
+            
+          let etiquetaCantidadSalida=this.obtenernombrecantidad(almacenOrigen);
+          let etiquetaCantidadEntrada=this.obtenernombrecantidad(almacenDestino);
+          updateProductosSalida=`update productos  SET ${etiquetaCantidadEntrada} = CASE codigo`;
+          updateProductosEntrada=`update productos  SET ${etiquetaCantidadSalida} = CASE codigo`;
+            let clausulaWhenSalida="";let clausulaWhenEntrada="";
+               let codigo="("
+      itemsproducts.forEach((itemPedido) => {
+        const { codigoProducto, valor, cantidad, codigoUsuario } = itemPedido;
+             console.log( itemPedido)
+      
+
+     
+      
+        
+        
+       
+        
+          if(queryKardexSalida === ""){
+              queryKardexSalida+=`(0,'SALIDA',${req.session.usuario.codigoComprobateventa},
+                    ${ itemPedido.codigoProducto},${itemPedido.cantidad},current_timestamp(),current_timestamp(),${req.session.usuario.codigousuario},
+                    '1990-01-01',0,"ACTIVO",${itemPedido.valor},${itemPedido.costo},'${almacenDestino}','${almacenOrigen}',0,0,'TRASLADO ${almacenDestino}',${itemPedido.costoPromedio},0,
+                    99,current_timestamp(),'${itemPedido.descripcion}','${itemPedido.codigoContable}',${itemPedido.codigoLinea},${itemPedido.codigoGrupo},${req.session.usuario.codigoVendedor}
+                    )`
+              clausulaWhenSalida += ` WHEN ${itemPedido.codigoProducto} THEN ${etiquetaCantidadEntrada} - ${itemPedido.cantidadproduct} `;
+                  replacementsalida.push(itemPedido.codigoProducto);
+          }else{
+            queryKardexSalida+=`(0,'SALIDA',${req.session.usuario.codigoComprobateventa},
+                    ${itemPedido.codigoProducto},${itemPedido.cantidad},current_timestamp(),current_timestamp(),${req.session.usuario.codigousuario},
+                    '1990-01-01',0,"ACTIVO",${itemPedido.valor},${itemPedido.costo},'${almacenDestino}','${almacenOrigen}',0,0,'TRASLADO ${almacenDestino}',${itemPedido.costoPromedio},0,
+                    99,current_timestamp(),'${itemPedido.descripcion}','${itemPedido.codigoContable}',${itemPedido.codigoLinea},${itemPedido.codigoGrupo},${req.session.usuario.codigoVendedor}
+                    )`
+            clausulaWhenSalida += ` WHEN ${itemPedido.codigoProducto} THEN ${etiquetaCantidadEntrada} - ${itemPedido.cantidadproduct} `;
+                replacementsalida.push(itemPedido.codigoProducto);
+          }
+          if(queryKardexEntrada === ""){
+              queryKardexEntrada+=`(0,'ENTRADA',${req.session.usuario.codigoComprobateventa},
+                    ${itemPedido.codigoProducto},${itemPedido.cantidad},current_timestamp(),current_timestamp(),${req.session.usuario.codigousuario},
+                    '1990-01-01',0,"ACTIVO",${itemPedido.valor},${itemPedido.costo},'${almacenOrigen}','${almacenDestino}',0,0,'TRASLADO ${almacenOrigen}',${itemPedido.costoPromedio},0,
+                    99,current_timestamp(),'${itemPedido.descripcion}','${itemPedido.codigoContable}',${itemPedido.codigoLinea},${itemPedido.codigoGrupo},${req.session.usuario.codigoVendedor}
+                    )`
+              clausulaWhenEntrada += ` WHEN ${itemPedido.codigoProducto} THEN ${etiquetaCantidadSalida} + ${itemPedido.cantidadproduct}`;
+                replacemententrada.push(itemPedido.codigoProducto);
+          }else{
+            queryKardexEntrada+=`(0,'ENTRADA',${req.session.usuario.codigoComprobateventa},
+                    ${itemPedido.codigoProducto},${itemPedido.cantidad},current_timestamp(),current_timestamp(),${req.session.usuario.codigousuario},
+                    '1990-01-01',0,"ACTIVO",${itemPedido.valor},${itemPedido.costo},'${almacenOrigen}','${almacenDestino}',0,0,'TRASLADO ${almacenOrigen}',${itemPedido.costoPromedio},0,
+                    99,current_timestamp(),'${itemPedido.descripcion}','${itemPedido.codigoContable}',${itemPedido.codigoLinea},${itemPedido.codigoGrupo},${req.session.usuario.codigoVendedor}
+                    )`
+            clausulaWhenEntrada += ` WHEN ${itemPedido.codigoProducto} THEN ${etiquetaCantidadSalida} + ${itemPedido.cantidadproduct} `;
+            replacemententrada.push(itemPedido.codigoProducto);
+          }
+          if(index===itemsproducts.length-1){
+              codigo+="?)"
+            }else{
+              codigo+="?,"
+            }
+          
+                
+                 if (index <itemsproducts.length - 1 && index !==itemsproducts.length - 1 ) {
+           queryKardexSalida += ",";
+           queryKardexEntrada +=",";
+        }
+            index++
+
+     
+        con++
+
+      });
+        updateProductosSalida += clausulaWhenSalida + "END where codigo IN "+codigo
+        updateProductosEntrada += clausulaWhenEntrada + " END where codigo IN "+codigo
+        console.log(replacemententrada,replacementsalida)
+      resolve({queryKardexSalida,queryKardexEntrada, updateProductosEntrada ,  updateProductosSalida ,replacemententrada,replacementsalida});
+    });
+
+
+
+
+    insertItems.then((queryValues) => {
+        
+
+         
+              db.query(queryValues.queryKardexSalida, { type: db.QueryTypes.INSERT }).then((itemsalida)=>{
+                                      console.log("entro a insertar product salida")
+                db.query(
+                  queryValues.updateProductosSalida,{ replacements:queryValues.replacementsalida, type: db.QueryTypes.UPDATE,logging: console.log}).then((itemupdatesalida)=>{
+                    db.query(queryValues.queryKardexEntrada, { type: db.QueryTypes.INSERT }).then((itementrada)=>{
+                      console.log("entro a insertar product")
+                      db.query(queryValues.updateProductosEntrada,{ logging: console.log ,replacements: queryValues.replacemententrada,type: db.QueryTypes.UPDATE}).then((itemupdateentrada)=>{
+                     
+        
+                                 
+                                               
+                      })
+                  })
+                  })
+                                
+              })
+             
+         
+            .catch((err) => {
+            console.log("de error",err)
+            });
+        });
+    }
+
+
+    
+
   }
   async eliminarpedidoreservado(req, res) {
     const { id } = req.params;

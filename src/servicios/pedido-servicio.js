@@ -132,11 +132,16 @@ async function crearPedido(
   queryInsert +=
     "codigoVendedor,codigoTercero,fechaCreacion,horaCreacion,codigoFactura,codigoUsuarioAnulo,";
   queryInsert +=
-    "fechaAnulo,estado,ubicacion,codigoUsuario,descuento,totalPedido,tipoFactura,observacion)";
+    "fechaAnulo,estado,ubicacion,codigoUsuario,descuento,totalPedido,tipoFactura,observacion,separado)";
   queryInsert += "VALUES(";
   queryInsert += `${codigousuario.codigo},${codigoUsuario},'${fechaCreacion}','${horaCreacion}',${codigoFactura},${codigoUsuarioAnulo},`;
-  queryInsert += `'1970-01-01','${estado}','${ubicacion}',${usuario.codigousuario},${descuento},${totalPedido},'${tipoFactura}','${observacion}')`;
 
+   if( io.request.session.usuario.separarproductospedido === 1 && io.request.session.usuario.almacenSeparado.trim()!=""){
+    queryInsert += `'1970-01-01','${estado}','${ubicacion}',${usuario.codigousuario},${descuento},${totalPedido},'${tipoFactura}','${observacion}',1)`;
+
+   }else{
+       queryInsert += `'1970-01-01','${estado}','${ubicacion}',${usuario.codigousuario},${descuento},${totalPedido},'${tipoFactura}','${observacion}',0)`;
+   }
   sequelize
     .query(queryInsert, { type: sequelize.QueryTypes.INSERT })
     .then(([idPedido, affectedRows]) => {
@@ -304,8 +309,8 @@ function crearItemsPedido(
                     db.query(queryValues.queryKardexEntrada, { type: db.QueryTypes.INSERT }).then((itementrada)=>{
                       db.query(queryValues.updateProductosEntrada,{  replacements: queryValues.replacemententrada,type: db.QueryTypes.UPDATE}).then((itemupdateentrada)=>{
                      
-                              db.query(queryValues.updateProductosEntrada,{  replacements: queryValues.replacemententrada,type: db.QueryTypes.UPDATE}).then((itemupdateentrada)=>{})
-                                 
+                            
+                             
                             respuesta = {
                             sistema: "POS",
                             estadoPeticion: "SUCCESS",
@@ -313,7 +318,10 @@ function crearItemsPedido(
                             tipoConsulta: "PEDIDO",
                             canalUsuario: canalUsuario,
                           };
-                          io.emit(canalserver, respuesta);                        
+                          io.emit(canalserver, respuesta);   
+                             
+                              
+                                                  
                       })
                   })
                   })
