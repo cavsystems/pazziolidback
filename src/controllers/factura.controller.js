@@ -2,6 +2,7 @@ const sequelize = require("sequelize");
 const { crearConexionPorNombre } = require("../libs/dbhelpers");
 const { Sequelize } = require("../config/db");
 const { Types } = require("mysql2");
+const almacen = require("../models/almacen");
 
 class Factura {
 
@@ -15,9 +16,9 @@ class Factura {
     const inicio =
       req.query.pagina && req.query.pagina > 0 ? req.query.pagina * 15 - 15 : 0;
     const consulta = `select f.codigo, f.codigoComprobante, c.nombre, f.fechaEmision as fechaEmision, f.fechaVencimiento 
-    as fechaVencimiento,  DATEDIFF(fechavencimiento,CURRENT_DATE) AS dias,
+    as fechaVencimiento,  IFNULL(DATEDIFF(fechavencimiento,CURRENT_DATE), 0) AS dias,
     f.totalFactura as totalFactura , f.saldo as saldo, f.observaciones ,
-     v.nombre as vendedor, t.razonSocial as cliente, false as selected, 0 as abono from  factura f inner join vendedores v inner join 
+     v.nombre as vendedor, t.razonSocial as cliente, t.identificacion, t.telefonoFijo, t.celulares, t.direccion, false as selected, 0 as abono from  factura f inner join vendedores v inner join 
     comprobantes c inner join tercero t on 
     v.codigo=f.codigoVendedor and  f.codigoComprobante=c.codigo and f.codigoTercero=t.codigo where t.codigo=? && saldo<>0 && f.estado='ACTIVO' limit ?,15 ;`;
     const consultatotal = `select  COUNT(f.codigo) as nregistros  , sum(f.saldo)   as saldo  from  factura f inner join vendedores v inner join 
@@ -47,37 +48,137 @@ class Factura {
       saldo: result2[0].saldo,
     });
   }
+
+  async enviarmensajewhasapp(req,res){
+   const {mensaje}=req.query
+
+
+  }
   async pdffactura(req, res) {
     const { sequelize } = crearConexionPorNombre(req.session.usuario.db);
-    const consulta = `SELECT 
-    f.codigo,
-    f.codigoComprobante,
-    c.nombre,
-    f.fechaEmision,
-    f.fechaVencimiento,
-    DATEDIFF(f.fechaVencimiento, CURRENT_DATE) AS dias,
-    f.totalFactura,
-    f.saldo,
-    f.observaciones,
-    v.nombre AS vendedor,
-    t.razonSocial AS cliente,
-    totales.totalCliente,
-    totales.totalSaldoCliente
-FROM factura f
-INNER JOIN vendedores v ON v.codigo = f.codigoVendedor
-INNER JOIN comprobantes c ON f.codigoComprobante = c.codigo
-INNER JOIN tercero t ON f.codigoTercero = t.codigo
-INNER JOIN (
+    const {codigousuario}=req.query;
+    let consulta;
+if(!codigousuario){
+consulta = `(
     SELECT 
-        f2.codigoTercero,
-        SUM(f2.totalFactura) AS totalCliente,
-        SUM(f2.saldo) AS totalSaldoCliente
-    FROM factura f2
-    WHERE f2.saldo <> 0 AND f2.estado = 'ACTIVO' and  f2.codigoVendedor<>0
-    GROUP BY f2.codigoTercero
-) AS totales ON totales.codigoTercero = f.codigoTercero
-WHERE f.saldo <> 0 AND f.estado = 'ACTIVO'
-ORDER BY cliente,f.fechaEmision `;
+        NULL AS codigo,
+        NULL AS codigoComprobante,
+        NULL AS nombre,
+        NULL AS fechaEmision,
+        NULL AS fechaVencimiento,
+        NULL AS dias,
+        NULL AS totalFactura,
+        NULL AS saldo,
+        NULL AS observaciones,
+        NULL AS vendedor,
+        t.razonSocial AS cliente,
+        t.identificacion,
+        t.direccion,
+        t.telefonoFijo,
+        t.celulares,
+        m.municipio,
+        SUM(f.totalFactura) AS totalCliente,
+        SUM(f.saldo) AS totalSaldoCliente,
+        0 AS orden
+    FROM factura f
+    INNER JOIN tercero t ON f.codigoTercero = t.codigo
+    JOIN municipios m ON m.codigoDepartamento=t.codigoDepartamento AND m.codigoMunicipio=t.codigoMunicipio
+    WHERE f.saldo <> 0 AND f.estado = 'ACTIVO' 
+    GROUP BY t.codigo,    cliente,  t.identificacion,   t.direccion,  t.telefonoFijo,  t.celulares, m.municipio
+)
+UNION ALL
+(
+    SELECT 
+        f.codigo,
+        f.codigoComprobante,
+        c.nombre,
+        f.fechaEmision,
+        f.fechaVencimiento,
+       IFNULL(DATEDIFF(fechavencimiento,CURRENT_DATE), 0) AS dias,
+        f.totalFactura,
+        f.saldo,
+        f.observaciones,
+        v.nombre AS vendedor,
+        t.razonSocial AS cliente,
+        t.identificacion AS id,
+        t.direccion,
+        t.telefonoFijo,
+        t.celulares,
+        m.municipio,
+        NULL AS totalCliente,
+        NULL AS totalSaldoCliente,
+        1 AS orden
+    FROM factura f
+    LEFT JOIN vendedores v ON v.codigo = f.codigoVendedor
+    INNER JOIN comprobantes c ON f.codigoComprobante = c.codigo
+    INNER JOIN tercero t ON f.codigoTercero = t.codigo
+    JOIN municipios m ON m.codigoDepartamento=t.codigoDepartamento AND m.codigoMunicipio=t.codigoMunicipio
+    WHERE f.saldo <> 0 AND f.estado = 'ACTIVO'
+)
+ ORDER BY cliente, orden, fechaEmision ;`;
+}else{
+  consulta = `(
+    SELECT 
+        NULL AS codigo,
+        NULL AS codigoComprobante,
+        NULL AS nombre,
+        NULL AS fechaEmision,
+        NULL AS fechaVencimiento,
+        NULL AS dias,
+        NULL AS totalFactura,
+        NULL AS saldo,
+        NULL AS observaciones,
+        NULL AS vendedor,
+        t.razonSocial AS cliente,
+        t.identificacion,
+        t.direccion,
+        t.telefonoFijo,
+        t.celulares,
+        m.municipio,
+        SUM(f.totalFactura) AS totalCliente,
+        SUM(f.saldo) AS totalSaldoCliente,
+        0 AS orden
+    FROM factura f
+    INNER JOIN tercero t ON f.codigoTercero = t.codigo
+    JOIN municipios m ON m.codigoDepartamento=t.codigoDepartamento AND m.codigoMunicipio=t.codigoMunicipio
+    WHERE f.saldo <> 0 AND f.estado = 'ACTIVO' and t.codigo=${codigousuario}
+    GROUP BY t.codigo,    cliente,  t.identificacion,   t.direccion,  t.telefonoFijo,  t.celulares, m.municipio 
+)
+UNION ALL
+(
+    SELECT 
+        f.codigo,
+        f.codigoComprobante,
+        c.nombre,
+        f.fechaEmision,
+        f.fechaVencimiento,
+       IFNULL(DATEDIFF(fechavencimiento,CURRENT_DATE), 0) AS dias,
+        f.totalFactura,
+        f.saldo,
+        f.observaciones,
+        v.nombre AS vendedor,
+        t.razonSocial AS cliente,
+        t.identificacion AS id,
+        t.direccion,
+        t.telefonoFijo,
+        t.celulares,
+        m.municipio,
+        NULL AS totalCliente,
+        NULL AS totalSaldoCliente,
+        1 AS orden
+    FROM factura f
+    INNER JOIN vendedores v ON v.codigo = f.codigoVendedor
+    INNER JOIN comprobantes c ON f.codigoComprobante = c.codigo
+    INNER JOIN tercero t ON f.codigoTercero = t.codigo
+    JOIN municipios m ON m.codigoDepartamento=t.codigoDepartamento AND m.codigoMunicipio=t.codigoMunicipio
+    WHERE f.saldo <> 0 AND f.estado = 'ACTIVO' AND t.codigo=${codigousuario}
+)
+ ORDER BY cliente, orden, fechaEmision  ;`;
+}
+
+      
+    
+    
     const result = await sequelize.query(consulta, {
       type: sequelize.QueryTypes.SELECT,
       logging: true,
@@ -88,21 +189,47 @@ ORDER BY cliente,f.fechaEmision `;
   async traersaldoactual(req,res){
     const {sequelize}=crearConexionPorNombre(req.session.usuario.db)
     
-  const [result] = await sequelize.query(`select sum(saldo) as suma from factura where  codigoTercero=${req.query.codigotercero}`,{logging:true})
+  const [result] = await sequelize.query(`select sum(saldo) as suma from factura where  codigoTercero=${req.query.codigotercero} and estado='ACTIVO'`,{logging:true})
     res.json({respuesta:result, usuario:req.session.usuario.nombre})
   }
   async traerfacturasSaldo(req, res) {
-    const { sequelize } = crearConexionPorNombre(req.session.usuario.db);
+    const { sequelize } = crearConexionPorNombre(req.session.usuario.db)
     const inicio = req.query.pagina > 0 ? req.query.pagina * 15 - 15 : 0;
-    const consulta = `select f.codigo, f.codigoComprobante, c.nombre, f.fechaEmision as fechaEmision, f.fechaVencimiento 
-    as fechaVencimiento,  DATEDIFF(fechavencimiento,CURRENT_DATE) AS dias,
-    f.totalFactura as totalFactura , f.saldo as saldo, f.observaciones ,
-     v.nombre as vendedor, t.razonSocial as cliente from  factura f inner join vendedores v inner join 
-    comprobantes c inner join tercero t on 
-    v.codigo=f.codigoVendedor and  f.codigoComprobante=c.codigo and f.codigoTercero=t.codigo where saldo<>0 && f.estado='ACTIVO' order by cliente, fechaEmision limit ?,15 ;`;
-    const consultatotal = `select  COUNT(*) as nregistros,  sum(f.saldo)   as saldo from  factura f inner join vendedores v inner join 
-    comprobantes c inner join tercero t on 
-    v.codigo=f.codigoVendedor and  f.codigoComprobante=c.codigo and f.codigoTercero=t.codigo where saldo<>0 && f.estado='ACTIVO'`;
+    console.log("entro aqui a cargar todonmmd wjdnedne")
+    const consulta = `SELECT 
+    f.codigo, 
+    f.codigoComprobante, 
+    c.nombre, 
+    f.fechaEmision AS fechaEmision, 
+    f.fechaVencimiento AS fechaVencimiento,  
+    IFNULL(DATEDIFF(f.fechaVencimiento,CURRENT_DATE), 0) AS dias,
+    f.totalFactura AS totalFactura, 
+    f.saldo AS saldo, 
+    f.observaciones,
+    COALESCE(v.nombre, 'SIN VENDEDOR') AS vendedor, -- Si no hay vendedor, mostrar texto
+    t.razonSocial AS cliente,
+    t.email AS email,
+    t.codigo AS codigotercero, 
+    t.identificacion, 
+    t.telefonoFijo, 
+    t.celulares, 
+    t.direccion, 
+    m.municipio
+FROM factura f
+INNER JOIN comprobantes c ON f.codigoComprobante = c.codigo
+INNER JOIN tercero t ON f.codigoTercero = t.codigo
+LEFT JOIN vendedores v ON v.codigo = f.codigoVendedor  -- LEFT JOIN mantiene facturas sin vendedor
+JOIN municipios m ON m.codigoDepartamento = t.codigoDepartamento 
+                 AND m.codigoMunicipio = t.codigoMunicipio
+WHERE f.saldo <> 0 
+  AND f.estado = 'ACTIVO'
+ORDER BY cliente, fechaEmision
+LIMIT ?,15;`;
+    const consultatotal = `select  COUNT(*) as nregistros,  sum(f.saldo)   as saldo from  factura f INNER JOIN comprobantes c ON f.codigoComprobante = c.codigo
+INNER JOIN tercero t ON f.codigoTercero = t.codigo
+LEFT JOIN vendedores v ON v.codigo = f.codigoVendedor  -- LEFT JOIN mantiene facturas sin vendedor
+JOIN municipios m ON m.codigoDepartamento = t.codigoDepartamento 
+                 AND m.codigoMunicipio = t.codigoMunicipio where saldo<>0 && f.estado='ACTIVO'`;
     const result = await sequelize.query(consulta, {
       replacements: [inicio],
       type: sequelize.QueryTypes.SELECT,
@@ -423,17 +550,24 @@ ${cliente[0].cupo},${cliente[0].listaPrecios},${cliente[0].reteFuente},${cliente
         const [resultado] = await sequelize.query(
           `select * from reciboingreso where codigo=${codigoReciboCreado} && codigoComprobante=${req.session.usuario.codigoComprobanteReciboIngreso}`
         );
+
         const [countcliente] = await sequelize.query(
           `select sum(saldo) AS saldo from factura where codigoTercero=${cliente.codigo}`
         );
-        res.status(200).json({
-          mensaje: "recibo de ingreso creado correctamente",
-          datos: resultado,
-          saldoactual: countcliente[0].saldo,
-          vendedor: req.session.usuario.vendedor,
-          usuario: req.session.usuario.nombre,
-          nombreComprobanteRI:req.session.usuario.nombreComprobanteRI,
-        });
+         
+        if(req.session.usuario.manejarEntregas>0 && req.session.usuario.nivel===4 ){
+         await this.procesarEntrega(totalrecibo,sequelize,req,res);
+        }
+
+     
+      return res.status(200).json({
+        mensaje: "recibo de ingreso creado correctamente",
+        datos: resultado,
+        saldoactual: countcliente[0].saldo,
+        vendedor: req.session.usuario.vendedor,
+        usuario: req.session.usuario.nombre,
+        nombreComprobanteRI: req.session.usuario.nombreComprobanteRI,
+    });
       }
     } else {
       res.status(400).json({ mensaje: "recibo de ingreso no se pudo crear" });
@@ -456,14 +590,21 @@ ${cliente[0].cupo},${cliente[0].listaPrecios},${cliente[0].reteFuente},${cliente
     sequelize,
     req
   ) {
+
+
     const ultimoCodigo = await sequelize.query(
       `select max(codigo) as ultimoCodigo from reciboingreso where codigoComprobante=${req.session.usuario.codigoComprobanteReciboIngreso}`
     );
+    let codigoCajaUsuario=0
+    if(req.session.usuario.nivel===4){
+    codigoCajaUsuario=await this.verificarCajaUsuario(req,sequelize);
+    }
+     
     let codigoReciboUsar = ultimoCodigo[0][0].ultimoCodigo + 1;
     const consulta = `insert into reciboingreso(codigo, codigoComprobante, valor, codigoCaja, concepto, recibidoDe, estado, fechaIngreso, usuarioIngreso,
     fechaAnulo, usuarioAnulo, codigoFactura, codigoComprobanteFactura, codigoTercero, consecutivoContable, descuento, baseiva, 
     baseretencion, reteiva, reteica, retefuente, codigocuentapago,
-    observacion, codigoVendedor) values(${codigoReciboUsar},${req.session.usuario.codigoComprobanteReciboIngreso},${totalrecibo},0,'${concepto}','${cliente.nombre}','ACTIVO',CURRENT_TIMESTAMP(),
+    observacion, codigoVendedor) values(${codigoReciboUsar},${req.session.usuario.codigoComprobanteReciboIngreso},${totalrecibo},${codigoCajaUsuario},'${concepto}','${cliente.nombre}','ACTIVO',CURRENT_TIMESTAMP(),
     ${req.session.usuario.codigousuario},'1990-01-01',0,0,0,${cliente.codigo},${codigoReciboUsar},${descuento},
     0,0,0,0,0,${codigoCuentaOtrosRC},'${observacion}',${req.session.usuario.codigoVendedor})`;
     const [result, affectedRows] = await sequelize.query(consulta, {
@@ -695,7 +836,7 @@ ${cliente[0].cupo},${cliente[0].listaPrecios},${cliente[0].reteFuente},${cliente
 
 async obtenertotalpornombrefactura(req,res){
   const {sequelize}=crearConexionPorNombre(req.session.usuario.db);
-  const datostotal= await sequelize.query(`select  sum(saldo) as sumatotal from  factura f inner join tercero t on f.codigoTercero=t.codigo where t.razonSocial='${req.query.nombret}'`)
+  const datostotal= await sequelize.query(`select  sum(saldo) as sumatotal from  factura f inner join tercero t on f.codigoTercero=t.codigo where t.razonSocial='${req.query.nombret}' AND f.estado='ACTIVO' `)
   ;
   return res.json({respuesta:datostotal[0]})
 }
@@ -704,12 +845,28 @@ async obtenertotalpornombrefactura(req,res){
   
   const consulta=`select i.descripcion,i.cantidad,i.presentacion , i.precio,i.totalItem,i.codigoContable ,i.referencia, DATE_FORMAT(f.fechaCreacion, '%H:%i:%s')  as horacreacion,t.email,t.identificacion,t.telefonofijo ,f.codigo as codigofactura,f.observaciones from factura f inner join itemsfactura i on f.codigo=i.codigoFactura and f.codigoComprobante=i.codigoComprobante join tercerofactura as t on t.codigoFactura=i.codigoFactura and t.codigoComprobante=i.codigoComprobante  where f.codigo=${req.query.codigo} && f.codigoComprobante=${req.query.codigoComprobante} `
 
+   
 
   const result=await sequelize.query(consulta,{
     type:sequelize.QueryTypes.SELECT,
     logging:true
   })
-  res.status(200).json({respuesta:result,config:req.session.usuario.config,prefijo:req.session.usuario.nombrecomprobateventa})
+
+  if(result.length>0){
+     res.status(200).json({respuesta:result,config:req.session.usuario.config,prefijo:req.session.usuario.nombrecomprobateventa})
+   }else{
+     const consulta2=`select  DATE_FORMAT(f.fechaCreacion, '%H:%i:%s')  as horacreacion,t.email,t.identificacion,t.telefonofijo ,f.codigo as codigofactura,f.observaciones from factura f inner join tercerofactura as t on t.codigoFactura=f.codigoFactura and t.codigoComprobante=f.codigoComprobante  where f.codigo=${req.query.codigo} && f.codigoComprobante=${req.query.codigoComprobante} `
+     const result2=await sequelize.query(consulta2,{
+    type:sequelize.QueryTypes.SELECT,
+    logging:true
+
+  })
+
+     res.status(200).json({respuesta:result2,config:req.session.usuario.config,prefijo:req.session.usuario.nombrecomprobateventa})
+   
+   }
+
+ 
  }
 
    async insertaritmesinventario(req,res){
@@ -837,6 +994,756 @@ async obtenertotalpornombrefactura(req,res){
         console.error('Error al eliminar el item de inventario:', error);
         res.status(500).json({respuesta:false, error: 'Error al eliminar el item de inventario'});
       })
+    }
+
+
+
+    consultarfacturasxusuario(req,res){
+      console.log(req.session)
+         const {sequelize}=crearConexionPorNombre(req.session.usuario.db)
+     const {codigousuario,fechainicio,fechafin}=req.query
+ console.log(req.query)
+     const consulta=`select f.*,c.nombre from factura f join comprobantes c on c.codigo=f.codigoComprobante 
+where  f.codigoTercero=${codigousuario} and f.estado='ACTIVO'  and f.fechaEmision between  '${fechainicio}'  and '${fechafin}'`;
+       sequelize.query( consulta,{
+       type:sequelize.QueryTypes.SELECT,
+       logging:true
+     }).then(data=>{
+      res.status(200).json({
+        factura:data
+      })
+     }
+
+     )
+    }
+
+    consultarreciboaux(req,res){
+      const {codigofa,codigocom}=req.query
+       const {sequelize}=crearConexionPorNombre(req.session.usuario.db)
+      const consulta=`select r.codigo,r.codigoComprobante,c.nombre,r.fechaIngreso,rf.valor from reciboingreso r inner join comprobantes  c on  r.codigoComprobante=c.codigo  inner join recibosfacturas
+rf on rf.codigoReciboCaja=r.codigo and rf.codigoReciboCajaComprobante=r.codigoComprobante where rf.codigoFactura=${codigofa} and rf.codigoComprobante=${codigocom}
+order by  r.fechaIngreso `
+         sequelize.query( consulta,{
+       type:sequelize.QueryTypes.SELECT,
+       logging:true
+     }).then(data=>{
+      res.status(200).json({
+        recibos:data
+      })
+     }
+
+     )
+    }
+
+
+    consultarauxiliarcliente(req,res){
+      console.log(req.session)
+         const {sequelize}=crearConexionPorNombre(req.session.usuario.db)
+     const {codigotercero,fechainicio,fechafin}=req.query
+
+      const consulta=`SELECT c.nombre,datos.* FROM (
+SELECT 
+    r.codigo,
+    r.codigoComprobante,
+    DATE_FORMAT(r.fechaIngreso, '%Y-%m-%d') AS fechaEmision,
+    r.valor AS totalDocumento,
+    'RECIBO' AS tipoDocumento
+FROM reciboingreso r 
+WHERE 
+    r.codigoTercero =${codigotercero}
+    AND r.estado = 'ACTIVO' 
+    AND DATE_FORMAT(r.fechaIngreso, '%Y-%m-%d') BETWEEN '${fechainicio}' AND '${fechafin}'
+
+UNION ALL
+
+SELECT 
+    f.codigo,
+    f.codigoComprobante,
+    f.fechaEmision,
+    f.valorCXC AS totalDocumento,
+    'FACTURA' AS tipoDocumento
+FROM factura f
+WHERE 
+    f.codigoTercero = ${codigotercero}
+    AND f.estado = 'ACTIVO' 
+    AND f.fechaEmision BETWEEN '${fechainicio}' AND '${fechafin}'
+    AND f.valorCXC > 0
+
+  
+
+UNION ALL
+
+SELECT 
+    d.codigo,
+    d.codigoComprobante,
+    DATE_FORMAT(d.fechaIngreso, '%Y-%m-%d') AS fechaEmision,
+    (td.valor - IFNULL(tds.valor, 0)) AS totalDocumento,
+    'DEVOLUCION' AS tipoDocumento
+FROM devoluciones d 
+JOIN (
+    SELECT codigoDevolucion, codigoComprobante, valor 
+    FROM totalesDevolucion 
+    WHERE item = 'TOTAL_DEVOLUCION'
+) AS td 
+    ON td.codigoDevolucion = d.codigo 
+    AND td.codigoComprobante = d.codigoComprobante
+LEFT JOIN (
+    SELECT codigoDevolucion, codigoComprobante, valor 
+    FROM totalesDevolucion 
+    WHERE item = 'TOTAL_DESCUENTOS'
+) AS tds 
+    ON tds.codigoDevolucion = d.codigo 
+    AND tds.codigoComprobante = d.codigoComprobante
+
+JOIN (
+	SELECT itd.* FROM itemsdevolucion itd 
+    JOIN factura fd ON fd.codigo=itd.codigoFactura AND fd.codigoComprobante=itd.codigoComprobanteFactura
+    WHERE fd.valorCXC>0
+) AS itemsd 
+	ON itemsd.codigoDevolucion=d.codigo
+    AND itemsd.codigoComprobanteDevolucion=d.codigoComprobante    
+WHERE 
+    d.codigoTercero = ${codigotercero}
+    AND DATE_FORMAT(d.fechaIngreso, '%Y-%m-%d') BETWEEN '${fechainicio}' AND '${fechafin}'
+
+ORDER BY fechaEmision ) AS datos 
+join comprobantes c on c.codigo=datos.codigocomprobante ORDER BY datos.fechaEmision;`
+
+
+      sequelize.query( consulta,{
+       type:sequelize.QueryTypes.SELECT,
+       logging:true
+     }).then(data=>{
+      res.status(200).json({
+        datosaux:data
+      })
+     }
+
+     ) 
+    }
+  
+    consultarTotalesVentasXUsuarioXRangoFechas(req,res){
+      console.log(req.session)
+      const {sequelize}=crearConexionPorNombre(req.session.usuario.db)
+      const {codigoUsuario,codigobodega,fechainicio,fechafin}=req.query
+
+  let consultaTotalFacturas;
+  console.log( req)
+  let objetoauxiliar= null;
+  try {
+    objetoauxiliar= JSON.parse(req.session.usuario.cteAuxiliares)
+    if(objetoauxiliar.respuesta.length==0){
+      objetoauxiliar={respuesta:[{valor:0}]};
+    }
+  } catch (error) {
+    objetoauxiliar={respuesta:[{valor:0}]};
+  }
+  
+  let ctesAux=''
+  console.log( 'objeto auxiliar:',objetoauxiliar)
+  
+ objetoauxiliar.respuesta.forEach((element,index) => {
+  if(index==0){
+    ctesAux += ''+ element.valor
+  }else{
+    ctesAux += ','+ element.valor
+  }
+  });
+
+  console.log( 'ctesAux:',ctesAux)
+
+    if(Number(codigobodega)===0){
+ if(Number(codigoUsuario)===0){
+  // Selecciono Todo - Todo
+    console.log("fechas", fechainicio,fechafin)
+           consultaTotalFacturas=`select 
+                                      sum(f.totalExenta) as ftExenta,
+                                        sum(f.totalGravada) as ftGravada,
+                                        sum(f.iva) as ftIva,
+                                        sum(f.valorEfectivo) as ftEfectivo,
+                                        sum(f.valorDebito) as ftDebito,
+                                        sum(f.valorCredito) as ftCredito,
+                                        sum(f.valorCheque) as ftCheque,
+                                        sum(f.valorBono) as ftBono,
+                                        sum(f.valorCXC) as ftCxc,
+                                        sum(f.totalDescuentos) as ftDescuentos,
+                                        sum(f.totalFactura) as totalVentas
+                                    from 
+                                      factura f 
+                                    where 
+                                      f.codigoCaja 
+                                        in (
+                                          SELECT codigo as codigoCaja 
+                                                FROM caja 
+                                                where DATE_FORMAT(fechaApertura, '%Y-%m-%d') between '${fechainicio}' and '${fechafin}'
+                                                )
+                                        OR (f.codigoComprobante in (${ctesAux}) AND DATE_FORMAT(fechaCreacion, '%Y-%m-%d') between '${fechainicio}' and '${fechafin}');`
+      }else{
+        // Almacen Todo - usuario especifico
+           consultaTotalFacturas=`select 
+                                    sum(b.ftExenta) as ftExenta,
+                                    sum(b.ftGravada) as ftGravada,
+                                    sum(b.ftIva) as ftIva,
+                                    sum(b.ftEfectivo) as ftEfectivo,
+                                    sum(b.ftDebito) as ftDebito,
+                                    sum(b.ftCredito) as ftCredito,
+                                    sum(b.ftCheque) as ftCheque,
+                                    sum(b.ftBono) as ftBono,
+                                    sum(b.ftCxc) as ftCxc,
+                                    sum(b.ftDescuentos) as ftDescuentos,
+                                    sum(b.totalVentas) as totalVentas
+                                    from (
+                                    select 
+                                    sum(f.totalExenta) as ftExenta,
+                                    sum(f.totalGravada) as ftGravada,
+                                    sum(f.iva) as ftIva,
+                                    sum(f.valorEfectivo) as ftEfectivo,
+                                    sum(f.valorDebito) as ftDebito,
+                                    sum(f.valorCredito) as ftCredito,
+                                    sum(f.valorCheque) as ftCheque,
+                                    sum(f.valorBono) as ftBono,
+                                    sum(f.valorCXC) as ftCxc,
+                                    sum(f.totalDescuentos) as ftDescuentos,
+                                    sum(f.totalFactura) as totalVentas,
+                                        f.codigoUsuarioIngreso as usuario
+                                  from 
+                                    factura f 
+                                  where 
+                                  f.codigoUsuarioIngreso=${codigoUsuario} and
+                                    codigoCaja 
+                                    in (
+                                      SELECT codigo as codigoCaja 
+                                        FROM caja 
+                                        where DATE_FORMAT(fechaApertura, '%Y-%m-%d') between '${fechainicio}' and '${fechafin}'
+                                        )
+                                    ) as b 
+                                    left join (
+                                    select 
+                                    sum(f.totalExenta) as ftExenta,
+                                      sum(f.totalGravada) as ftGravada,
+                                      sum(f.iva) as ftIva,
+                                      sum(f.valorEfectivo) as ftEfectivo,
+                                      sum(f.valorDebito) as ftDebito,
+                                      sum(f.valorCredito) as ftCredito,
+                                      sum(f.valorCheque) as ftCheque,
+                                      sum(f.valorBono) as ftBono,
+                                      sum(f.valorCXC) as ftCxc,
+                                      sum(f.totalDescuentos) as ftDescuentos,
+                                      sum(f.totalFactura) as totalVentas,
+                                            doc.codigoUsuarioSepara as usuario
+                                    from documentoseparado doc
+                                    left join factura f on f.codigo=doc.codigoDocumento and f.codigoComprobante=doc.codigoComprobanteDocumento
+                                    where doc.codigoUsuarioSepara=${codigoUsuario} and f.fechaEmision between '${fechainicio}' and '${fechafin}' and f.estado='ACTIVO') as c
+                                    on c.usuario=b.usuario;`
+      }
+    }else{
+       if(Number(codigoUsuario)===0){
+        // Almacen especifico - Todo (Proceso)
+           consultaTotalFacturas=`select 
+                                      sum(f.totalExenta) as ftExenta,
+                                        sum(f.totalGravada) as ftGravada,
+                                        sum(f.iva) as ftIva,
+                                        sum(f.valorEfectivo) as ftEfectivo,
+                                        sum(f.valorDebito) as ftDebito,
+                                        sum(f.valorCredito) as ftCredito,
+                                        sum(f.valorCheque) as ftCheque,
+                                        sum(f.valorBono) as ftBono,
+                                        sum(f.valorCXC) as ftCxc,
+                                        sum(f.totalDescuentos) as ftDescuentos,
+                                        sum(f.totalFactura) as totalVentas
+                                    from 
+                                    
+                                      factura f 
+                                      join
+                                      usuario u
+                                      join
+                                      usuariosaliasalmacen ua
+                                      join
+                                      aliasalmacen al
+                                      on
+                                      f.codigoUsuarioIngreso=u.codigo
+                                      and
+                                      ua.codigoUsuario =f.codigoUsuarioIngreso
+                                      and
+                                      al.codigo=ua.codigoAliasAlmacen
+                                    where 
+                                      al.codigo=${Number(codigobodega)}
+                                      and
+                                      codigoCaja 
+                                        in (
+                                          SELECT codigo as codigoCaja 
+                                                FROM caja 
+                                                where DATE_FORMAT(fechaApertura, '%Y-%m-%d') between '${fechainicio}' and '${fechafin}'
+                                                )
+                                        OR (f.codigoComprobante in (select c.codigoComprobante from (    
+                                                                        select 
+                                                                          DISTINCT valor 
+                                                                        from 
+                                                                          parametrosComprobante 
+                                                                        where 
+                                                                          codigoParametro in (select codigo from parametros where nombre like 'COMPROBANTE_AUXILIAR')) as b
+
+                                                                        inner join (
+                                                                        select 
+                                                                          distinct pc.codigoComprobante, pc.valor 
+                                                                        from 
+                                                                          gilsas.parametrosComprobante pc
+                                                                        join aliasalmacen al on al.almacen=pc.valor
+                                                                        where 
+                                                                          pc.codigoParametro in (select codigo from parametros where nombre = 'ALMACEN')
+                                                                            and al.codigo=${Number(codigobodega)}) as c 
+                                                                            on c.codigoComprobante = b.valor) AND DATE_FORMAT(fechaCreacion, '%Y-%m-%d') between '${fechainicio}' and '${fechafin}');`
+      }else{
+           consultaTotalFacturas=`select 
+                                      sum(f.totalExenta) as ftExenta,
+                                        sum(f.totalGravada) as ftGravada,
+                                        sum(f.iva) as ftIva,
+                                        sum(f.valorEfectivo) as ftEfectivo,
+                                        sum(f.valorDebito) as ftDebito,
+                                        sum(f.valorCredito) as ftCredito,
+                                        sum(f.valorCheque) as ftCheque,
+                                        sum(f.valorBono) as ftBono,
+                                        sum(f.valorCXC) as ftCxc,
+                                        sum(f.totalDescuentos) as ftDescuentos,
+                                        sum(f.totalFactura) as totalVentas
+                                    from 
+                                        factura f 
+                                    where 
+                                     f.codigoUsuarioIngreso=${codigoUsuario} and
+                                      codigoCaja 
+                                        in (
+                                          SELECT codigo as codigoCaja 
+                                                FROM caja 
+                                                where DATE_FORMAT(fechaApertura, '%Y-%m-%d') between '${fechainicio}' and '${fechafin}'
+                                                );`
+      }
+    }
+
+     
+    
+        sequelize.query( consultaTotalFacturas,{
+        type:sequelize.QueryTypes.SELECT,
+        logging:true
+     }).then(data=>{
+      res.status(200).json({
+        datosaux:data
+      })
+     }
+
+     ) 
+    }
+
+    consultarusuario(req,res){
+          const {sequelize}=crearConexionPorNombre(req.session.usuario.db)
+          const {codigousuario}=req.query
+          let consulta=''
+          if(codigousuario===0){
+            consulta=`select codigo,nombre,nivel,estado from usuario `
+          }else{
+            consulta=`select   codigo,nombre,nivel,estado from usuario where codigo=${codigousuario}`
+          }
+
+             sequelize.query( consulta,{
+       type:sequelize.QueryTypes.SELECT,
+       logging:true
+     }).then(data=>{
+      res.status(200).json({
+        datoscliente:data
+      })
+     }
+
+     ) 
+            
+    }
+
+    consultarusuarioalmacen(req,res){
+         const {sequelize}=crearConexionPorNombre(req.session.usuario.db)
+          const {codigobodega}=req.query
+     let consulta=''
+          if(Number(codigobodega)!==0){
+               consulta=`select 
+	u.*
+from 
+	usuariosaliasalmacen ual 
+join usuario u inner join aliasalmacen a  on u.codigo=ual.codigoUsuario and ual.codigoAliasAlmacen=a.codigo where a.codigo=${Number(codigobodega)} AND u.estado='ACTIVO';`
+          }else{
+           consulta=`select * from usuario WHERE estado='ACTIVO' ;`          
+          }
+
+             sequelize.query( consulta,{
+       type:sequelize.QueryTypes.SELECT,
+       logging:true
+     }).then(data=>{
+        res.status(200).json({usuarios:data})
+     })
+     
+    }
+
+    consultarTotalesRecibosIngresoXUsuarioXRangoFechas(req,res){
+      console.log(req.session)
+         const {sequelize}=crearConexionPorNombre(req.session.usuario.db)
+     const {codigoUsuario,codigobodega,fechainicio,fechafin}=req.query
+     let  consultaTotalRecibosIngreso=''
+      if(Number(codigobodega)!==0){
+           if(Number(codigoUsuario)!==0){
+          console.log(typeof codigotercero )
+          
+  consultaTotalRecibosIngreso=`select 
+                                       coalesce(sum(tp.valorEfectivo),0) as TEfectivo,
+                                       coalesce(sum(tp.valorDebito),0) as TDebito,
+                                       coalesce(sum(tp.valorCredito),0) as TCredito,
+                                       coalesce(sum(tp.valorCheque),0) as TCheque,
+                                       coalesce(sum(tp.valorBono),0) as TBancos,
+                                       coalesce(sum(tp.valorCxc),0) as TDescuentos,
+                                       coalesce(sum(r.valor),0) as totalRecibos
+                                    from 
+                                      reciboingreso r
+
+                                    join 
+	                                    tipopagoreciboingreso tp on tp.codigoReciboIngreso=r.codigo and tp.codigoComprobante=r.codigoComprobante join
+                                      usuario u on  u.codigo=r.usuarioIngreso  
+                                    where
+                                      r.usuarioIngreso=${codigoUsuario}
+                                      and
+                                      r.codigoCaja 
+                                        in (
+                                          SELECT codigo as codigoCaja 
+                                                FROM caja 
+                                                where DATE_FORMAT(fechaApertura, '%Y-%m-%d') between '${fechainicio}' and '${fechafin}'
+                                                );`
+
+      }else{
+        console.log("consultando recibos")
+        consultaTotalRecibosIngreso=`select 
+                                       coalesce(sum(tp.valorEfectivo),0) as TEfectivo,
+                                       coalesce(sum(tp.valorDebito),0) as TDebito,
+                                       coalesce(sum(tp.valorCredito),0) as TCredito,
+                                       coalesce(sum(tp.valorCheque),0) as TCheque,
+                                       coalesce(sum(tp.valorBono),0) as TBancos,
+                                       coalesce(sum(tp.valorCxc),0) as TDescuentos,
+                                       coalesce(sum(r.valor),0) as totalRecibos
+                                    from 
+                                      reciboingreso r
+
+                                    join 
+	                                    tipopagoreciboingreso tp on tp.codigoReciboIngreso=r.codigo and tp.codigoComprobante=r.codigoComprobante join
+                                      usuario u on  u.codigo=r.usuarioIngreso join usuariosaliasalmacen ua on ua.codigoUsuario=u.codigo join 
+                                       aliasalmacen al on al.codigo=ua.codigoAliasAlmacen
+                                    where 
+                                    al.codigo=${Number(codigobodega)} and 
+                                    DATE_FORMAT(r.fechaIngreso, '%Y-%m-%d') between '${fechainicio}' and '${fechafin}'`
+
+      }
+     
+      }else{
+            if(Number(codigoUsuario)!==0){
+          console.log(typeof codigotercero )
+  consultaTotalRecibosIngreso=`select 
+                                       coalesce(sum(tp.valorEfectivo),0) as TEfectivo,
+                                       coalesce(sum(tp.valorDebito),0) as TDebito,
+                                       coalesce(sum(tp.valorCredito),0) as TCredito,
+                                       coalesce(sum(tp.valorCheque),0) as TCheque,
+                                       coalesce(sum(tp.valorBono),0) as TBancos,
+                                       coalesce(sum(tp.valorCxc),0) as TDescuentos,
+                                       coalesce(sum(r.valor),0) as totalRecibos
+                                    from 
+                                      reciboingreso r
+
+                                    join 
+	                                    tipopagoreciboingreso tp on tp.codigoReciboIngreso=r.codigo and tp.codigoComprobante=r.codigoComprobante join
+                                      usuario u on  u.codigo=r.usuarioIngreso 
+                                    where 
+                                      r.usuarioIngreso=${codigoUsuario}
+                                      and
+                                      r.codigoCaja 
+                                        in (
+                                          SELECT codigo as codigoCaja 
+                                                FROM caja 
+                                                where DATE_FORMAT(fechaApertura, '%Y-%m-%d') between '${fechainicio}' and '${fechafin}'
+                                                );`
+
+      }else{
+        console.log("consultando recibos")
+        consultaTotalRecibosIngreso=`select 
+                                       coalesce(sum(tp.valorEfectivo),0) as TEfectivo,
+                                       coalesce(sum(tp.valorDebito),0) as TDebito,
+                                       coalesce(sum(tp.valorCredito),0) as TCredito,
+                                       coalesce(sum(tp.valorCheque),0) as TCheque,
+                                       coalesce(sum(tp.valorBono),0) as TBancos,
+                                       coalesce(sum(tp.valorCxc),0) as TDescuentos,
+                                       coalesce(sum(r.valor),0) as totalRecibos
+                                    from 
+                                      reciboingreso r
+
+                                    join 
+	                                    tipopagoreciboingreso tp on tp.codigoReciboIngreso=r.codigo and tp.codigoComprobante=r.codigoComprobante 
+                                    where  
+                                    
+                                      DATE_FORMAT(r.fechaIngreso, '%Y-%m-%d') between '${fechainicio}' and '${fechafin}'`
+
+      }
+
+      }
+      
+
+      sequelize.query( consultaTotalRecibosIngreso,{
+       type:sequelize.QueryTypes.SELECT,
+       logging:true
+     }).then(data=>{
+      res.status(200).json({
+        datosaux:data
+      })
+     }
+
+     ) 
+    }
+
+    consultarTotalesRecibosEgresoXUsuarioXRangoFechas(req,res){
+      console.log(req.session)
+         const {sequelize}=crearConexionPorNombre(req.session.usuario.db)
+     const {codigoUsuario,codigobodega,fechainicio,fechafin}=req.query
+  let consultaTotalRecibosEgreso
+   if(Number(codigobodega)===0){
+        if(Number(codigoUsuario)!==0){
+      consultaTotalRecibosEgreso=`select 
+                                       coalesce(sum(re.descuento),0) as tDescuentos,
+                                         coalesce(sum(re.valor),0) as tEgresos
+                                    from 
+                                      reciboegreso re
+                                     
+                                    where 
+                                    re.usuarioIngreso=${codigoUsuario}
+                                    and
+                                      codigoCaja 
+                                        in (
+                                          SELECT codigo as codigoCaja 
+                                                FROM caja 
+                                                where DATE_FORMAT(fechaApertura, '%Y-%m-%d') between '${fechainicio}' and '${fechafin}'
+                                                );`
+
+    }else{
+      consultaTotalRecibosEgreso=`select 
+                                      coalesce(sum(re.descuento),0) as tDescuentos,
+                                      coalesce(sum(re.valor),0) as tEgresos
+                                    from 
+                                  reciboegreso re
+                                   
+                                   where DATE_FORMAT(fechaIngreso, '%Y-%m-%d') between '${fechainicio}' and '${fechafin}'`
+    }
+      
+   }else{
+       if(Number(codigoUsuario)!==0){
+      consultaTotalRecibosEgreso=`select 
+                                       coalesce(sum(re.descuento),0) as tDescuentos,
+                                         coalesce(sum(re.valor),0) as tEgresos
+                                    from 
+                                      reciboegreso re
+                                      
+                                    where 
+                                     
+                                    re.usuarioIngreso=${codigoUsuario}
+                                    and
+                                 
+                                      codigoCaja 
+                                        in (
+                                          SELECT codigo as codigoCaja 
+                                                FROM caja 
+                                                where DATE_FORMAT(fechaApertura, '%Y-%m-%d') between '${fechainicio}' and '${fechafin}'
+                                                );`
+
+    }else{
+      consultaTotalRecibosEgreso=`select 
+                                      coalesce(sum(re.descuento),0) as tDescuentos,
+                                      coalesce(sum(re.valor),0) as tEgresos
+                                    from 
+                                  reciboegreso re
+                                       join
+                                      usuario u
+                                      join
+                                      usuariosaliasalmacen ua
+                                      join
+                                      aliasalmacen al
+                                      on
+                                       re.usuarioIngreso=u.codigo
+                                      and
+                                      ua.codigoUsuario =re.usuarioIngreso
+                                      and
+                                      al.codigo=ua.codigoAliasAlmacen
+                                   where    al.codigo=${codigobodega} and DATE_FORMAT(fechaIngreso, '%Y-%m-%d') between '${fechainicio}' and '${fechafin}'`
+    }
+
+   }
+   
+
+
+      sequelize.query( consultaTotalRecibosEgreso,{
+       type:sequelize.QueryTypes.SELECT,
+       logging:true
+     }).then(data=>{
+      res.status(200).json({
+        datosaux:data
+      })
+     }
+
+     ) 
+    }
+
+    consultarTotalesDevolucionesXUsuarioXRangoFechas(req,res){
+      console.log(req.session)
+         const {sequelize}=crearConexionPorNombre(req.session.usuario.db)
+     const {codigoUsuario,codigobodega,fechainicio,fechafin}=req.query
+  let consultaTotalDevoluciones
+  if(Number(codigobodega)===0){
+    if(Number(codigoUsuario)!==0){
+      consultaTotalDevoluciones=`select 
+                                    coalesce(sum(case when td.item='TOTAL_DEVOLUCION' and d.codigoCaja>0 THEN  td.valor ELSE 0 end),0) as totalDevolucionContado, 
+                                    coalesce(sum(case when td.item='TOTAL_DESCUENTOS' and d.codigoCaja>0 THEN  td.valor ELSE 0 end),0) as totalDescuentosContado, 
+                                    coalesce(sum(case when td.item='TOTAL_DEVOLUCION' and d.codigoCaja=0 THEN  td.valor ELSE 0 end),0) as totalDevolucionCartera, 
+                                    coalesce(sum(case when td.item='TOTAL_DESCUENTOS' and d.codigoCaja=0 THEN  td.valor ELSE 0 end),0) as totalDescuentosCartera, 
+                                    coalesce(sum(case when td.item='TOTAL_DEVOLUCION' THEN  td.valor ELSE 0 end),0) as totalDevolucion, 
+                                    coalesce(sum(case when td.item='TOTAL_DESCUENTOS' THEN  td.valor ELSE 0 end),0) as totalDescuentos 
+                                from 
+                                  devoluciones d
+                                join
+                                  totalesdevolucion td on td.codigoDevolucion=d.codigo and td.codigoComprobante=d.codigoComprobante 
+
+                                where
+                                    d.usuarioIngreso=${codigoUsuario}
+                                    and
+                                    DATE_FORMAT(d.fechaIngreso, '%Y-%m-%d') between '${fechainicio}' and '${fechafin}';`
+
+    }else{
+      consultaTotalDevoluciones=`select 
+                                  coalesce(sum(case when td.item='TOTAL_DEVOLUCION' and d.codigoCaja>0 THEN  td.valor ELSE 0 end),0) as totalDevolucionContado, 
+                                  coalesce(sum(case when td.item='TOTAL_DESCUENTOS' and d.codigoCaja>0 THEN  td.valor ELSE 0 end),0) as totalDescuentosContado, 
+                                  coalesce(sum(case when td.item='TOTAL_DEVOLUCION' and d.codigoCaja=0 THEN  td.valor ELSE 0 end),0) as totalDevolucionCartera, 
+                                  coalesce(sum(case when td.item='TOTAL_DESCUENTOS' and d.codigoCaja=0 THEN  td.valor ELSE 0 end),0) as totalDescuentosCartera, 
+                                  coalesce(sum(case when td.item='TOTAL_DEVOLUCION' THEN  td.valor ELSE 0 end),0) as totalDevolucion, 
+                                    coalesce(sum(case when td.item='TOTAL_DESCUENTOS' THEN  td.valor ELSE 0 end),0) as totalDescuentos 
+                                from 
+                                  devoluciones d
+                                join
+                                  totalesdevolucion td on td.codigoDevolucion=d.codigo and td.codigoComprobante=d.codigoComprobante
+                                where
+                                   DATE_FORMAT(d.fechaIngreso, '%Y-%m-%d') between '${fechainicio}' and '${fechafin}';`
+    }
+      
+  }else{
+  if(Number(codigoUsuario)!==0){
+      consultaTotalDevoluciones=`select 
+                                    coalesce(sum(case when td.item='TOTAL_DEVOLUCION' and d.codigoCaja>0 THEN  td.valor ELSE 0 end),0) as totalDevolucionContado, 
+                                    coalesce(sum(case when td.item='TOTAL_DESCUENTOS' and d.codigoCaja>0 THEN  td.valor ELSE 0 end),0) as totalDescuentosContado, 
+                                    coalesce(sum(case when td.item='TOTAL_DEVOLUCION' and d.codigoCaja=0 THEN  td.valor ELSE 0 end),0) as totalDevolucionCartera, 
+                                    coalesce(sum(case when td.item='TOTAL_DESCUENTOS' and d.codigoCaja=0 THEN  td.valor ELSE 0 end),0) as totalDescuentosCartera, 
+                                    coalesce(sum(case when td.item='TOTAL_DEVOLUCION' THEN  td.valor ELSE 0 end),0) as totalDevolucion, 
+                                    coalesce(sum(case when td.item='TOTAL_DESCUENTOS' THEN  td.valor ELSE 0 end),0) as totalDescuentos 
+                                from 
+                                  devoluciones d
+                                join
+                                  totalesdevolucion td on td.codigoDevolucion=d.codigo and td.codigoComprobante=d.codigoComprobante  
+                                where
+                                  
+                                    d.usuarioIngreso=${codigoUsuario}
+                                    and
+                                    DATE_FORMAT(d.fechaIngreso, '%Y-%m-%d') between '${fechainicio}' and '${fechafin}';`
+
+    }else{
+      consultaTotalDevoluciones=`select 
+                                  coalesce(sum(case when td.item='TOTAL_DEVOLUCION' and d.codigoCaja>0 THEN  td.valor ELSE 0 end),0) as totalDevolucionContado, 
+                                  coalesce(sum(case when td.item='TOTAL_DESCUENTOS' and d.codigoCaja>0 THEN  td.valor ELSE 0 end),0) as totalDescuentosContado, 
+                                  coalesce(sum(case when td.item='TOTAL_DEVOLUCION' and d.codigoCaja=0 THEN  td.valor ELSE 0 end),0) as totalDevolucionCartera, 
+                                  coalesce(sum(case when td.item='TOTAL_DESCUENTOS' and d.codigoCaja=0 THEN  td.valor ELSE 0 end),0) as totalDescuentosCartera, 
+                                  coalesce(sum(case when td.item='TOTAL_DEVOLUCION' THEN  td.valor ELSE 0 end),0) as totalDevolucion, 
+                                    coalesce(sum(case when td.item='TOTAL_DESCUENTOS' THEN  td.valor ELSE 0 end),0) as totalDescuentos 
+                                from 
+                                  devoluciones d
+                                join
+                                  totalesdevolucion td on td.codigoDevolucion=d.codigo and td.codigoComprobante=d.codigoComprobante join
+                                      usuario u on  u.codigo=d.usuarioIngreso   join   usuariosaliasalmacen ua on ua.codigoUsuario=u.codigo join 
+                                       aliasalmacen al on al.codigo=ua.codigoAliasAlmacen
+                                where
+                                     al.codigo=${codigobodega} and
+                                   DATE_FORMAT(d.fechaIngreso, '%Y-%m-%d') between '${fechainicio}' and '${fechafin}';`
+    }
+  
+  }
+
+
+
+      sequelize.query( consultaTotalDevoluciones,{
+       type:sequelize.QueryTypes.SELECT,
+       logging:true
+     }).then(data=>{
+      res.status(200).json({
+        datosaux:data
+      })
+     }
+
+     ) 
+    }
+
+    async procesarEntrega(totalrecibo, sequelize, req,res){
+      if(req.session.usuario.entregaPendiente !==''){
+        let entrega=JSON.parse(req.session.usuario.entregaPendiente)
+          const [actualizaEntrega] = await sequelize.query(
+            `update entregas set valor_recaudado=valor_recaudado+${totalrecibo}, valor_entregado=valor_entregado+${totalrecibo} where codigo=${entrega.codigo}`
+            ,{type:sequelize.QueryTypes.UPDATE})
+            console.log("Actualizo valores de entrega pendiente")
+      }else{
+        const newentrega=`insert into entregas (codigo, codigo_usuario_entrega, fecha_Inicio, fecha_Final, valor_recaudado, valor_descontado, valor_entregado, codigo_usuario_autorizo, observaciones, estado) 
+        values(0, ${req.session.usuario.codigousuario}, 
+        current_timestamp, null, ${totalrecibo},
+         0, ${totalrecibo}, 0, 
+        '', 'ACTIVO')`;
+          const [Insertarentrega] = await sequelize.query(newentrega,{type:sequelize.QueryTypes.INSERT})
+        console.log("Inserto registro nuevo entrega.")
+
+        let entregaPendiente = await this.traerEntregaPendiente(req.session.usuario.codigousuario,sequelize)
+ 
+    // REASIGNAR EL OBJETO COMPLETO
+ 
+let datosusuario = {...req.session.usuario,entregaPendiente:JSON.stringify(entregaPendiente)}
+
+ req.session.touch();
+await new Promise((resolve, reject) => {
+  //SOLUCION FINAL REGERAR LA SESSION
+req.session.regenerate(err => {
+  if (err) console.log(err);
+
+  req.session.usuario = datosusuario;
+
+  req.session.save(err => {
+    if (err) console.log("Error guardando nueva sesión:", err);
+    console.log("Sesión regenerada");
+   resolve()
+  });
+});
+
+});
+
+console.log("Sesión actualizada:", req.session.usuario);
+
+
+      }
+        
+    }
+
+    async traerEntregaPendiente(codigoUsuarioEntrega, sequelize){
+      const [result] = await sequelize.query(
+          "SELECT * FROM entregas WHERE codigo=(SELECT max(codigo) FROM entregas WHERE codigo_usuario_entrega = ? and estado='ACTIVO');",
+          {
+            replacements: [codigoUsuarioEntrega],
+          }
+        );
+    
+        console.log("entrega pendiente result",result)
+       return result[0];
+    }
+
+    traerTotalesVentasCteAuxiliarXUsuario(codigoUSuarioConsulta, sequelize){
+      const [result] = sequelize.query(
+        ``
+      );
     }
 }
 

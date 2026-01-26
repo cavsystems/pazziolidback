@@ -28,7 +28,9 @@ const db = require("./config/db");
 const {
   enviarDataEmail,
   enviarDataingresos,
-    enviarDatafactura
+    enviarDatafactura,
+    enviarDatafacturapediente
+
 } = require("./servicios/servicio-email");
 const { midleware } = require("./libs/midleware");
 const { routerfactura } = require("./routes/factura.routes");
@@ -44,11 +46,13 @@ app.use(
   })
 );
 app.use(express.json());
-app.use(express.static(path.join(__dirname, "img")));
+
 //app.set("trust proxy", 1);
 const midlewaraseccion = seccion({
   secret: "fazt", // como va empezar a guardar las secciones
-  resave: false, //para que no se empiense a rrenoar la seccion
+rolling: false,
+
+ resave: false, //para que no se empiense a rrenoar la seccion
   saveUninitialized: false, //para que se vuelva a establecer la seccion
   store: new MySQLStore({
     host: process.env.HOST,
@@ -59,10 +63,15 @@ const midlewaraseccion = seccion({
   }), //endonde guardar la seccion
   //http es para que cookie se accesible desde document.cookie
   cookie: {
+     /*  path: "/",
     //sameSite: "none",
     sameSite: "lax", // ⬅️ obligatorio si tu frontend y backend están en dominios distintos
     // secure: true, // ⬅️ obligatorio para que se envíe por HTTPS
-    httpOnly: true, // ⬅️ recomendado para seguridad (aunque puedes poner false si necesitas leerla en JS)
+    httpOnly: true, // ⬅️ recomendado para seguridad (aunque puedes poner false si necesitas leerla en JS)*/
+    path: "/",
+    sameSite: "lax",
+    secure: false,            // Tu backend está en HTTP local
+    httpOnly: true,
   },
 });
 
@@ -96,20 +105,28 @@ app.get("/api/traerempresas", async (req, res) => {
       );
       //toma un objeto y devuelve un array con los valores de sus propiedades
       datos = Object.values(datos[0]);
-
+      console.log('Datos encontrados: ',datos)
       res.json({ response: true, data: datos });
     } else {
       res.json({ response: true, data: [] });
     }
   } catch (error) {
     ;
+    console.log('Entre catch...',error)
     res.json({
       response: false,
       message: "ocurrio un error al ejecutar el procedimiento",
     });
   }
 });
-
+app.use(express.static(path.join(__dirname, "img")));
+app.use((req,res,next)=>{
+  if (req.session.usuario) {
+    console.log("RUTA:", req.originalUrl);
+    console.log("SESION ANTES:", req.session.usuario.entregaPendiente);
+  }
+  next();
+});
 app.use("/api", midleware, routerpedido);
 app.use("/api", midleware, routerterceo);
 
@@ -139,6 +156,7 @@ app.get("/api/selectempresa", midleware, async (req, res) => {
       });
     }
     const db = user.db;
+   
     return res.json({
       response: true,
       db: db,
@@ -147,12 +165,20 @@ app.get("/api/selectempresa", midleware, async (req, res) => {
       nombre: user.vendedor,
       identificacion: user.documento,
       nombreusuario: user.nombre,
+      nivel: user.nivel,
       codigoVendedor:user.codigoVendedor,
         modificarPrecio:user.modificarPrecio,
         permisos:user.permisos,
            codigoComprobanteReciboIngreso: user.codigoComprobanteReciboIngreso,
           ventaEnNegativo:user.ventaEnNegativo,
            facturarPedidos:user.facturarPedidos,
+           codigobodega:user.codigobodega,
+            codigousuario:user.codigousuario,
+            separarproductospedido:user.separarproductospedido,
+            almacenSeparado:user.almacenSeparado,
+             manejarEntregas:user.manejarEntregas,
+             entregaPendiente:user.entregaPendiente,
+             cteAuxiliares:user.cteAuxiliares
 
     });
   } else {
@@ -210,6 +236,13 @@ io.on("connection", (socket) => {
             codigoComprobanteReciboIngreso:socket.request.session.usuario.codigoComprobanteReciboIngreso,
             ventaEnNegativo:socket.request.session.usuario.ventaEnNegativo,
             facturarPedidos:socket.request.session.usuario.facturarPedidos,
+            nivel:socket.request.session.usuario.nivel,
+              separarproductospedido:socket.request.session.usuario.separarproductospedido,
+              almacenSeparado:socket.request.session.usuario.almacenSeparado,
+              manejarEntregas:socket.request.session.usuario.manejarEntregas,
+              entregaPendiente:socket.request.session.usuario.entregaPendiente,
+                 cteAuxiliares:socket.request.session.usuario.cteAuxiliares
+
           });
         }
       } else {
@@ -226,17 +259,24 @@ io.on("connection", (socket) => {
         break;
       case "ACTULIZAR":
         indexServicio.actulizar(socket, dbs, data);
+        break;
       case "EMAIL":
         enviarDataEmail(socket, data);
         break;
       case "EMAILINGRESO":
-        ;
-        enviarDataingresos(socket, data);
+         enviarDataingresos(socket, data);
+          break;
+       
       
 
      case "EMAILFACTURA":
-        ;
-        enviarDatafactura(socket, data);
+       enviarDatafactura(socket, data);
+            break;
+
+        case "EMAILFACTURAPEDIENTE":
+       enviarDatafacturapediente(socket, data);
+            break;
+       
       default:
         break;
     }

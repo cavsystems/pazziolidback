@@ -14,6 +14,7 @@ productoServicio.consultar = async (io, db, datoConsulta) => {
   const sesion = io.request.session;
   const usuario = sesion?.usuario;
   const precio = usuario.precio;
+  let  inventariototal=0;
   let registro=0
   let precioconsulta = "precio1";
   switch (precio) {
@@ -72,8 +73,19 @@ productoServicio.consultar = async (io, db, datoConsulta) => {
       break;
 
 
+      case "LINEAS":
+          consulta=`select * from lineas`;
+        break;
+
+
+          case "GRUPOS":
+          consulta=`select * from grupos`;
+        break;
+
+
 
        case "DESCRIPCIONINVENTARIO":
+           let consultotalinventariodes=''
          console.log("datos",datoConsulta,'bodegas')
         if(datoConsulta.bodega!==''){
           if(datoConsulta.bodega==="BODEGA"){
@@ -83,40 +95,142 @@ productoServicio.consultar = async (io, db, datoConsulta) => {
                     invencan= `cantidad${(Number(datoConsulta.bodega.slice(-1)) + 1).toString()}`;
           }
 
+
+          if(datoConsulta.linea!==0 && datoConsulta.grupo!==0 ){
+                       consulta = `select p.*,${invencan} as Cantidad,${invencan}*costo as cantidadtotal from productos   p   `;
+      consulta += ` WHERE (p.descripcion LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' OR  p.referencia LIKE '%${datoConsulta.datoCondicion.toString().trim()}%'  OR p.codigoBarra LIKE '%${datoConsulta.datoCondicion.toString().trim()}%')   and codigoLinea=${datoConsulta.linea}and codigoGrupo=${datoConsulta.grupo} order by p.descripcion limit 15`;
+    consultotalinventariodes=` select SUM(${invencan}*costo) as totalInventario from productos `
+     consultotalinventariodes += ` WHERE (descripcion LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' OR  referencia LIKE '%${datoConsulta.datoCondicion.toString().trim()}%'  OR codigoBarra LIKE '%${datoConsulta.datoCondicion.toString().trim()}%') and codigoLinea=${datoConsulta.linea} and codigoGrupo=${datoConsulta.grupo}order by descripcion limit 15`;
+          }else if(datoConsulta.linea!==0 ){
+              consulta = `select p.*,${invencan} as Cantidad,${invencan}*costo as cantidadtotal from productos   p   `;
+      consulta += ` WHERE (p.descripcion LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' OR  p.referencia LIKE '%${datoConsulta.datoCondicion.toString().trim()}%'  OR p.codigoBarra LIKE '%${datoConsulta.datoCondicion.toString().trim()}%')  and codigoLinea=${datoConsulta.linea} order by p.descripcion limit 15`;
+    consultotalinventariodes=` select SUM(${invencan}*costo) as totalInventario from productos `
+     consultotalinventariodes += ` WHERE (descripcion LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' OR  referencia LIKE '%${datoConsulta.datoCondicion.toString().trim()}%'  OR codigoBarra LIKE '%${datoConsulta.datoCondicion.toString().trim()}%') and codigoLinea=${datoConsulta.linea} order by descripcion limit 15`;
+          }else if( datoConsulta.grupo!==0 ){
+                consulta = `select p.*,${invencan} as Cantidad,${invencan}*costo as cantidadtotal from productos   p   `;
+      consulta += ` WHERE (p.descripcion LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' OR  p.referencia LIKE '%${datoConsulta.datoCondicion.toString().trim()}%'  OR p.codigoBarra LIKE '%${datoConsulta.datoCondicion.toString().trim()}%')   and codigoGrupo=${datoConsulta.grupo} order by p.descripcion limit 15`;
+    consultotalinventariodes=` select SUM(${invencan}*costo) as totalInventario from productos `
+     consultotalinventariodes += ` WHERE (descripcion LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' OR  referencia LIKE '%${datoConsulta.datoCondicion.toString().trim()}%'  OR codigoBarra LIKE '%${datoConsulta.datoCondicion.toString().trim()}%') and  codigoGrupo=${datoConsulta.grupo} order by descripcion limit 15`; 
+          }else{
            consulta = `select p.*,${invencan} as Cantidad,${invencan}*costo as cantidadtotal from productos   p   `;
-      consulta += ` WHERE p.descripcion LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' OR  p.referencia LIKE '%${datoConsulta.datoCondicion.toString().trim()}%'  OR p.codigoBarra LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' order by p.descripcion limit 50`;
-
+      consulta += ` WHERE p.descripcion LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' OR  p.referencia LIKE '%${datoConsulta.datoCondicion.toString().trim()}%'  OR p.codigoBarra LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' order by p.descripcion limit 15`;
+    consultotalinventariodes=` select SUM(${invencan}*costo) as totalInventario from productos `
+     consultotalinventariodes += ` WHERE descripcion LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' OR  referencia LIKE '%${datoConsulta.datoCondicion.toString().trim()}%'  OR codigoBarra LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' order by descripcion limit 15`;
+          }
+          
         }else{
-         consulta = `select p.*,((cantidad+cantidad2+cantidad3)*costo) as cantidadtotal from productos   p   `;
-      consulta += ` WHERE p.descripcion LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' OR  p.referencia LIKE '%${datoConsulta.datoCondicion.toString().trim()}%'  OR p.codigoBarra LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' order by p.descripcion limit 50`;
-    }
 
+           if(datoConsulta.linea!==0 && datoConsulta.grupo!==0 ){
+
+            consulta = `select p.descripcion,(cantidad+cantidad2+cantidad3+cantidad4+cantidad5+cantidad6+cantidad7+cantidad8+cantidad9+cantidad10) as cantidad,p.costo
+         ,p.precio1,p.precio2,p.precio3,p.referencia,((cantidad+cantidad2+cantidad3+cantidad4+cantidad5+cantidad6+cantidad7+cantidad8+cantidad9+cantidad10)*costo) as cantidadtotal from productos   p `;
+            consulta += ` WHERE (p.descripcion LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' OR  p.referencia LIKE '%${datoConsulta.datoCondicion.toString().trim()}%'  OR p.codigoBarra LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' )  and codigoLinea=${datoConsulta.linea}and codigoGrupo=${datoConsulta.grupo} order by p.descripcion limit 15`;
+              consultotalinventariodes=` select SUM((cantidad+cantidad2+cantidad3+cantidad4+cantidad5+cantidad6+cantidad7+cantidad8+cantidad9+cantidad10)*costo) as totalInventario from productos `
+       consultotalinventariodes+= ` WHERE (descripcion LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' OR  referencia LIKE '%${datoConsulta.datoCondicion.toString().trim()}%'  OR codigoBarra LIKE '%${datoConsulta.datoCondicion.toString().trim()}%')  and codigoLinea=${datoConsulta.linea} and codigoGrupo=${datoConsulta.grupo} order by descripcion limit 15`;           
+    
+          }else if(datoConsulta.linea!==0 ){
+          console.log("entro a codigo linea",datoConsulta)
+            consulta = `select p.descripcion,(cantidad+cantidad2+cantidad3+cantidad4+cantidad5+cantidad6+cantidad7+cantidad8+cantidad9+cantidad10) as cantidad,p.costo
+         ,p.precio1,p.precio2,p.precio3,p.referencia,((cantidad+cantidad2+cantidad3+cantidad4+cantidad5+cantidad6+cantidad7+cantidad8+cantidad9+cantidad10)*costo) as cantidadtotal from productos   p `;
+            consulta += ` WHERE (p.descripcion LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' OR  p.referencia LIKE '%${datoConsulta.datoCondicion.toString().trim()}%'  OR p.codigoBarra LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' )  and codigoLinea=${datoConsulta.linea} order by p.descripcion limit 15`;
+              consultotalinventariodes=` select SUM((cantidad+cantidad2+cantidad3+cantidad4+cantidad5+cantidad6+cantidad7+cantidad8+cantidad9+cantidad10)*costo) as totalInventario from productos `
+       consultotalinventariodes+= ` WHERE (descripcion LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' OR  referencia LIKE '%${datoConsulta.datoCondicion.toString().trim()}%'  OR codigoBarra LIKE '%${datoConsulta.datoCondicion.toString().trim()}%')  and codigoLinea=${datoConsulta.linea} order by descripcion limit 15`;           
+          }else if( datoConsulta.grupo!==0 ){
+             
+            consulta = `select p.descripcion,(cantidad+cantidad2+cantidad3+cantidad4+cantidad5+cantidad6+cantidad7+cantidad8+cantidad9+cantidad10) as cantidad,p.costo
+         ,p.precio1,p.precio2,p.precio3,p.referencia,((cantidad+cantidad2+cantidad3+cantidad4+cantidad5+cantidad6+cantidad7+cantidad8+cantidad9+cantidad10)*costo) as cantidadtotal from productos   p `;
+            consulta += ` WHERE (p.descripcion LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' OR  p.referencia LIKE '%${datoConsulta.datoCondicion.toString().trim()}%'  OR p.codigoBarra LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' )  and codigoGrupo=${datoConsulta.grupo} order by p.descripcion limit 15`;
+              consultotalinventariodes=` select SUM((cantidad+cantidad2+cantidad3+cantidad4+cantidad5+cantidad6+cantidad7+cantidad8+cantidad9+cantidad10)*costo) as totalInventario from productos `
+       consultotalinventariodes+= ` WHERE (descripcion LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' OR  referencia LIKE '%${datoConsulta.datoCondicion.toString().trim()}%'  OR codigoBarra LIKE '%${datoConsulta.datoCondicion.toString().trim()}%')  and codigoGrupo=${datoConsulta.grupo} order by descripcion limit 15`;           
+          }else{
+         consulta = `select p.descripcion,(cantidad+cantidad2+cantidad3+cantidad4+cantidad5+cantidad6+cantidad7+cantidad8+cantidad9+cantidad10) as cantidad,p.costo
+         ,p.precio1,p.precio2,p.precio3,p.referencia,((cantidad+cantidad2+cantidad3+cantidad4+cantidad5+cantidad6+cantidad7+cantidad8+cantidad9+cantidad10)*costo) as cantidadtotal from productos   p   `;
+      consulta += ` WHERE p.descripcion LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' OR  p.referencia LIKE '%${datoConsulta.datoCondicion.toString().trim()}%'  OR p.codigoBarra LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' order by p.descripcion limit 15`;
+       consultotalinventariodes=` select SUM((cantidad+cantidad2+cantidad3+cantidad4+cantidad5+cantidad6+cantidad7+cantidad8+cantidad9+cantidad10)*costo) as totalInventario from productos `
+       consultotalinventariodes+= ` WHERE descripcion LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' OR  referencia LIKE '%${datoConsulta.datoCondicion.toString().trim()}%'  OR codigoBarra LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' order by descripcion limit 15`;
+          }
+          
+       
+    }
+           const resumentotaldes= await sequelize
+    .query(consultotalinventariodes, { type: sequelize.QueryTypes.SELECT ,logging:true})
+     inventariototal=resumentotaldes[0]. totalInventario
       break;
 
 
       case "INVENTARIO":
           const inicio =datoConsulta.pagina> 0 ? datoConsulta.pagina * 15 - 15 : 0;
+          let consultotalinventario=''
+          console.log("bodega seleccionada",datoConsulta.bodega)
           if(datoConsulta.bodega!==''){
+            
              if(datoConsulta.bodega==="BODEGA"){
               invencan="cantidad"
 
-          }else{
+          }else {
               invencan= `cantidad${(Number(datoConsulta.bodega.slice(-1)) + 1).toString()}`;
              
           }
               
-                      consulta = `select p.*,${invencan} as Cantidad,${invencan}*costo as cantidadtotal from productos   p    order by cantidadtotal desc limit ${inicio},15  `;
+           if(datoConsulta.linea!==0 && datoConsulta.grupo!==0 ){
+                consulta = `select p.*,${invencan} as Cantidad,${invencan}*costo as cantidadtotal from productos   p  where codigoLinea=${datoConsulta.linea} and codigoGrupo=${datoConsulta.grupo}     order by cantidadtotal desc limit ${inicio},15  `;
+                       
+                  consultotalinventario=` select SUM(${invencan}*costo) as totalInventario from productos where codigoLinea=${datoConsulta.linea} and codigoGrupo=${datoConsulta.grupo} `
+           }else if(datoConsulta.linea!==0){
+              consulta = `select p.*,${invencan} as Cantidad,${invencan}*costo as cantidadtotal from productos   p  where codigoLinea=${datoConsulta.linea}   order by cantidadtotal desc limit ${inicio},15  `;
+                       
+                  consultotalinventario=` select SUM(${invencan}*costo) as totalInventario from productos where codigoLinea=${datoConsulta.linea} `       
+           }else if(datoConsulta.grupo!==0){
+              consulta = `select p.*,${invencan} as Cantidad,${invencan}*costo as cantidadtotal from productos   p  where codigoGrupo=${datoConsulta.linea}  order by cantidadtotal desc limit ${inicio},15  `;
+                       
+                  consultotalinventario=` select SUM(${invencan}*costo) as totalInventario from productos where codigoGrupo=${datoConsulta.linea} `       
+           }else{
+              consulta = `select p.*,${invencan} as Cantidad,${invencan}*costo as cantidadtotal from productos   p      order by cantidadtotal desc limit ${inicio},15  `;
+                       
+                  consultotalinventario=`select SUM(${invencan}*costo) as totalInventario from productos `       
+           }
           }else{
-               consulta = `select p.*,((cantidad+cantidad2+cantidad3)*costo) as cantidadtotal from productos   p    order by cantidadtotal desc limit ${inicio},15  `;
-          }
-      
-        
-                    consulta2=`  select count(codigo) as total from productos`
-        const re= await sequelize
-    .query(consulta2, { type: sequelize.QueryTypes.SELECT ,logging:true})
 
-    console.log("consulta2",re)
-    registro= Math.round(re[0].total / 15)
+             if(datoConsulta.linea!==0 && datoConsulta.grupo!==0 ){
+
+
+                    consulta = `select p.codigo, p.descripcion,(cantidad+cantidad2+cantidad3+cantidad4+cantidad5+cantidad6+cantidad7+cantidad8+cantidad9+cantidad10) as cantidad,p.costo
+         ,p.precio1,p.precio2,p.precio3,p.referencia,((cantidad+cantidad2+cantidad3+cantidad4+cantidad5+cantidad6+cantidad7+cantidad8+cantidad9+cantidad10)*costo) as cantidadtotal from productos   p   where codigoLinea=${datoConsulta.linea} and codigoGrupo=${datoConsulta.grupo} order by p.descripcion desc limit ${inicio},15 `;
+           consultotalinventario=` select SUM((cantidad+cantidad2+cantidad3+cantidad4+cantidad5+cantidad6+cantidad7+cantidad8+cantidad9+cantidad10)*costo) as totalInventario from productos  where codigoLinea=${datoConsulta.linea} and codigoGrupo=${datoConsulta.grupo}`
+             
+                       
+                
+           }else if(datoConsulta.linea!==0){
+         
+                    consulta = `select p.codigo, p.descripcion,(cantidad+cantidad2+cantidad3+cantidad4+cantidad5+cantidad6+cantidad7+cantidad8+cantidad9+cantidad10) as cantidad,p.costo
+         ,p.precio1,p.precio2,p.precio3,p.referencia,((cantidad+cantidad2+cantidad3+cantidad4+cantidad5+cantidad6+cantidad7+cantidad8+cantidad9+cantidad10)*costo) as cantidadtotal from productos   p   where codigoLinea=${datoConsulta.linea} order by p.descripcion desc limit ${inicio},15 `;
+           consultotalinventario=` select SUM((cantidad+cantidad2+cantidad3+cantidad4+cantidad5+cantidad6+cantidad7+cantidad8+cantidad9+cantidad10)*costo) as totalInventario from productos  where codigoLinea=${datoConsulta.linea}`
+                
+           }else if(datoConsulta.grupo!==0){
+           
+                    consulta = `select p.codigo, p.descripcion,(cantidad+cantidad2+cantidad3+cantidad4+cantidad5+cantidad6+cantidad7+cantidad8+cantidad9+cantidad10) as cantidad,p.costo
+         ,p.precio1,p.precio2,p.precio3,p.referencia,((cantidad+cantidad2+cantidad3+cantidad4+cantidad5+cantidad6+cantidad7+cantidad8+cantidad9+cantidad10)*costo) as cantidadtotal from productos   p   where   codigoGrupo=${datoConsulta.grupo} order by p.descripcion desc limit ${inicio},15 `;
+           consultotalinventario=` select SUM((cantidad+cantidad2+cantidad3+cantidad4+cantidad5+cantidad6+cantidad7+cantidad8+cantidad9+cantidad10)*costo) as totalInventario from productos  where  codigoGrupo=${datoConsulta.grupo}`
+           }else{
+             consulta = `select p.codigo, p.descripcion,(cantidad+cantidad2+cantidad3+cantidad4+cantidad5+cantidad6+cantidad7+cantidad8+cantidad9+cantidad10) as cantidad,p.costo
+         ,p.precio1,p.precio2,p.precio3,p.referencia,((cantidad+cantidad2+cantidad3+cantidad4+cantidad5+cantidad6+cantidad7+cantidad8+cantidad9+cantidad10)*costo) as cantidadtotal from productos   p order by p.descripcion desc limit ${inicio},15    `;
+         consultotalinventario=` select SUM((cantidad+cantidad2+cantidad3+cantidad4+cantidad5+cantidad6+cantidad7+cantidad8+cantidad9+cantidad10)*costo) as totalInventario from productos`   
+           }
+             
+          }
+                 
+        
+
+
+                    consulta2=`  select count(codigo) as total from productos`
+        const resumentotal= await sequelize
+    .query(consultotalinventario, { type: sequelize.QueryTypes.SELECT ,logging:true})
+     inventariototal=resumentotal[0]. totalInventario
+   const re= await sequelize
+    .query(consulta2, { type: sequelize.QueryTypes.SELECT ,logging:true})
+    console.log("consulta2",resumentotal)
+    registro= Math.ceil(re[0].total / 15)
+    console.log("registros actuales",registro)
     if(registro===0){
       registro=1
     }
@@ -146,6 +260,7 @@ productoServicio.consultar = async (io, db, datoConsulta) => {
     .query(consulta, { type: sequelize.QueryTypes.SELECT ,logging:true})
     .then((producto) => {
       ;
+      
       if (producto.length > 0) {
         respuesta = {
           sistema: "POS",
@@ -153,7 +268,9 @@ productoServicio.consultar = async (io, db, datoConsulta) => {
           mensajePeticion: producto,
           tipoConsulta: "PRODUCTO",
           canalUsuario: canalUsuario,
-          registro
+          registro,
+          inventariototal
+        
         };
           
         io.emit(process.env.CANALSERVIDOR, JSON.stringify(respuesta));
