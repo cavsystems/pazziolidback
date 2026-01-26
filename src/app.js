@@ -28,7 +28,9 @@ const db = require("./config/db");
 const {
   enviarDataEmail,
   enviarDataingresos,
-    enviarDatafactura
+    enviarDatafactura,
+    enviarDatafacturapediente
+
 } = require("./servicios/servicio-email");
 const { midleware } = require("./libs/midleware");
 const { routerfactura } = require("./routes/factura.routes");
@@ -172,7 +174,8 @@ app.get("/api/selectempresa", midleware, async (req, res) => {
             separarproductospedido:user.separarproductospedido,
             almacenSeparado:user.almacenSeparado,
              manejarEntregas:user.manejarEntregas,
-             entregaPendiente:user.entregaPendiente
+             entregaPendiente:user.entregaPendiente,
+             cteAuxiliares:user.cteAuxiliares
 
     });
   } else {
@@ -234,7 +237,9 @@ io.on("connection", (socket) => {
               separarproductospedido:socket.request.session.usuario.separarproductospedido,
               almacenSeparado:socket.request.session.usuario.almacenSeparado,
               manejarEntregas:socket.request.session.usuario.manejarEntregas,
-              entregaPendiente:socket.request.session.usuario.entregaPendiente
+              entregaPendiente:socket.request.session.usuario.entregaPendiente,
+                 cteAuxiliares:socket.request.session.usuario.cteAuxiliares
+
           });
         }
       } else {
@@ -251,17 +256,24 @@ io.on("connection", (socket) => {
         break;
       case "ACTULIZAR":
         indexServicio.actulizar(socket, dbs, data);
+        break;
       case "EMAIL":
         enviarDataEmail(socket, data);
         break;
       case "EMAILINGRESO":
-        ;
-        enviarDataingresos(socket, data);
+         enviarDataingresos(socket, data);
+          break;
+       
       
 
      case "EMAILFACTURA":
-        ;
-        enviarDatafactura(socket, data);
+       enviarDatafactura(socket, data);
+            break;
+
+        case "EMAILFACTURAPEDIENTE":
+       enviarDatafacturapediente(socket, data);
+            break;
+       
       default:
         break;
     }

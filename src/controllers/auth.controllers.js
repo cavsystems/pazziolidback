@@ -197,8 +197,14 @@ class Useraccioneauth {
                   })
                 }
                 
-                let almacenSeparado = await this.cargarAliasAlmaceXAlias("SEPARADO", sequelize)
+                let almacenSeparado=''
+                let  almacenSeparadoFinal= await this.cargarAliasAlmaceXAlias("SEPARADO", sequelize)
                 console.log("almacen separado",almacenSeparado)
+                try {
+                  almacenSeparado=almacenSeparadoFinal.almacen
+                } catch (error) {
+                  almacenSeparado=''
+                }
                 const [resultComprobanteVenta] = await sequelize.query(
                   "SELECT c.* FROM usuarioscomprobantes uc JOIN comprobantes c ON uc.codigoComprobante = c.codigo WHERE uc.codigoUsuario =? AND uc.categoria =?;",
                   {
@@ -235,6 +241,9 @@ class Useraccioneauth {
                    entregaPendiente=''
                 }
               
+                // Verificando comprobantes auxiliares
+                let cteAuxiliares = await this.cargarComprobantesAuxiliares(sequelize);
+                console.log("Cte auxiliares:",cteAuxiliares);
 
                 req.session.usuario = {
                     ...req.session.usuario,
@@ -243,7 +252,7 @@ class Useraccioneauth {
                   separarproductospedido,
                   manejarEntregas,
                   entregaPendiente,
-                  almacenSeparado:almacenSeparado.almacen,
+                  almacenSeparado:almacenSeparado,
                   modificarPrecio,
                   documento: documento,
                   db: db,
@@ -264,6 +273,7 @@ class Useraccioneauth {
                   precio,
                   ventaEnNegativo,
                   facturarPedidos,
+                  cteAuxiliares:JSON.stringify(cteAuxiliares),
                 };
                 console.log("autenticado")
                 return res.json({ autenticado: true });
@@ -530,6 +540,22 @@ async traerEntregaPendiente(codigoUsuarioEntrega, sequelize){
     console.log("entrega pendiente result",result)
    return result[0];
 }
+
+async cargarComprobantesAuxiliares(sequelize){
+      let consulta =  `select 
+                          DISTINCT valor 
+                        from 
+                          parametrosComprobante 
+                        where 
+                          codigoParametro in (select codigo from parametros where nombre like 'COMPROBANTE_AUXILIAR');`;
+
+      const result = await sequelize.query(consulta, {
+      type: sequelize.QueryTypes.SELECT,
+      logging: true,
+    });
+
+    return {respuesta: result};
+    }
 
 }
 
