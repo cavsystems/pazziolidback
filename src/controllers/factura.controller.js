@@ -11,19 +11,65 @@ class Factura {
     this.insertaritemsfactura=
       this.insertaritemsfactura.bind(this);
   }
+  async traerfacturaciudades(req, res) {
+    const { sequelize } = crearConexionPorNombre(req.session.usuario.db);
+    const consulta = `SELECT
+  DISTINCT m.municipio
+FROM factura f
+INNER JOIN tercero t ON f.codigoTercero = t.codigo
+JOIN municipios m ON m.codigoDepartamento = t.codigoDepartamento AND m.codigoMunicipio = t.codigoMunicipio
+WHERE f.saldo <> 0 AND f.estado = 'ACTIVO';`;
+    const result = await sequelize.query(consulta, {
+      type: sequelize.QueryTypes.SELECT,
+      logging: true,
+    });
+    res.json({ respuesta: result });
+  }
   async traerfactura(req, res) {
     const { sequelize } = crearConexionPorNombre(req.session.usuario.db);
     const inicio =
       req.query.pagina && req.query.pagina > 0 ? req.query.pagina * 15 - 15 : 0;
-    const consulta = `select f.codigo, f.codigoComprobante, c.nombre, f.fechaEmision as fechaEmision, f.fechaVencimiento 
-    as fechaVencimiento,  IFNULL(DATEDIFF(fechavencimiento,CURRENT_DATE), 0) AS dias,
-    f.totalFactura as totalFactura , f.saldo as saldo, f.observaciones ,
-     v.nombre as vendedor, t.razonSocial as cliente, t.identificacion, t.telefonoFijo, t.celulares, t.direccion, false as selected, 0 as abono from  factura f inner join vendedores v inner join 
-    comprobantes c inner join tercero t on 
-    v.codigo=f.codigoVendedor and  f.codigoComprobante=c.codigo and f.codigoTercero=t.codigo where t.codigo=? && saldo<>0 && f.estado='ACTIVO' limit ?,15 ;`;
-    const consultatotal = `select  COUNT(f.codigo) as nregistros  , sum(f.saldo)   as saldo  from  factura f inner join vendedores v inner join 
-    comprobantes c inner join tercero t on 
-    v.codigo=f.codigoVendedor and  f.codigoComprobante=c.codigo and f.codigoTercero=t.codigo where saldo<>0 && f.estado='ACTIVO' &&  t.codigo=?`;
+    const consulta = `SELECT 
+  f.codigo,
+  f.codigoComprobante,
+  c.nombre,
+  f.fechaEmision,
+  f.fechaVencimiento,
+  IFNULL(DATEDIFF(f.fechaVencimiento, CURRENT_DATE), 0) AS dias,
+  f.totalFactura,
+  f.saldo,
+  f.observaciones,
+  v.nombre AS vendedor,
+  t.razonSocial AS cliente,
+  t.identificacion,
+  t.telefonoFijo,
+  t.celulares,
+  t.direccion,
+  FALSE AS selected,
+  0 AS abono
+FROM factura f
+LEFT JOIN vendedores v
+  ON v.codigo = f.codigoVendedor
+INNER JOIN comprobantes c
+  ON c.codigo = f.codigoComprobante
+INNER JOIN tercero t
+  ON t.codigo = f.codigoTercero
+WHERE t.codigo = ?
+  AND f.saldo <> 0
+  AND f.estado = 'ACTIVO'
+LIMIT ?, 15;
+`;
+    const consultatotal = `select  COUNT(f.codigo) as nregistros  , sum(f.saldo)   as saldo  FROM factura f
+LEFT JOIN vendedores v
+  ON v.codigo = f.codigoVendedor
+INNER JOIN comprobantes c
+  ON c.codigo = f.codigoComprobante
+INNER JOIN tercero t
+  ON t.codigo = f.codigoTercero
+WHERE t.codigo = ?
+  AND f.saldo <> 0
+  AND f.estado = 'ACTIVO'
+`;
     const result = await sequelize.query(consulta, {
       replacements: [Number(req.query.codigo), inicio],
       type: sequelize.QueryTypes.SELECT,
@@ -56,7 +102,7 @@ class Factura {
   }
   async pdffactura(req, res) {
     const { sequelize } = crearConexionPorNombre(req.session.usuario.db);
-    const {codigousuario}=req.query;
+    const {codigousuario,ciudad}=req.query;
     let consulta;
 if(!codigousuario){
 consulta = `(
@@ -83,7 +129,7 @@ consulta = `(
     FROM factura f
     INNER JOIN tercero t ON f.codigoTercero = t.codigo
     JOIN municipios m ON m.codigoDepartamento=t.codigoDepartamento AND m.codigoMunicipio=t.codigoMunicipio
-    WHERE f.saldo <> 0 AND f.estado = 'ACTIVO' 
+    WHERE f.saldo <> 0 AND f.estado = 'ACTIVO'  and m.municipio like '%${ciudad}%'
     GROUP BY t.codigo,    cliente,  t.identificacion,   t.direccion,  t.telefonoFijo,  t.celulares, m.municipio
 )
 UNION ALL
@@ -113,7 +159,7 @@ UNION ALL
     INNER JOIN comprobantes c ON f.codigoComprobante = c.codigo
     INNER JOIN tercero t ON f.codigoTercero = t.codigo
     JOIN municipios m ON m.codigoDepartamento=t.codigoDepartamento AND m.codigoMunicipio=t.codigoMunicipio
-    WHERE f.saldo <> 0 AND f.estado = 'ACTIVO'
+    WHERE f.saldo <> 0 AND f.estado = 'ACTIVO'  and m.municipio like '%${ciudad}%'
 )
  ORDER BY cliente, orden, fechaEmision ;`;
 }else{
@@ -141,7 +187,7 @@ UNION ALL
     FROM factura f
     INNER JOIN tercero t ON f.codigoTercero = t.codigo
     JOIN municipios m ON m.codigoDepartamento=t.codigoDepartamento AND m.codigoMunicipio=t.codigoMunicipio
-    WHERE f.saldo <> 0 AND f.estado = 'ACTIVO' and t.codigo=${codigousuario}
+    WHERE f.saldo <> 0 AND f.estado = 'ACTIVO' and t.codigo=${codigousuario}  and m.municipio like '%${ciudad}%'
     GROUP BY t.codigo,    cliente,  t.identificacion,   t.direccion,  t.telefonoFijo,  t.celulares, m.municipio 
 )
 UNION ALL
@@ -167,11 +213,11 @@ UNION ALL
         NULL AS totalSaldoCliente,
         1 AS orden
     FROM factura f
-    INNER JOIN vendedores v ON v.codigo = f.codigoVendedor
+   LEFT JOIN vendedores v ON v.codigo = f.codigoVendedor
     INNER JOIN comprobantes c ON f.codigoComprobante = c.codigo
     INNER JOIN tercero t ON f.codigoTercero = t.codigo
     JOIN municipios m ON m.codigoDepartamento=t.codigoDepartamento AND m.codigoMunicipio=t.codigoMunicipio
-    WHERE f.saldo <> 0 AND f.estado = 'ACTIVO' AND t.codigo=${codigousuario}
+    WHERE f.saldo <> 0 AND f.estado = 'ACTIVO' AND t.codigo=${codigousuario} and m.municipio like '%${ciudad}%'
 )
  ORDER BY cliente, orden, fechaEmision  ;`;
 }
@@ -223,13 +269,14 @@ JOIN municipios m ON m.codigoDepartamento = t.codigoDepartamento
                  AND m.codigoMunicipio = t.codigoMunicipio
 WHERE f.saldo <> 0 
   AND f.estado = 'ACTIVO'
+  and m.municipio like '%${req.query.ciudad}%'
 ORDER BY cliente, fechaEmision
 LIMIT ?,15;`;
     const consultatotal = `select  COUNT(*) as nregistros,  sum(f.saldo)   as saldo from  factura f INNER JOIN comprobantes c ON f.codigoComprobante = c.codigo
 INNER JOIN tercero t ON f.codigoTercero = t.codigo
 LEFT JOIN vendedores v ON v.codigo = f.codigoVendedor  -- LEFT JOIN mantiene facturas sin vendedor
 JOIN municipios m ON m.codigoDepartamento = t.codigoDepartamento 
-                 AND m.codigoMunicipio = t.codigoMunicipio where saldo<>0 && f.estado='ACTIVO'`;
+                 AND m.codigoMunicipio = t.codigoMunicipio where saldo<>0 && f.estado='ACTIVO' and m.municipio like '%${req.query.ciudad}%'`;
     const result = await sequelize.query(consulta, {
       replacements: [inicio],
       type: sequelize.QueryTypes.SELECT,
@@ -1115,7 +1162,8 @@ join comprobantes c on c.codigo=datos.codigocomprobante ORDER BY datos.fechaEmis
        logging:true
      }).then(data=>{
       res.status(200).json({
-        datosaux:data
+        datosaux:data,
+        dataempresa:req.session.usuario.config.RAZON_SOCIAL
       })
      }
 

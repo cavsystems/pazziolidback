@@ -98,9 +98,9 @@ productoServicio.consultar = async (io, db, datoConsulta) => {
 
           if(datoConsulta.linea!==0 && datoConsulta.grupo!==0 ){
                        consulta = `select p.*,${invencan} as Cantidad,${invencan}*costo as cantidadtotal from productos   p   `;
-      consulta += ` WHERE (p.descripcion LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' OR  p.referencia LIKE '%${datoConsulta.datoCondicion.toString().trim()}%'  OR p.codigoBarra LIKE '%${datoConsulta.datoCondicion.toString().trim()}%')   and codigoLinea=${datoConsulta.linea}and codigoGrupo=${datoConsulta.grupo} order by p.descripcion limit 15`;
+      consulta += ` WHERE (p.descripcion LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' OR  p.referencia LIKE '%${datoConsulta.datoCondicion.toString().trim()}%'  OR p.codigoBarra LIKE '%${datoConsulta.datoCondicion.toString().trim()}%')   and codigoLinea=${datoConsulta.linea} and codigoGrupo=${datoConsulta.grupo} order by p.descripcion limit 15`;
     consultotalinventariodes=` select SUM(${invencan}*costo) as totalInventario from productos `
-     consultotalinventariodes += ` WHERE (descripcion LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' OR  referencia LIKE '%${datoConsulta.datoCondicion.toString().trim()}%'  OR codigoBarra LIKE '%${datoConsulta.datoCondicion.toString().trim()}%') and codigoLinea=${datoConsulta.linea} and codigoGrupo=${datoConsulta.grupo}order by descripcion limit 15`;
+     consultotalinventariodes += ` WHERE (descripcion LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' OR  referencia LIKE '%${datoConsulta.datoCondicion.toString().trim()}%'  OR codigoBarra LIKE '%${datoConsulta.datoCondicion.toString().trim()}%') and codigoLinea=${datoConsulta.linea} and codigoGrupo=${datoConsulta.grupo} order by descripcion limit 15`;
           }else if(datoConsulta.linea!==0 ){
               consulta = `select p.*,${invencan} as Cantidad,${invencan}*costo as cantidadtotal from productos   p   `;
       consulta += ` WHERE (p.descripcion LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' OR  p.referencia LIKE '%${datoConsulta.datoCondicion.toString().trim()}%'  OR p.codigoBarra LIKE '%${datoConsulta.datoCondicion.toString().trim()}%')  and codigoLinea=${datoConsulta.linea} order by p.descripcion limit 15`;
@@ -124,7 +124,7 @@ productoServicio.consultar = async (io, db, datoConsulta) => {
 
             consulta = `select p.descripcion,(cantidad+cantidad2+cantidad3+cantidad4+cantidad5+cantidad6+cantidad7+cantidad8+cantidad9+cantidad10) as cantidad,p.costo
          ,p.precio1,p.precio2,p.precio3,p.referencia,((cantidad+cantidad2+cantidad3+cantidad4+cantidad5+cantidad6+cantidad7+cantidad8+cantidad9+cantidad10)*costo) as cantidadtotal from productos   p `;
-            consulta += ` WHERE (p.descripcion LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' OR  p.referencia LIKE '%${datoConsulta.datoCondicion.toString().trim()}%'  OR p.codigoBarra LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' )  and codigoLinea=${datoConsulta.linea}and codigoGrupo=${datoConsulta.grupo} order by p.descripcion limit 15`;
+            consulta += ` WHERE (p.descripcion LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' OR  p.referencia LIKE '%${datoConsulta.datoCondicion.toString().trim()}%'  OR p.codigoBarra LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' )  and codigoLinea=${datoConsulta.linea} and codigoGrupo=${datoConsulta.grupo} order by p.descripcion limit 15`;
               consultotalinventariodes=` select SUM((cantidad+cantidad2+cantidad3+cantidad4+cantidad5+cantidad6+cantidad7+cantidad8+cantidad9+cantidad10)*costo) as totalInventario from productos `
        consultotalinventariodes+= ` WHERE (descripcion LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' OR  referencia LIKE '%${datoConsulta.datoCondicion.toString().trim()}%'  OR codigoBarra LIKE '%${datoConsulta.datoCondicion.toString().trim()}%')  and codigoLinea=${datoConsulta.linea} and codigoGrupo=${datoConsulta.grupo} order by descripcion limit 15`;           
     
