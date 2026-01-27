@@ -1335,7 +1335,7 @@ join comprobantes c on c.codigo=datos.codigocomprobante ORDER BY datos.fechaEmis
                                                                         select 
                                                                           distinct pc.codigoComprobante, pc.valor 
                                                                         from 
-                                                                          gilsas.parametrosComprobante pc
+                                                                        parametrosComprobante pc
                                                                         join aliasalmacen al on al.almacen=pc.valor
                                                                         where 
                                                                           pc.codigoParametro in (select codigo from parametros where nombre = 'ALMACEN')
