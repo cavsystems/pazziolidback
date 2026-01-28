@@ -143,7 +143,7 @@ async function crearPedido(
        queryInsert += `'1970-01-01','${estado}','${ubicacion}',${usuario.codigousuario},${descuento},${totalPedido},'${tipoFactura}','${observacion}',0)`;
    }
   sequelize
-    .query(queryInsert, { type: sequelize.QueryTypes.INSERT })
+    .query(queryInsert, { type: sequelize.QueryTypes.INSERT, logging: console.log })
     .then(([idPedido, affectedRows]) => {
       dataEmail = {
         ...dataEmail,
