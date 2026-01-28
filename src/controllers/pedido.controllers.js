@@ -281,7 +281,7 @@ obtenernombrecantidad(almacenMovimiento) {
       return cantidad
     }
    async devolveritemsbodega(req,res,itemsproducts,db){
-      if( req.session.usuario.separarproductospedido === 1 && req.session.usuario.almacenSeparado.trim()!="" && itemsproducts[0].separado){
+      if( req.session.usuario.separarproductospedido === 1 && req.session.usuario.almacenSeparado.trim()!="" ){
               
          let queryKardexSalida ="insert into kardex(codigo, transaccion,codigoComprobante, codigoProducto, cantidad,fechaTransaccion, fechaIngreso, codigoUsuarioIngreso, fechaAnulo, codigoUsuarioAnulo, estado, precioVenta, costo, origen, destino, codigoDocumento, codigoBodega, categoriaComprobante, costoPromedio, codigoCaja, codigoComprobanteDocumento, fechaCreacionDocumento, descripcion, codigoContable, codigoLinea,codigoGrupo, codigoVendedor)values"; 
   var queryKardexEntrada="insert into kardex(codigo, transaccion,codigoComprobante, codigoProducto, cantidad,fechaTransaccion, fechaIngreso, codigoUsuarioIngreso, fechaAnulo, codigoUsuarioAnulo, estado, precioVenta, costo, origen, destino, codigoDocumento, codigoBodega, categoriaComprobante, costoPromedio, codigoCaja, codigoComprobanteDocumento, fechaCreacionDocumento, descripcion, codigoContable, codigoLinea,codigoGrupo, codigoVendedor)values";

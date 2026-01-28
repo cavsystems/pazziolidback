@@ -132,15 +132,15 @@ async function crearPedido(
   queryInsert +=
     "codigoVendedor,codigoTercero,fechaCreacion,horaCreacion,codigoFactura,codigoUsuarioAnulo,";
   queryInsert +=
-    "fechaAnulo,estado,ubicacion,codigoUsuario,descuento,totalPedido,tipoFactura,observacion,separado)";
+    "fechaAnulo,estado,ubicacion,codigoUsuario,descuento,totalPedido,tipoFactura,observacion)";
   queryInsert += "VALUES(";
   queryInsert += `${codigousuario.codigo},${codigoUsuario},'${fechaCreacion}','${horaCreacion}',${codigoFactura},${codigoUsuarioAnulo},`;
 
    if( io.request.session.usuario.separarproductospedido === 1 && io.request.session.usuario.almacenSeparado.trim()!=""){
-    queryInsert += `'1970-01-01','${estado}','${ubicacion}',${usuario.codigousuario},${descuento},${totalPedido},'${tipoFactura}','${observacion}',1)`;
+    queryInsert += `'1970-01-01','${estado}','${ubicacion}',${usuario.codigousuario},${descuento},${totalPedido},'${tipoFactura}','${observacion}')`;
 
    }else{
-       queryInsert += `'1970-01-01','${estado}','${ubicacion}',${usuario.codigousuario},${descuento},${totalPedido},'${tipoFactura}','${observacion}',0)`;
+       queryInsert += `'1970-01-01','${estado}','${ubicacion}',${usuario.codigousuario},${descuento},${totalPedido},'${tipoFactura}','${observacion}')`;
    }
   sequelize
     .query(queryInsert, { type: sequelize.QueryTypes.INSERT, logging: console.log })
