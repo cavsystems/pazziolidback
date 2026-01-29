@@ -181,9 +181,9 @@ productoServicio.consultar = async (io, db, datoConsulta) => {
                        
                   consultotalinventario=` select SUM(${invencan}*costo) as totalInventario from productos where codigoLinea=${datoConsulta.linea} `       
            }else if(datoConsulta.grupo!==0){
-              consulta = `select p.*,${invencan} as Cantidad,${invencan}*costo as cantidadtotal from productos   p  where codigoGrupo=${datoConsulta.linea}  order by cantidadtotal desc limit ${inicio},15  `;
+              consulta = `select p.*,${invencan} as Cantidad,${invencan}*costo as cantidadtotal from productos   p  where codigoGrupo=${datoConsulta.grupo}  order by cantidadtotal desc limit ${inicio},15  `;
                        
-                  consultotalinventario=` select SUM(${invencan}*costo) as totalInventario from productos where codigoGrupo=${datoConsulta.linea} `       
+                  consultotalinventario=` select SUM(${invencan}*costo) as totalInventario from productos where codigoGrupo=${datoConsulta.grupo} `       
            }else{
               consulta = `select p.*,${invencan} as Cantidad,${invencan}*costo as cantidadtotal from productos   p      order by cantidadtotal desc limit ${inicio},15  `;
                        
