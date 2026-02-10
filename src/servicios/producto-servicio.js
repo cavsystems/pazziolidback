@@ -257,10 +257,18 @@ productoServicio.consultar = async (io, db, datoConsulta) => {
              
           }
                  
-        
+                if(datoConsulta.linea!==0 && datoConsulta.grupo!==0){
+   consulta2=`select count(codigo) as total from productos  where codigoLinea=${datoConsulta.linea} and codigoGrupo=${datoConsulta.grupo}`
+                }else if(datoConsulta.linea!==0){
+                consulta2=`select count(codigo) as total from productos  where codigoLinea=${datoConsulta.linea}`
+                }else if(datoConsulta.grupo!==0){
+                   consulta2=`select count(codigo) as total from productos  where codigoGrupo=${datoConsulta.grupo}`
+                }else{
+                     consulta2=`select count(codigo) as total from productos`
+                }
 
-
-                    consulta2=`  select count(codigo) as total from productos`
+          
+                 
         const resumentotal= await sequelize
     .query(consultotalinventario, { type: sequelize.QueryTypes.SELECT ,logging:true})
      
