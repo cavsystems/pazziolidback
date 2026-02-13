@@ -68,6 +68,8 @@ class Pedidocontrol {
 
     let pedidos_obtenidos = await sequelize.query(consulta, {
       type: sequelize.QueryTypes.SELECT,
+      logging: console.log
+
     });
 
     if (pedidos_obtenidos.length > 0) {
