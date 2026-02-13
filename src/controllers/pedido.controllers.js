@@ -16,6 +16,7 @@ class Pedidocontrol {
   async obtenerpedido(req, res) {
     const { sequelize } = crearConexionPorNombre(req.session.usuario.db);
     let consulta;
+    console.log("seccion db  activa",req.session.usuario.db)
     const inicio = req.query.pagina > 0 ? req.query.pagina * 15 - 15 : 0;
     const busqueda =
       !isNaN(req.query.busqueda) && isFinite(req.query.busqueda)
