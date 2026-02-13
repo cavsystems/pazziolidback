@@ -30,7 +30,7 @@ class Pedidocontrol {
       ) {
         consulta = `SELECT p.codigo AS codigo_pedido,p.codigoUsuario AS codigousuario,p.fechaCreacion as fecha_creacion,v.nombre AS nombrevendedor ,v.identificacion as cedula,p.horaCreacion AS  hora
         ,t.apellido1 AS nombre_cliente ,t.razonSocial AS razonsocial_clientes
-         , p.estado AS estadopedido,p.totalpedido as totalpedido,t.email,t.identificacion ,t.telefonoFijo,t.direccion FROM pedido p INNER JOIN  tercero t INNER JOIN vendedores v ON
+         , p.estado AS estadopedido,COALESCE(p.totalpedido,0) as totalpedido,t.email,t.identificacion ,t.telefonoFijo,t.direccion FROM pedido p INNER JOIN  tercero t INNER JOIN vendedores v ON
         v.codigo=p.codigoVendedor AND p.codigoTercero=t.codigo where v.identificacion=${
           req.session.usuario.documento
         } and (t.razonSocial like '%${busqueda}%'  or p.codigo like '%${busqueda}%' or v.nombre like '%${busqueda}%') and  p.estado='${
@@ -39,7 +39,7 @@ class Pedidocontrol {
       } else {
         consulta = `SELECT p.codigo AS codigo_pedido,p.codigoUsuario AS codigousuario,p.fechaCreacion as fecha_creacion,v.nombre AS nombrevendedor ,v.identificacion as cedula,p.horaCreacion AS  hora
         ,t.apellido1 AS nombre_cliente ,t.razonSocial AS razonsocial_clientes
-         , p.estado AS estadopedido,p.totalpedido as totalpedido,t.email,t.identificacion ,t.telefonoFijo,t.direccion FROM pedido p INNER JOIN  tercero t INNER JOIN vendedores v ON
+         , p.estado AS estadopedido,COALESCE(p.totalpedido,0) as totalpedido,t.email,t.identificacion ,t.telefonoFijo,t.direccion FROM pedido p INNER JOIN  tercero t INNER JOIN vendedores v ON
         v.codigo=p.codigoVendedor AND p.codigoTercero=t.codigo where v.identificacion=${
           req.session.usuario.documento
         } and t.razonSocial like '%${busqueda}%'  or p.codigo like '%${busqueda}%' or v.nombre like '%${busqueda}%'   limit  ${inicio},${15} `;
@@ -52,14 +52,14 @@ class Pedidocontrol {
       ) {
         consulta = `SELECT p.codigo AS codigo_pedido,p.codigoUsuario AS codigousuario,p.fechaCreacion as fecha_creacion,v.nombre AS nombrevendedor,v.identificacion as cedula ,p.horaCreacion AS  hora
         ,t.apellido1 AS nombre_cliente ,t.razonSocial AS razonsocial_clientes
-         , p.estado AS estadopedido,p.totalpedido as totalpedido,t.email,t.identificacion ,t.telefonoFijo,t.direccion FROM pedido p INNER JOIN  tercero t INNER JOIN vendedores v ON
+         , p.estado AS estadopedido,COALESCE(p.totalpedido,0) as totalpedido,t.email,t.identificacion ,t.telefonoFijo,t.direccion FROM pedido p INNER JOIN  tercero t INNER JOIN vendedores v ON
         v.codigo=p.codigoVendedor AND p.codigoTercero=t.codigo where v.identificacion=${
           req.session.usuario.documento
         }  and  p.estado='${req.query.estado}'  limit ${inicio},${15}`;
       } else {
         consulta = `SELECT p.codigo AS codigo_pedido,p.codigoUsuario AS codigousuario,p.fechaCreacion as fecha_creacion,v.nombre AS nombrevendedor,v.identificacion as cedula ,p.horaCreacion AS  hora
         ,t.apellido1 AS nombre_cliente ,t.razonSocial AS razonsocial_clientes
-         , p.estado AS estadopedido,p.totalpedido as totalpedido,t.email,t.identificacion ,t.telefonoFijo,t.direccion FROM pedido p INNER JOIN  tercero t INNER JOIN vendedores v ON
+         , p.estado AS estadopedido,COALESCE(p.totalpedido,0) as totalpedido,t.email,t.identificacion ,t.telefonoFijo,t.direccion FROM pedido p INNER JOIN  tercero t INNER JOIN vendedores v ON
         v.codigo=p.codigoVendedor AND p.codigoTercero=t.codigo where v.identificacion=${
           req.session.usuario.documento
         } limit ${inicio},${15}`;
@@ -141,7 +141,7 @@ class Pedidocontrol {
     const codigopedido = req.query.codigo;
     const { sequelize } = crearConexionPorNombre(req.session.usuario.db);
 
-    const consulta = `SELECT p.totalPedido AS total,i.cantidad AS cantidad
+    const consulta = `SELECT COALESCE(p.totalpedido,0) AS total,i.cantidad AS cantidad
      ,r.descripcion AS nombre ,precio1 AS precio
      ,r.codigo AS codigo,r.descripcion AS nombre ,r.referencia AS referencia,r.presentacion AS presentacion ,r.precio1 AS precio
      FROM pedido p INNER JOIN itemspedido i INNER JOIN productos r INNER JOIN tercero t ON p.codigo=i.codigoPedido AND p.codigoTercero=t.codigo AND i.codigoProducto=r.codigo WHERE p.codigo=?`;
@@ -479,7 +479,7 @@ Códigos de barras y QR
     const consulta = `SELECT 
                         dias.nombre_dia AS dia_semana,
                         COUNT(p.fechaCreacion) AS cantidad_pedidos,
-                        COALESCE(SUM(p.totalPedido),0) AS total_Pedidos_Dia
+                        COALESCE(SUM(COALESCE(p.totalpedido,0)),0) AS total_Pedidos_Dia
                       FROM (
                         SELECT 'Lunes' AS nombre_dia, 0 AS dia_num UNION
                         SELECT 'Martes', 1 UNION
@@ -558,7 +558,7 @@ async totalPedidosVendedorMes(req, res){
     const { sequelize } = crearConexionPorNombre(req.session.usuario.db);
     const consulta = `SELECT 
                         s.semana,
-                        IFNULL(p.totalPedidosSemana, 0) AS totalPedidosSemana,
+                        IFNULL(COALESCE(p.totalpedido,0)sSemana, 0) AS totalPedidosSemana,
                         IFNULL(r.totalRecibosSemana, 0) AS totalRecibosSemana
                       FROM
                         (SELECT 1 AS semana UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4) s
