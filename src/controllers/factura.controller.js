@@ -426,7 +426,7 @@ obtenernombrecantidad(req){
 
 
   async insertartercerofactura(tercero,sequelize,ultimocodigo,req){
-     console.log("entro a insertar tercero factura")
+
     const cliente=await sequelize.query(`select * from tercero where  codigo=${tercero.codigo}`,{
       type:sequelize.QueryTypes.SELECT
     });
@@ -476,7 +476,9 @@ ${cliente[0].cupo},${cliente[0].listaPrecios},${cliente[0].reteFuente},${cliente
     const result = await sequelize.query(consulta, {
       replacements: [req.session.usuario.codigousuario],
       type: sequelize.QueryTypes.SELECT,
-      logging: true,
+      logging: (msg) => {
+  console.log('SQL:', msg);
+}
     });
    
     let codigoCajaUsuario=0;
