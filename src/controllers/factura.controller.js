@@ -426,7 +426,7 @@ obtenernombrecantidad(req){
 
 
   async insertartercerofactura(tercero,sequelize,ultimocodigo,req){
-
+     console.log("entro a insertar tercero factura")
     const cliente=await sequelize.query(`select * from tercero where  codigo=${tercero.codigo}`,{
       type:sequelize.QueryTypes.SELECT
     });
