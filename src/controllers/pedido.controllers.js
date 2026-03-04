@@ -558,10 +558,10 @@ async totalPedidosVendedorMes(req, res){
     const { sequelize } = crearConexionPorNombre(req.session.usuario.db);
     const consulta = `SELECT 
                         s.semana,
-                        IFNULL(COALESCE(p.totalpedido,0)sSemana, 0) AS totalPedidosSemana,
+                     IFNULL(COALESCE(p.totalPedidosSemana, 0), 0) AS totalPedidosSemana,
                         IFNULL(r.totalRecibosSemana, 0) AS totalRecibosSemana
                       FROM
-                        (SELECT 1 AS semana UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4) s
+                        (SELECT 1 AS semana UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4) as s
                       LEFT JOIN (
                         SELECT 
                           WEEK(fechaCreacion, 1) - WEEK(DATE_SUB(fechaCreacion, INTERVAL DAYOFMONTH(fechaCreacion)-1 DAY), 1) + 1 AS semanaDelMes,
