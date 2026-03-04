@@ -435,7 +435,7 @@ obtenernombrecantidad(req){
     nombre2, apellido1, apellido2, razonSocial, tipoRegimen, clasificacion, direccion, codigoDepartamento, codigoMunicipio, codigoPais, telefonoFijo,
      celulares, email,
      plazo, cupo, listaPrecios, reteFuente, reteIca, reteIva, codigoFactura, codigoComprobante)values (0,'${cliente[0].identificacion}',
-${cliente[0].codigoTipoIdentificacion},${cliente[0].dv ?? NULL},'${cliente[0].nombre1}','${cliente[0].nombre1}','${cliente[0].apellido1}',
+${cliente[0].codigoTipoIdentificacion},${cliente[0].dv ? `'${cliente[0].dv}'` : 'NULL'},'${cliente[0].nombre1}','${cliente[0].nombre1}','${cliente[0].apellido1}',
 '${cliente[0].apellido2}','${cliente[0].razonSocial}','${cliente[0].tipoRegimen}','${cliente[0].clasificacion}',
 '${cliente[0].direccion}',${cliente[0]. codigoDepartamento},${cliente[0].codigoMunicipio},${cliente[0].codigoPais},
 '${cliente[0].telefonoFijo}','${cliente[0].celulares}','${cliente[0].email}',${cliente[0].plazo},
