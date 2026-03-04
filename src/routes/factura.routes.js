@@ -10,6 +10,7 @@ routerfactura.post(
   "/crearreciboingreso",
   Factura.crearreciboingreso.bind(Factura)
 );
+routerfactura.get("/traerparametroscomprobante",Factura.traerparametroscomprobante)
 routerfactura.get("/traerciudades", Factura.traerfacturaciudades);
 routerfactura.get("/traerbancos", Factura.traerbancos);
 routerfactura.get("/traerrecibos", Factura.buscarrecibocliente);

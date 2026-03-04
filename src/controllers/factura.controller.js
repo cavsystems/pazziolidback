@@ -346,6 +346,22 @@ const faultimoCodigo = await sequelize.query(
   
   
   }
+  async traerparametroscomprobante(req,res){
+    const { sequelize } = crearConexionPorNombre(req.session.usuario.db);
+    const consulta=`
+select p.valor,pa.codigo,pa.nombre 
+from parametroscomprobante p 
+join comprobantes c on p.codigoComprobante=c.codigo  
+join parametros pa on pa.codigo=p.codigoParametro 
+WHERE p.valor REGEXP '^[0-9]+(\\\\.[0-9]+)?$'
+AND LENGTH(p.valor) >= 8
+`
+    const result=await sequelize.query(consulta,{
+      type: sequelize.QueryTypes.SELECT,
+      logging: true,
+    })
+    res.status(200).json({respuesta:result})
+  }
 
   async insertaritemsfactura(itemspedido,sequelize,codigofactura,req,codigoCaja){
     let consulta = `insert into itemsfactura(codigo,codigoFactura,codigoProducto,precio,tasaIva,cantidad,descuento,descripcion,costo,codigoContable,
