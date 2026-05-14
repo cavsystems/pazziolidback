@@ -129,6 +129,7 @@ class Pedidocontrol {
     sequelize.close();
 
     let result = Math.round(resultado[0][0].nregistros / 15);
+    console.log("ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",result,resultado[0][0].nregistros)
     if (result === 0) {
       result = 1;
     }
