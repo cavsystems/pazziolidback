@@ -14,6 +14,8 @@ productoServicio.consultar = async (io, db, datoConsulta) => {
   const sesion = io.request.session;
   const usuario = sesion?.usuario;
   const precio = usuario.precio;
+
+
   let  inventariototal=0;
   let registro=0
   let precioconsulta = "precio1";
@@ -38,6 +40,26 @@ productoServicio.consultar = async (io, db, datoConsulta) => {
     default:
       precioconsulta = "precio1";
       break;
+  }
+    console.log("data precio actual",datoConsulta,datoConsulta.precio)
+  switch(Number(datoConsulta.precio)){
+     case 1:
+      precioconsulta = "precio1";
+
+      break;
+    case 2:
+      precioconsulta = "precio2";
+
+      break;
+    case 3:
+      precioconsulta = "precio3";
+
+      break;
+    case 4:
+      precioconsulta = "costo";
+
+      break;
+
   }
   const { sequelize } = crearConexionPorNombre(usuario.db);
   let cantidad = "";
@@ -288,6 +310,15 @@ productoServicio.consultar = async (io, db, datoConsulta) => {
     
 
       break;
+
+      case "KEYS":
+        console.log("datakey traida actual")
+        consulta=`SELECT DISTINCT COLUMN_NAME AS campos
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_SCHEMA = '${usuario.db}'
+AND TABLE_NAME = 'productos'
+AND COLUMN_NAME LIKE 'precio%'`
+break;
     case "CODIGO":
       consulta += ` WHERE codigoBarra LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' OR codigo LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' OR referencia LIKE '%${datoConsulta.datoCondicion.toString().trim()}%' limit 1`;
       break;

@@ -202,7 +202,7 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: "https://pazziolweb.cavsystems.com.co",
-    methods: ["GET", "PO ST"],
+    methods: ["GET", "POST"],
     credentials: true,
   },
 });

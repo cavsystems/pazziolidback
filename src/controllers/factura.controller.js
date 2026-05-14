@@ -908,7 +908,7 @@ async obtenertotalpornombrefactura(req,res){
  async traeritemsfactura(req,res){
   const {sequelize}=crearConexionPorNombre(req.session.usuario.db)
   
-  const consulta=`select i.descripcion,i.cantidad,i.presentacion , i.precio,i.totalItem,i.codigoContable ,i.referencia, DATE_FORMAT(f.fechaCreacion, '%H:%i:%s')  as horacreacion,t.email,t.identificacion,t.telefonofijo ,f.codigo as codigofactura,f.observaciones from factura f inner join itemsfactura i on f.codigo=i.codigoFactura and f.codigoComprobante=i.codigoComprobante join tercerofactura as t on t.codigoFactura=i.codigoFactura and t.codigoComprobante=i.codigoComprobante  where f.codigo=${req.query.codigo} && f.codigoComprobante=${req.query.codigoComprobante} `
+  const consulta=`select i.descripcion,i.cantidad,i.presentacion , i.precio,i.totalItem,i.codigoContable ,i.referencia, DATE_FORMAT(f.fechaCreacion, '%H:%i:%s')  as horacreacion,t.email,t.identificacion,t.telefonofijo ,f.codigo as codigofactura,f.observaciones from factura f inner join itemsfactura i on f.codigo=i.codigoFactura and f.codigoComprobante=i.codigoComprobante left join tercerofactura as t on t.codigoFactura=i.codigoFactura and t.codigoComprobante=i.codigoComprobante  where f.codigo=${req.query.codigo} && f.codigoComprobante=${req.query.codigoComprobante} `
 
    
 
