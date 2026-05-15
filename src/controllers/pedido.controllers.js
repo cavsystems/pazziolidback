@@ -22,7 +22,46 @@ class Pedidocontrol {
       !isNaN(req.query.busqueda) && isFinite(req.query.busqueda)
         ? req.query.busqueda
         : req.query.busqueda.toUpperCase();
-    if (busqueda && busqueda !== "") {
+
+        if(req.session.usuario.nivel===1){
+  if (busqueda && busqueda !== "") {
+      if (
+        req.query.estado &&
+        req.query.estado !== "" &&
+        req.query.estado !== "TODO"
+      ) {
+        consulta = `SELECT p.codigo AS codigo_pedido,p.codigoUsuario AS codigousuario,p.fechaCreacion as fecha_creacion,v.nombre AS nombrevendedor ,v.identificacion as cedula,p.horaCreacion AS  hora
+        ,t.apellido1 AS nombre_cliente ,t.razonSocial AS razonsocial_clientes
+         , p.estado AS estadopedido,COALESCE(p.totalpedido,0) as totalpedido,t.email,t.identificacion ,t.telefonoFijo,t.direccion FROM pedido p INNER JOIN  tercero t INNER JOIN vendedores v ON
+        v.codigo=p.codigoVendedor AND p.codigoTercero=t.codigo where (t.razonSocial like '%${busqueda}%'  or p.codigo like '%${busqueda}%' or v.nombre like '%${busqueda}%') and  p.estado='${
+          req.query.estado
+        }'limit  ${inicio},${15} `;
+      } else {
+        consulta = `SELECT p.codigo AS codigo_pedido,p.codigoUsuario AS codigousuario,p.fechaCreacion as fecha_creacion,v.nombre AS nombrevendedor ,v.identificacion as cedula,p.horaCreacion AS  hora
+        ,t.apellido1 AS nombre_cliente ,t.razonSocial AS razonsocial_clientes
+         , p.estado AS estadopedido,COALESCE(p.totalpedido,0) as totalpedido,t.email,t.identificacion ,t.telefonoFijo,t.direccion FROM pedido p INNER JOIN  tercero t INNER JOIN vendedores v ON
+        v.codigo=p.codigoVendedor AND p.codigoTercero=t.codigo where  t.razonSocial like '%${busqueda}%'  or p.codigo like '%${busqueda}%' or v.nombre like '%${busqueda}%'   limit  ${inicio},${15} `;
+      }
+    } else {
+      if (
+        req.query.estado &&
+        req.query.estado !== "" &&
+        req.query.estado !== "TODO"
+      ) {
+        consulta = `SELECT p.codigo AS codigo_pedido,p.codigoUsuario AS codigousuario,p.fechaCreacion as fecha_creacion,v.nombre AS nombrevendedor,v.identificacion as cedula ,p.horaCreacion AS  hora
+        ,t.apellido1 AS nombre_cliente ,t.razonSocial AS razonsocial_clientes
+         , p.estado AS estadopedido,COALESCE(p.totalpedido,0) as totalpedido,t.email,t.identificacion ,t.telefonoFijo,t.direccion FROM pedido p INNER JOIN  tercero t INNER JOIN vendedores v ON
+        v.codigo=p.codigoVendedor AND p.codigoTercero=t.codigo where   p.estado='${req.query.estado}'  limit ${inicio},${15}`;
+      } else {
+        consulta = `SELECT p.codigo AS codigo_pedido,p.codigoUsuario AS codigousuario,p.fechaCreacion as fecha_creacion,v.nombre AS nombrevendedor,v.identificacion as cedula ,p.horaCreacion AS  hora
+        ,t.apellido1 AS nombre_cliente ,t.razonSocial AS razonsocial_clientes
+         , p.estado AS estadopedido,COALESCE(p.totalpedido,0) as totalpedido,t.email,t.identificacion ,t.telefonoFijo,t.direccion FROM pedido p INNER JOIN  tercero t INNER JOIN vendedores v ON
+        v.codigo=p.codigoVendedor AND p.codigoTercero=t.codigo  limit ${inicio},${15}`;
+      }
+    }
+
+        }else{
+            if (busqueda && busqueda !== "") {
       if (
         req.query.estado &&
         req.query.estado !== "" &&
@@ -66,6 +105,9 @@ class Pedidocontrol {
       }
     }
 
+        }
+      
+  
     let pedidos_obtenidos = await sequelize.query(consulta, {
       type: sequelize.QueryTypes.SELECT,
       logging: console.log
@@ -73,9 +115,12 @@ class Pedidocontrol {
     });
 
     if (pedidos_obtenidos.length > 0) {
-      if (req.session.usuario.documento !== pedidos_obtenidos[0].cedula) {
+      if(req.session.usuario.nivel!==1){
+        if (req.session.usuario.documento !== pedidos_obtenidos[0].cedula) {
         pedidos_obtenidos = [];
       }
+      }
+     
     }
 
     return res.status(200).json({ pedidos: pedidos_obtenidos });
@@ -85,7 +130,48 @@ class Pedidocontrol {
     const { sequelize } = crearConexionPorNombre(req.session.usuario.db);
     let resultado;
 
-    if (req.query.busqueda && req.query.busqueda !== "") {
+    if(req.session.usuario.nivel===1){
+ if (req.query.busqueda && req.query.busqueda !== "") {
+      if (
+        req.query.estado &&
+        req.query.estado.trim() !== "" &&
+        req.query.estado !== "TODO"
+      ) {
+        ;
+        resultado = await sequelize.query(
+          `SELECT COUNT(v.codigo)  as nregistros  FROM pedido p INNER JOIN  tercero t INNER JOIN vendedores v ON
+        v.codigo=p.codigoVendedor AND p.codigoTercero=t.codigo where p.estado='${req.query.estado}' and (t.razonSocial like '%${req.query.busqueda}%'  or p.codigo like '%${req.query.busqueda}%' or v.nombre like '%${req.query.busqueda}%')`
+        );
+      } else {
+        ;
+        resultado = await sequelize.query(
+          `SELECT COUNT(v.codigo)  as nregistros FROM pedido p INNER JOIN  tercero t INNER JOIN vendedores v ON
+        v.codigo=p.codigoVendedor AND p.codigoTercero=t.codigo where (t.razonSocial like '%${req.query.busqueda}%'  or p.codigo like '%${req.query.busqueda}%' or v.nombre like '%${req.query.busqueda}%')`
+        );
+      }
+    } else {
+      if (
+        req.query.estado &&
+        req.query.estado.trim() !== "" &&
+        req.query.estado !== "TODO"
+      ) {
+        ;
+        resultado = await sequelize.query(
+          `SELECT COUNT(v.codigo)  as nregistros  FROM pedido p INNER JOIN  tercero t INNER JOIN vendedores v ON
+        v.codigo=p.codigoVendedor AND p.codigoTercero=t.codigo where p.estado='${req.query.estado}'`,
+          
+        );
+      } else {
+        ;
+        resultado = await sequelize.query(
+          `SELECT COUNT(v.codigo)  as nregistros  FROM pedido p INNER JOIN  tercero t INNER JOIN vendedores v ON
+        v.codigo=p.codigoVendedor AND p.codigoTercero=t.codigo`,
+          
+        );
+      }
+    }
+    }else{
+       if (req.query.busqueda && req.query.busqueda !== "") {
       if (
         req.query.estado &&
         req.query.estado.trim() !== "" &&
@@ -126,10 +212,13 @@ class Pedidocontrol {
         );
       }
     }
+    }
+
+    
     sequelize.close();
 
     let result = Math.round(resultado[0][0].nregistros / 15);
-    console.log("ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",result,resultado[0][0].nregistros,req.session.usuario.documento)
+    console.log("ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",result,resultado[0][0].nregistros,req.session.usuario.documento,)
     if (result === 0) {
       result = 1;
     }
