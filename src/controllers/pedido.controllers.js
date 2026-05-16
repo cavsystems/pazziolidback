@@ -234,7 +234,7 @@ class Pedidocontrol {
     const consulta = `SELECT COALESCE(p.totalpedido,0) AS total,i.cantidad AS cantidad
      ,r.descripcion AS nombre ,precio1 AS precio
      ,r.codigo AS codigo,r.descripcion AS nombre ,r.referencia AS referencia,r.presentacion AS presentacion ,i.valor AS precio
-     FROM pedido p INNER JOIN itemspedido i INNER JOIN productos r INNER JOIN tercero t ON p.codigo=i.codigoPedido AND p.codigoTercero=t.codigo AND i.codigoProducto=r.codigo WHERE p.codigo=?`;
+     FROM pedido p INNER JOIN itemspedido i  left JOIN productos r on r.codigo=i.codigoProducto INNER JOIN tercero t ON p.codigo=i.codigoPedido AND p.codigoTercero=t.codigo  WHERE p.codigo=?`;
     const result = await sequelize.query(consulta, {
       replacements: [codigopedido],
       type: sequelize.QueryTypes.SELECT,
