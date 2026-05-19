@@ -30,14 +30,14 @@ class Pedidocontrol {
         req.query.estado !== "" &&
         req.query.estado !== "TODO"
       ) {
-        consulta = `SELECT p.codigo AS codigo_pedido,p.codigoUsuario AS codigousuario,p.fechaCreacion as fecha_creacion,v.nombre AS nombrevendedor ,v.identificacion as cedula,p.horaCreacion AS  hora
+        consulta = `SELECT p.observacion,p.codigo AS codigo_pedido,p.codigoUsuario AS codigousuario,p.fechaCreacion as fecha_creacion,v.nombre AS nombrevendedor ,v.identificacion as cedula,p.horaCreacion AS  hora
         ,t.apellido1 AS nombre_cliente ,t.razonSocial AS razonsocial_clientes
          , p.estado AS estadopedido,COALESCE(p.totalpedido,0) as totalpedido,t.email,t.identificacion ,t.telefonoFijo,t.direccion FROM pedido p INNER JOIN  tercero t INNER JOIN vendedores v ON
         v.codigo=p.codigoVendedor AND p.codigoTercero=t.codigo where (t.razonSocial like '%${busqueda}%'  or p.codigo like '%${busqueda}%' or v.nombre like '%${busqueda}%') and  p.estado='${
           req.query.estado
         }'limit  ${inicio},${15} `;
       } else {
-        consulta = `SELECT p.codigo AS codigo_pedido,p.codigoUsuario AS codigousuario,p.fechaCreacion as fecha_creacion,v.nombre AS nombrevendedor ,v.identificacion as cedula,p.horaCreacion AS  hora
+        consulta = `SELECT p.observacion,p.codigo AS codigo_pedido,p.codigoUsuario AS codigousuario,p.fechaCreacion as fecha_creacion,v.nombre AS nombrevendedor ,v.identificacion as cedula,p.horaCreacion AS  hora
         ,t.apellido1 AS nombre_cliente ,t.razonSocial AS razonsocial_clientes
          , p.estado AS estadopedido,COALESCE(p.totalpedido,0) as totalpedido,t.email,t.identificacion ,t.telefonoFijo,t.direccion FROM pedido p INNER JOIN  tercero t INNER JOIN vendedores v ON
         v.codigo=p.codigoVendedor AND p.codigoTercero=t.codigo where  t.razonSocial like '%${busqueda}%'  or p.codigo like '%${busqueda}%' or v.nombre like '%${busqueda}%'   limit  ${inicio},${15} `;
@@ -48,14 +48,14 @@ class Pedidocontrol {
         req.query.estado !== "" &&
         req.query.estado !== "TODO"
       ) {
-        consulta = `SELECT p.codigo AS codigo_pedido,p.codigoUsuario AS codigousuario,p.fechaCreacion as fecha_creacion,v.nombre AS nombrevendedor,v.identificacion as cedula ,p.horaCreacion AS  hora
+        consulta = `SELECT p.observacion,p.codigo AS codigo_pedido,p.codigoUsuario AS codigousuario,p.fechaCreacion as fecha_creacion,v.nombre AS nombrevendedor,v.identificacion as cedula ,p.horaCreacion AS  hora
         ,t.apellido1 AS nombre_cliente ,t.razonSocial AS razonsocial_clientes
-         , p.estado AS estadopedido,COALESCE(p.totalpedido,0) as totalpedido,t.email,t.identificacion ,t.telefonoFijo,t.direccion FROM pedido p INNER JOIN  tercero t INNER JOIN vendedores v ON
+         , p.estado AS estadopedido,t.codigo as codigotercero,COALESCE(p.totalpedido,0) as totalpedido,t.email,t.identificacion ,t.telefonoFijo,t.direccion FROM pedido p INNER JOIN  tercero t INNER JOIN vendedores v ON
         v.codigo=p.codigoVendedor AND p.codigoTercero=t.codigo where   p.estado='${req.query.estado}'  limit ${inicio},${15}`;
       } else {
-        consulta = `SELECT p.codigo AS codigo_pedido,p.codigoUsuario AS codigousuario,p.fechaCreacion as fecha_creacion,v.nombre AS nombrevendedor,v.identificacion as cedula ,p.horaCreacion AS  hora
+        consulta = `SELECT p.observacion,p.codigo AS codigo_pedido,p.codigoUsuario AS codigousuario,p.fechaCreacion as fecha_creacion,v.nombre AS nombrevendedor,v.identificacion as cedula ,p.horaCreacion AS  hora
         ,t.apellido1 AS nombre_cliente ,t.razonSocial AS razonsocial_clientes
-         , p.estado AS estadopedido,COALESCE(p.totalpedido,0) as totalpedido,t.email,t.identificacion ,t.telefonoFijo,t.direccion FROM pedido p INNER JOIN  tercero t INNER JOIN vendedores v ON
+         , p.estado AS estadopedido,t.codigo as codigotercero,COALESCE(p.totalpedido,0) as totalpedido,t.email,t.identificacion ,t.telefonoFijo,t.direccion FROM pedido p INNER JOIN  tercero t INNER JOIN vendedores v ON
         v.codigo=p.codigoVendedor AND p.codigoTercero=t.codigo  limit ${inicio},${15}`;
       }
     }
@@ -67,18 +67,18 @@ class Pedidocontrol {
         req.query.estado !== "" &&
         req.query.estado !== "TODO"
       ) {
-        consulta = `SELECT p.codigo AS codigo_pedido,p.codigoUsuario AS codigousuario,p.fechaCreacion as fecha_creacion,v.nombre AS nombrevendedor ,v.identificacion as cedula,p.horaCreacion AS  hora
+        consulta = `SELECT p.observacion,p.codigo AS codigo_pedido,p.codigoUsuario AS codigousuario,p.fechaCreacion as fecha_creacion,v.nombre AS nombrevendedor ,v.identificacion as cedula,p.horaCreacion AS  hora
         ,t.apellido1 AS nombre_cliente ,t.razonSocial AS razonsocial_clientes
-         , p.estado AS estadopedido,COALESCE(p.totalpedido,0) as totalpedido,t.email,t.identificacion ,t.telefonoFijo,t.direccion FROM pedido p INNER JOIN  tercero t INNER JOIN vendedores v ON
+         , p.estado AS estadopedido,t.codigo as codigotercero,COALESCE(p.totalpedido,0) as totalpedido,t.email,t.identificacion ,t.telefonoFijo,t.direccion FROM pedido p INNER JOIN  tercero t INNER JOIN vendedores v ON
         v.codigo=p.codigoVendedor AND p.codigoTercero=t.codigo where v.identificacion=${
           req.session.usuario.documento
         } and (t.razonSocial like '%${busqueda}%'  or p.codigo like '%${busqueda}%' or v.nombre like '%${busqueda}%') and  p.estado='${
           req.query.estado
         }'limit  ${inicio},${15} `;
       } else {
-        consulta = `SELECT p.codigo AS codigo_pedido,p.codigoUsuario AS codigousuario,p.fechaCreacion as fecha_creacion,v.nombre AS nombrevendedor ,v.identificacion as cedula,p.horaCreacion AS  hora
+        consulta = `SELECT p.observacion,p.codigo AS codigo_pedido,p.codigoUsuario AS codigousuario,p.fechaCreacion as fecha_creacion,v.nombre AS nombrevendedor ,v.identificacion as cedula,p.horaCreacion AS  hora
         ,t.apellido1 AS nombre_cliente ,t.razonSocial AS razonsocial_clientes
-         , p.estado AS estadopedido,COALESCE(p.totalpedido,0) as totalpedido,t.email,t.identificacion ,t.telefonoFijo,t.direccion FROM pedido p INNER JOIN  tercero t INNER JOIN vendedores v ON
+         , p.estado AS estadopedido,t.codigo as codigotercero,COALESCE(p.totalpedido,0) as totalpedido,t.email,t.identificacion ,t.telefonoFijo,t.direccion FROM pedido p INNER JOIN  tercero t INNER JOIN vendedores v ON
         v.codigo=p.codigoVendedor AND p.codigoTercero=t.codigo where v.identificacion=${
           req.session.usuario.documento
         } and t.razonSocial like '%${busqueda}%'  or p.codigo like '%${busqueda}%' or v.nombre like '%${busqueda}%'   limit  ${inicio},${15} `;
@@ -89,16 +89,16 @@ class Pedidocontrol {
         req.query.estado !== "" &&
         req.query.estado !== "TODO"
       ) {
-        consulta = `SELECT p.codigo AS codigo_pedido,p.codigoUsuario AS codigousuario,p.fechaCreacion as fecha_creacion,v.nombre AS nombrevendedor,v.identificacion as cedula ,p.horaCreacion AS  hora
+        consulta = `SELECT p.observacion,p.codigo AS codigo_pedido,p.codigoUsuario AS codigousuario,p.fechaCreacion as fecha_creacion,v.nombre AS nombrevendedor,v.identificacion as cedula ,p.horaCreacion AS  hora
         ,t.apellido1 AS nombre_cliente ,t.razonSocial AS razonsocial_clientes
-         , p.estado AS estadopedido,COALESCE(p.totalpedido,0) as totalpedido,t.email,t.identificacion ,t.telefonoFijo,t.direccion FROM pedido p INNER JOIN  tercero t INNER JOIN vendedores v ON
+         , p.estado AS estadopedido,t.codigo as codigotercero,COALESCE(p.totalpedido,0) as totalpedido,t.email,t.identificacion ,t.telefonoFijo,t.direccion FROM pedido p INNER JOIN  tercero t INNER JOIN vendedores v ON
         v.codigo=p.codigoVendedor AND p.codigoTercero=t.codigo where v.identificacion=${
           req.session.usuario.documento
         }  and  p.estado='${req.query.estado}'  limit ${inicio},${15}`;
       } else {
-        consulta = `SELECT p.codigo AS codigo_pedido,p.codigoUsuario AS codigousuario,p.fechaCreacion as fecha_creacion,v.nombre AS nombrevendedor,v.identificacion as cedula ,p.horaCreacion AS  hora
+        consulta = `SELECT  p.observacion,p.codigo AS codigo_pedido,p.codigoUsuario AS codigousuario,p.fechaCreacion as fecha_creacion,v.nombre AS nombrevendedor,v.identificacion as cedula ,p.horaCreacion AS  hora
         ,t.apellido1 AS nombre_cliente ,t.razonSocial AS razonsocial_clientes
-         , p.estado AS estadopedido,COALESCE(p.totalpedido,0) as totalpedido,t.email,t.identificacion ,t.telefonoFijo,t.direccion FROM pedido p INNER JOIN  tercero t INNER JOIN vendedores v ON
+         , p.estado AS estadopedido,t.codigo as codigotercero,COALESCE(p.totalpedido,0) as totalpedido,t.email,t.identificacion ,t.telefonoFijo,t.direccion FROM pedido p INNER JOIN  tercero t INNER JOIN vendedores v ON
         v.codigo=p.codigoVendedor AND p.codigoTercero=t.codigo where v.identificacion=${
           req.session.usuario.documento
         } limit ${inicio},${15}`;
@@ -232,7 +232,7 @@ class Pedidocontrol {
     const { sequelize } = crearConexionPorNombre(req.session.usuario.db);
 
     const consulta = `SELECT COALESCE(p.totalpedido,0) AS total,i.cantidad AS cantidad
-     ,r.descripcion AS nombre ,precio1 AS precio
+     ,r.descripcion AS nombre ,precio1 AS precio,r.codigoContable as codigoContable
      ,r.codigo AS codigo,r.descripcion AS nombre ,r.referencia AS referencia,r.presentacion AS presentacion ,i.valor AS precio
      FROM pedido p INNER JOIN itemspedido i  left JOIN productos r on r.codigo=i.codigoProducto INNER JOIN tercero t ON p.codigo=i.codigoPedido AND p.codigoTercero=t.codigo  WHERE p.codigo=?`;
     const result = await sequelize.query(consulta, {

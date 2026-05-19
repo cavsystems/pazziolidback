@@ -161,13 +161,14 @@ class Useraccioneauth {
                 }
 
                 const [resultParametrosComprobanteVentaEnNegativo] = await sequelize.query(
-                  "SELECT p.nombre,pc.* FROM parametroscomprobante pc JOIN parametros p ON pc.codigoParametro = p.codigo JOIN usuarioscomprobantes uc ON pc.codigoComprobante = uc.codigoComprobante WHERE p.nombre  IN (?,?,?,?)  AND uc.codigoUsuario =? AND uc.categoria =?;",
+                  "SELECT p.nombre,pc.* FROM parametroscomprobante pc JOIN parametros p ON pc.codigoParametro = p.codigo JOIN usuarioscomprobantes uc ON pc.codigoComprobante = uc.codigoComprobante WHERE p.nombre  IN (?,?,?,?,?)  AND uc.codigoUsuario =? AND uc.categoria =?;",
                   {
                     replacements: [
                       "VENTA_EN_NEGATIVO",
                       "FACTURAR_PEDIDOS",
                       "SEPARAR_PRODUCTOS_PEDIDO",
                       "MANEJAR_ENTREGAS",
+                      "PDF_PEDIDO_SIN_PRECIO",
                       usuario[0].codigo,
                       "VENTAS",
                     ],
@@ -177,7 +178,7 @@ class Useraccioneauth {
                 let nombrecomprobateventa=""
                 let separarproductospedido=0
                 let manejarEntregas=0;
-                let ventaEnNegativo=0;let facturarPedidos=0;
+                let ventaEnNegativo=0;let facturarPedidos=0;let pdfsinprecio=0
                 if(resultParametrosComprobanteVentaEnNegativo.length>0){
                   console.log("parametros comprobantes",resultParametrosComprobanteVentaEnNegativo)
                   resultParametrosComprobanteVentaEnNegativo.forEach(dato => {
@@ -193,6 +194,10 @@ class Useraccioneauth {
                     }
                     if(dato.nombre === 'MANEJAR_ENTREGAS'){
                       manejarEntregas=Number (dato.valor);
+                    }
+
+                      if(dato.nombre === 'PDF_PEDIDO_SIN_PRECIO'){
+                      pdfsinprecio=Number (dato.valor);
                     }
                   })
                 }
@@ -255,6 +260,7 @@ class Useraccioneauth {
                   almacenSeparado:almacenSeparado,
                   modificarPrecio,
                   documento: documento,
+                  pdfsinprecio,
                   db: db,
                   nivel: usuario[0].nivel,
                   almacen: usuarioauth[0].almacen.almacen,

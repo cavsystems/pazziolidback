@@ -29,6 +29,7 @@ const cliente = new mongoose.Schema({
   municipio: {
     type: String,
   },
+
   vendedor: {
     type: String,
     required: true,

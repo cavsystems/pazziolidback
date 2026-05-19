@@ -12,6 +12,8 @@ var respuesta = {};
  * @param {*} datoConsulta es la variable que envia el cliente Dashboard de la data para consultar el producto
  */
 terceroServicio.consultar = (io, db, datoConsulta) => {
+console.log("Consultando tercerossssssssssssssssssssssssss",datoConsulta.condicion.toUpperCase())
+
   var consulta =
     "select t.nombre1,t.razonSocial,t.identificacion,t.tipoRegimen,t.direccion,t.telefonoFijo,t.celulares,t.email,t.codigo,t.plazo,m.municipio,d.departamento from tercero t inner join  municipios m inner join paises p inner join departamentos d   on m.codigoDepartamento=d.codigoDepartamento and m.codigo=t.codigoMunicipio and  t.codigoPais=p.codigo";
   const sesion = io.request.session;
@@ -25,7 +27,7 @@ terceroServicio.consultar = (io, db, datoConsulta) => {
       consulta += ` WHERE identificacion = '${datoConsulta.datoCondicion}' limit 20`;
       break;
     case "ID":
-      consulta += ` WHERE codigo = '${parseInt(
+      consulta += ` WHERE t.codigo = '${parseInt(
         datoConsulta.datoCondicion
       )}limit 20'`;
       break;
@@ -49,6 +51,7 @@ terceroServicio.consultar = (io, db, datoConsulta) => {
         mensajePeticion: tercero,
         tipoConsulta: "TERCERO",
         canalUsuario: canalUsuario,
+        pdfsinprecio:usuario.pdfsinprecio
       };
 
       io.emit(datoConsulta.canalserver, JSON.stringify(respuesta));
@@ -60,6 +63,7 @@ terceroServicio.consultar = (io, db, datoConsulta) => {
         mensajePeticion: err,
         tipoConsulta: "TERCERO",
         canalUsuario: canalUsuario,
+       
       };
       ;
       io.emit(datoConsulta.canalserver, respuesta);

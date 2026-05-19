@@ -149,6 +149,7 @@ app.get("/api/selectempresa", midleware, async (req, res) => {
   const session = req.session;
   const user = session?.usuario;
 
+
   if (user?.db) {
     if (!user?.documento) {
       return res.json({
@@ -156,9 +157,11 @@ app.get("/api/selectempresa", midleware, async (req, res) => {
       });
     }
     const db = user.db;
-   
-    return res.json({
-      response: true,
+    console.log("datos traiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii",{
+        pdfsinprecio:user.pdfsinprecio,
+    })
+   let  respuesta = {
+   response: true,
       db: db,
       config: user.config,
       alias: user.alias,
@@ -166,6 +169,7 @@ app.get("/api/selectempresa", midleware, async (req, res) => {
       identificacion: user.documento,
       nombreusuario: user.nombre,
       nivel: user.nivel,
+           pdfsinprecio:Number(user.pdfsinprecio),
       codigoVendedor:user.codigoVendedor,
         modificarPrecio:user.modificarPrecio,
         permisos:user.permisos,
@@ -179,8 +183,8 @@ app.get("/api/selectempresa", midleware, async (req, res) => {
              manejarEntregas:user.manejarEntregas,
              entregaPendiente:user.entregaPendiente,
              cteAuxiliares:user.cteAuxiliares
-
-    });
+     }
+    return res.json( respuesta);
   } else {
     return res.json({
       response: false,
@@ -228,6 +232,7 @@ io.on("connection", (socket) => {
         if (data.metodo === "traeralmacen") {
           socket.emit("obteneralmacen", {
             almacen: socket.request.session.usuario.almacen,
+             pdfsinprecio:Number( socket.request.session.usuario.pdfsinprecio),
             config: socket.request.session.usuario.config,
              modificarPrecio:socket.request.session.usuario.modificarPrecio,
             nombre: socket.request.session.usuario.vendedor,
