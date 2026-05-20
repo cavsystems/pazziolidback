@@ -15,7 +15,7 @@ terceroServicio.consultar = (io, db, datoConsulta) => {
 console.log("Consultando tercerossssssssssssssssssssssssss",datoConsulta.condicion.toUpperCase())
 
   var consulta =
-    "select t.nombre1,t.razonSocial,t.identificacion,t.tipoRegimen,t.direccion,t.telefonoFijo,t.celulares,t.email,t.codigo,t.plazo,m.municipio,d.departamento from tercero t inner join  municipios m inner join paises p inner join departamentos d   on m.codigoDepartamento=d.codigoDepartamento and m.codigo=t.codigoMunicipio and  t.codigoPais=p.codigo";
+    "select t.nombre1,t.razonSocial,t.identificacion,t.tipoRegimen,t.direccion,t.telefonoFijo,t.celulares,t.email,t.codigo,t.plazo,m.municipio,d.departamento from tercero t inner join  municipios m inner join paises p inner join departamentos d   on m.codigoDepartamento=d.codigoDepartamento and m.codigoMunicipio=t.codigoMunicipio and d.codigoDepartamento=t.codigoDepartamento and  t.codigoPais=p.codigoPais ";
   const sesion = io.request.session;
   const usuario = sesion?.usuario;
   const { sequelize } = crearConexionPorNombre(usuario.db);
@@ -27,9 +27,9 @@ console.log("Consultando tercerossssssssssssssssssssssssss",datoConsulta.condici
       consulta += ` WHERE identificacion = '${datoConsulta.datoCondicion}' limit 20`;
       break;
     case "ID":
-      consulta += ` WHERE t.codigo = '${parseInt(
+      consulta += ` WHERE t.codigo = ${parseInt(
         datoConsulta.datoCondicion
-      )}limit 20'`;
+      )}  limit 20`;
       break;
     case "NOMBRES":
       consulta += ` WHERE t.nombre1 LIKE '%${datoConsulta.datoCondicion}%' OR t.nombre2 LIKE '%${datoConsulta.datoCondicion}%' OR t.apellido1 LIKE '%${datoConsulta.datoCondicion}%' OR t.apellido2 LIKE '%${datoConsulta.datoCondicion}%' OR t.razonSocial LIKE '%${datoConsulta.datoCondicion}%' OR  t.identificacion  LIKE '%${datoConsulta.datoCondicion}%' limit 20`;
