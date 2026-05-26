@@ -13,118 +13,132 @@ class Pedidocontrol {
 }
   
 
-  async obtenerpedido(req, res) {
+ async obtenerpedido(req, res) {
+  try {
     const { sequelize } = crearConexionPorNombre(req.session.usuario.db);
-    let consulta;
-    console.log("seccion db  activa",req.session.usuario.db)
-    const inicio = req.query.pagina > 0 ? req.query.pagina * 15 - 15 : 0;
+
+    console.log("seccion db activa", req.session.usuario.db);
+
+    const inicio =
+      req.query.pagina > 0 ? req.query.pagina * 15 - 15 : 0;
+
     const busqueda =
       !isNaN(req.query.busqueda) && isFinite(req.query.busqueda)
         ? req.query.busqueda
-        : req.query.busqueda.toUpperCase();
+        : (req.query.busqueda || "").toUpperCase();
 
-        if(req.session.usuario.nivel===1){
-  if (busqueda && busqueda !== "") {
-      if (
-        req.query.estado &&
-        req.query.estado !== "" &&
-        req.query.estado !== "TODO"
-      ) {
-        consulta = `SELECT p.observacion,p.codigo AS codigo_pedido,p.codigoUsuario AS codigousuario,p.fechaCreacion as fecha_creacion,v.nombre AS nombrevendedor ,v.identificacion as cedula,p.horaCreacion AS  hora
-        ,t.apellido1 AS nombre_cliente ,t.razonSocial AS razonsocial_clientes
-         , p.estado AS estadopedido,COALESCE(p.totalpedido,0) as totalpedido,t.email,t.identificacion ,t.telefonoFijo,t.direccion FROM pedido p INNER JOIN  tercero t INNER JOIN vendedores v ON
-        v.codigo=p.codigoVendedor AND p.codigoTercero=t.codigo where (t.razonSocial like '%${busqueda}%'  or p.codigo like '%${busqueda}%' or v.nombre like '%${busqueda}%') and  p.estado='${
-          req.query.estado
-        }'limit  ${inicio},${15} `;
-      } else {
-        consulta = `SELECT p.observacion,p.codigo AS codigo_pedido,p.codigoUsuario AS codigousuario,p.fechaCreacion as fecha_creacion,v.nombre AS nombrevendedor ,v.identificacion as cedula,p.horaCreacion AS  hora
-        ,t.apellido1 AS nombre_cliente ,t.razonSocial AS razonsocial_clientes
-         , p.estado AS estadopedido,COALESCE(p.totalpedido,0) as totalpedido,t.email,t.identificacion ,t.telefonoFijo,t.direccion FROM pedido p INNER JOIN  tercero t INNER JOIN vendedores v ON
-        v.codigo=p.codigoVendedor AND p.codigoTercero=t.codigo where  t.razonSocial like '%${busqueda}%'  or p.codigo like '%${busqueda}%' or v.nombre like '%${busqueda}%'   limit  ${inicio},${15} `;
-      }
-    } else {
-      if (
-        req.query.estado &&
-        req.query.estado !== "" &&
-        req.query.estado !== "TODO"
-      ) {
-        consulta = `SELECT p.observacion,p.codigo AS codigo_pedido,p.codigoUsuario AS codigousuario,p.fechaCreacion as fecha_creacion,v.nombre AS nombrevendedor,v.identificacion as cedula ,p.horaCreacion AS  hora
-        ,t.apellido1 AS nombre_cliente ,t.razonSocial AS razonsocial_clientes
-         , p.estado AS estadopedido,t.codigo as codigotercero,COALESCE(p.totalpedido,0) as totalpedido,t.email,t.identificacion ,t.telefonoFijo,t.direccion FROM pedido p INNER JOIN  tercero t INNER JOIN vendedores v ON
-        v.codigo=p.codigoVendedor AND p.codigoTercero=t.codigo where   p.estado='${req.query.estado}'  limit ${inicio},${15}`;
-      } else {
-        consulta = `SELECT p.observacion,p.codigo AS codigo_pedido,p.codigoUsuario AS codigousuario,p.fechaCreacion as fecha_creacion,v.nombre AS nombrevendedor,v.identificacion as cedula ,p.horaCreacion AS  hora
-        ,t.apellido1 AS nombre_cliente ,t.razonSocial AS razonsocial_clientes
-         , p.estado AS estadopedido,t.codigo as codigotercero,COALESCE(p.totalpedido,0) as totalpedido,t.email,t.identificacion ,t.telefonoFijo,t.direccion FROM pedido p INNER JOIN  tercero t INNER JOIN vendedores v ON
-        v.codigo=p.codigoVendedor AND p.codigoTercero=t.codigo  limit ${inicio},${15}`;
-      }
+    const esAdmin = req.session.usuario.nivel === 1;
+
+    let where = [];
+
+    // filtro vendedor
+    if (!esAdmin) {
+      where.push(
+        `v.identificacion='${req.session.usuario.documento}'`
+      );
     }
 
-        }else{
-            if (busqueda && busqueda !== "") {
-      if (
-        req.query.estado &&
-        req.query.estado !== "" &&
-        req.query.estado !== "TODO"
-      ) {
-        consulta = `SELECT p.observacion,p.codigo AS codigo_pedido,p.codigoUsuario AS codigousuario,p.fechaCreacion as fecha_creacion,v.nombre AS nombrevendedor ,v.identificacion as cedula,p.horaCreacion AS  hora
-        ,t.apellido1 AS nombre_cliente ,t.razonSocial AS razonsocial_clientes
-         , p.estado AS estadopedido,t.codigo as codigotercero,COALESCE(p.totalpedido,0) as totalpedido,t.email,t.identificacion ,t.telefonoFijo,t.direccion FROM pedido p INNER JOIN  tercero t INNER JOIN vendedores v ON
-        v.codigo=p.codigoVendedor AND p.codigoTercero=t.codigo where v.identificacion=${
-          req.session.usuario.documento
-        } and (t.razonSocial like '%${busqueda}%'  or p.codigo like '%${busqueda}%' or v.nombre like '%${busqueda}%') and  p.estado='${
-          req.query.estado
-        }'limit  ${inicio},${15} `;
-      } else {
-        consulta = `SELECT p.observacion,p.codigo AS codigo_pedido,p.codigoUsuario AS codigousuario,p.fechaCreacion as fecha_creacion,v.nombre AS nombrevendedor ,v.identificacion as cedula,p.horaCreacion AS  hora
-        ,t.apellido1 AS nombre_cliente ,t.razonSocial AS razonsocial_clientes
-         , p.estado AS estadopedido,t.codigo as codigotercero,COALESCE(p.totalpedido,0) as totalpedido,t.email,t.identificacion ,t.telefonoFijo,t.direccion FROM pedido p INNER JOIN  tercero t INNER JOIN vendedores v ON
-        v.codigo=p.codigoVendedor AND p.codigoTercero=t.codigo where v.identificacion=${
-          req.session.usuario.documento
-        } and t.razonSocial like '%${busqueda}%'  or p.codigo like '%${busqueda}%' or v.nombre like '%${busqueda}%'   limit  ${inicio},${15} `;
-      }
-    } else {
-      if (
-        req.query.estado &&
-        req.query.estado !== "" &&
-        req.query.estado !== "TODO"
-      ) {
-        consulta = `SELECT p.observacion,p.codigo AS codigo_pedido,p.codigoUsuario AS codigousuario,p.fechaCreacion as fecha_creacion,v.nombre AS nombrevendedor,v.identificacion as cedula ,p.horaCreacion AS  hora
-        ,t.apellido1 AS nombre_cliente ,t.razonSocial AS razonsocial_clientes
-         , p.estado AS estadopedido,t.codigo as codigotercero,COALESCE(p.totalpedido,0) as totalpedido,t.email,t.identificacion ,t.telefonoFijo,t.direccion FROM pedido p INNER JOIN  tercero t INNER JOIN vendedores v ON
-        v.codigo=p.codigoVendedor AND p.codigoTercero=t.codigo where v.identificacion=${
-          req.session.usuario.documento
-        }  and  p.estado='${req.query.estado}'  limit ${inicio},${15}`;
-      } else {
-        consulta = `SELECT  p.observacion,p.codigo AS codigo_pedido,p.codigoUsuario AS codigousuario,p.fechaCreacion as fecha_creacion,v.nombre AS nombrevendedor,v.identificacion as cedula ,p.horaCreacion AS  hora
-        ,t.apellido1 AS nombre_cliente ,t.razonSocial AS razonsocial_clientes
-         , p.estado AS estadopedido,t.codigo as codigotercero,COALESCE(p.totalpedido,0) as totalpedido,t.email,t.identificacion ,t.telefonoFijo,t.direccion FROM pedido p INNER JOIN  tercero t INNER JOIN vendedores v ON
-        v.codigo=p.codigoVendedor AND p.codigoTercero=t.codigo where v.identificacion=${
-          req.session.usuario.documento
-        } limit ${inicio},${15}`;
-      }
+    // filtro búsqueda
+    if (busqueda && busqueda !== "") {
+      where.push(`
+        (
+          t.razonSocial LIKE '%${busqueda}%'
+          OR p.codigo LIKE '%${busqueda}%'
+          OR v.nombre LIKE '%${busqueda}%'
+        )
+      `);
     }
 
-        }
-      
-  
+    // filtro estado
+    if (
+      req.query.estado &&
+      req.query.estado !== "" &&
+      req.query.estado !== "TODO"
+    ) {
+      where.push(`p.estado='${req.query.estado}'`);
+    }
+
+    const whereFinal =
+      where.length > 0
+        ? `WHERE ${where.join(" AND ")}`
+        : "";
+
+    const consulta = `
+      SELECT
+        p.observacion,
+        p.codigo AS codigo_pedido,
+        p.codigoUsuario AS codigousuario,
+        p.fechaCreacion AS fecha_creacion,
+        p.horaCreacion AS hora,
+
+        v.nombre AS nombrevendedor,
+        v.identificacion AS cedula,
+
+        t.apellido1 AS nombre_cliente,
+        t.razonSocial AS razonsocial_clientes,
+        t.codigo AS codigotercero,
+
+        p.estado AS estadopedido,
+
+        COALESCE(p.totalpedido,0) AS totalpedido,
+
+        t.email,
+        t.identificacion,
+        t.telefonoFijo,
+        t.direccion,
+
+        f.codigo AS codigofa,
+        COALESCE(f.totalFactura,0) AS totalfactura
+
+      FROM pedido p
+
+        LEFT JOIN factura f
+ON f.codigo = SUBSTRING_INDEX(p.codigofactura, ';', 1)
+
+      INNER JOIN tercero t
+      ON p.codigoTercero = t.codigo
+
+      INNER JOIN vendedores v
+      ON v.codigo = p.codigoVendedor
+
+      ${whereFinal}
+
+      LIMIT ${inicio},15
+    `;
+
+    console.log("SQL:", consulta);
+
     let pedidos_obtenidos = await sequelize.query(consulta, {
       type: sequelize.QueryTypes.SELECT,
-      logging: console.log
-
+      logging: console.log,
     });
 
-    if (pedidos_obtenidos.length > 0) {
-      if(req.session.usuario.nivel!==1){
-        if (req.session.usuario.documento !== pedidos_obtenidos[0].cedula) {
+    // validación extra
+    if (
+      pedidos_obtenidos.length > 0 &&
+      !esAdmin
+    ) {
+      if (
+        req.session.usuario.documento !==
+        pedidos_obtenidos[0].cedula
+      ) {
         pedidos_obtenidos = [];
       }
-      }
-     
     }
 
-    return res.status(200).json({ pedidos: pedidos_obtenidos });
+    return res.status(200).json({
+      pedidos: pedidos_obtenidos,
+    });
+
+  } catch (error) {
+    console.log(error);
+
+    return res.status(500).json({
+      mensaje: "Error obteniendo pedidos",
+      error,
+    });
   }
+}
 
   async optenernumeroregistro(req, res) {
     const { sequelize } = crearConexionPorNombre(req.session.usuario.db);
