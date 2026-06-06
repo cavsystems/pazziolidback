@@ -148,7 +148,7 @@ app.get("/api/obtenerdbfiltradas", midleware, async (req, res) => {
 app.get("/api/selectempresa", midleware, async (req, res) => {
   const session = req.session;
   const user = session?.usuario;
-
+ console.log("usuario en select empresa",user)
 
   if (user?.db) {
     if (!user?.documento) {
@@ -182,7 +182,8 @@ app.get("/api/selectempresa", midleware, async (req, res) => {
             almacenSeparado:user.almacenSeparado,
              manejarEntregas:user.manejarEntregas,
              entregaPendiente:user.entregaPendiente,
-             cteAuxiliares:user.cteAuxiliares
+             cteAuxiliares:user.cteAuxiliares,
+             precio:user.precio
      }
     return res.json( respuesta);
   } else {
@@ -246,7 +247,8 @@ io.on("connection", (socket) => {
               almacenSeparado:socket.request.session.usuario.almacenSeparado,
               manejarEntregas:socket.request.session.usuario.manejarEntregas,
               entregaPendiente:socket.request.session.usuario.entregaPendiente,
-                 cteAuxiliares:socket.request.session.usuario.cteAuxiliares
+                 cteAuxiliares:socket.request.session.usuario.cteAuxiliares,
+                 precio:socket.request.session.usuario.precio
 
           });
         }

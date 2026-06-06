@@ -270,13 +270,22 @@ JOIN municipios m ON m.codigoDepartamento = t.codigoDepartamento
 WHERE f.saldo <> 0 
   AND f.estado = 'ACTIVO'
   and m.municipio like '%${req.query.ciudad}%'
+    AND EXISTS (
+      SELECT 1
+      FROM itemsfactura i
+      WHERE i.codigoFactura = f.codigo
+  )
 ORDER BY cliente, fechaEmision
 LIMIT ?,15;`;
     const consultatotal = `select  COUNT(*) as nregistros,  sum(f.saldo)   as saldo from  factura f INNER JOIN comprobantes c ON f.codigoComprobante = c.codigo
 INNER JOIN tercero t ON f.codigoTercero = t.codigo
 LEFT JOIN vendedores v ON v.codigo = f.codigoVendedor  -- LEFT JOIN mantiene facturas sin vendedor
 JOIN municipios m ON m.codigoDepartamento = t.codigoDepartamento 
-                 AND m.codigoMunicipio = t.codigoMunicipio where saldo<>0 && f.estado='ACTIVO' and m.municipio like '%${req.query.ciudad}%'`;
+                 AND m.codigoMunicipio = t.codigoMunicipio where saldo<>0 && f.estado='ACTIVO' and m.municipio like '%${req.query.ciudad}%'    AND EXISTS (
+      SELECT 1
+      FROM itemsfactura i
+      WHERE i.codigoFactura = f.codigo
+  )`;
     const result = await sequelize.query(consulta, {
       replacements: [inicio],
       type: sequelize.QueryTypes.SELECT,
