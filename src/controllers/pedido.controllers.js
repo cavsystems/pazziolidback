@@ -49,6 +49,14 @@ class Pedidocontrol {
       `);
     }
 
+    if( req.query.fechaInicio && req.query.fechaFin){
+      where.push(`p.fechaCreacion BETWEEN '${req.query.fechaInicio}' AND '${req.query.fechaFin}'`);
+    }else if(req.query.fechaInicio){
+      where.push(`p.fechaCreacion >= '${req.query.fechaInicio}'`);
+    }else if(req.query.fechaFin){
+       where.push(`p.fechaCreacion <= '${req.query.fechaFin}'`);
+    }
+
     // filtro estado
     if (
       req.query.estado &&
@@ -102,7 +110,7 @@ ON f.codigo = SUBSTRING_INDEX(p.codigofactura, ';', 1)
       ON v.codigo = p.codigoVendedor
 
       ${whereFinal}
-
+       order by   p.fechaCreacion desc , p.horaCreacion desc
       LIMIT ${inicio},15
     `;
 
