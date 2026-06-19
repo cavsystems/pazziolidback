@@ -165,6 +165,10 @@ app.get("/api/selectempresa", midleware, async (req, res) => {
       db: db,
       config: user.config,
       alias: user.alias,
+      etiquetaTcredito:user.config.ETIQUETA_TCREDITO,
+      etiquetaTdebito:user.config.ETIQUETA_TDEBITO ,
+           etiquetabono:user.config.ETIQUETA_BONOS ? user.config.ETIQUETA_BONOS :user.config.ETIQUETA_BONO ,
+                    etiquetacheque:user.config.ETIQUETA_CHEQUE,
       nombre: user.vendedor,
       identificacion: user.documento,
       nombreusuario: user.nombre,
@@ -234,6 +238,9 @@ io.on("connection", (socket) => {
           socket.emit("obteneralmacen", {
             almacen: socket.request.session.usuario.almacen,
              pdfsinprecio:Number( socket.request.session.usuario.pdfsinprecio),
+             etiquetaTcredito:socket.request.session.usuario.etiquetaTcredito,
+             etiquetaTdebito:socket.request.session.usuario.etiquetaTdebito,
+             
             config: socket.request.session.usuario.config,
              modificarPrecio:socket.request.session.usuario.modificarPrecio,
             nombre: socket.request.session.usuario.vendedor,

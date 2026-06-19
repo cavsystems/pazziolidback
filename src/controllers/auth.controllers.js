@@ -159,9 +159,9 @@ class Useraccioneauth {
                     }
                   })
                 }
-
+              let etiquetaTcredito="";let etiquetaTdebito="";let etiquetabono=""; let etiquetacheque=""
                 const [resultParametrosComprobanteVentaEnNegativo] = await sequelize.query(
-                  "SELECT p.nombre,pc.* FROM parametroscomprobante pc JOIN parametros p ON pc.codigoParametro = p.codigo JOIN usuarioscomprobantes uc ON pc.codigoComprobante = uc.codigoComprobante WHERE p.nombre  IN (?,?,?,?,?)  AND uc.codigoUsuario =? AND uc.categoria =?;",
+                  "SELECT p.nombre,pc.* FROM parametroscomprobante pc JOIN parametros p ON pc.codigoParametro = p.codigo JOIN usuarioscomprobantes uc ON pc.codigoComprobante = uc.codigoComprobante WHERE p.nombre  IN (?,?,?,?,?,?,?,?,?)  AND uc.codigoUsuario =? AND uc.categoria =?;",
                   {
                     replacements: [
                       "VENTA_EN_NEGATIVO",
@@ -169,6 +169,10 @@ class Useraccioneauth {
                       "SEPARAR_PRODUCTOS_PEDIDO",
                       "MANEJAR_ENTREGAS",
                       "PDF_PEDIDO_SIN_PRECIO",
+                      "ETIQUETA_TCREDITO",
+                      "ETIQUETA_TDEBITO",
+                      "ETIQUETA_BONOS",
+                      "ETIQUETA_CHEQUE",
                       usuario[0].codigo,
                       "VENTAS",
                     ],
@@ -199,6 +203,20 @@ class Useraccioneauth {
                       if(dato.nombre === 'PDF_PEDIDO_SIN_PRECIO'){
                       pdfsinprecio=Number (dato.valor);
                     }
+                   if(dato.nombre === 'ETIQUETA_TCREDITO'){
+                      etiquetaTcredito=dato.valor;
+                    }
+                    if(dato.nombre === 'ETIQUETA_TDEBITO'){
+                      etiquetaTdebito=dato.valor;
+                    }
+
+                    if(dato.nombre === 'ETIQUETA_BONOS'){
+                      etiquetabono=dato.valor;
+                    }
+                    if(dato.nombre === 'ETIQUETA_CHEQUE'){
+                      etiquetacheque=dato.valor;
+                    }
+                    
                   })
                 }
                 
@@ -252,6 +270,10 @@ class Useraccioneauth {
 
                 req.session.usuario = {
                     ...req.session.usuario,
+                    etiquetabono:etiquetabono,
+                    etiquetacheque:etiquetacheque,
+                    etiquetaTcredito:etiquetaTcredito,
+                    etiquetaTdebito:etiquetaTdebito,
                   codigoComprobateventa,
                   nombrecomprobateventa,
                   separarproductospedido,
