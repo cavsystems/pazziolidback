@@ -127,6 +127,7 @@ async function crearPedido(
   if (id !== "") {
     await modelpedidoreservado.findByIdAndDelete(id);
   }
+  const observacionValor = typeof observacion === "string" ? observacion : "";
 
   var queryInsert = "INSERT INTO pedido(";
   queryInsert +=
@@ -137,10 +138,10 @@ async function crearPedido(
   queryInsert += `${codigousuario.codigo},${codigoUsuario},'${fechaCreacion}','${horaCreacion}',${codigoFactura},${codigoUsuarioAnulo},`;
 
    if( io.request.session.usuario.separarproductospedido === 1 && io.request.session.usuario.almacenSeparado.trim()!=""){
-    queryInsert += `'1970-01-01','${estado}','${ubicacion}',${usuario.codigousuario},${descuento},${totalPedido},'${tipoFactura}','${observacion}')`;
+    queryInsert += `'1970-01-01','${estado}','${ubicacion}',${usuario.codigousuario},${descuento},${totalPedido},'${tipoFactura}','${observacionValor}')`;
 
    }else{
-       queryInsert += `'1970-01-01','${estado}','${ubicacion}',${usuario.codigousuario},${descuento},${totalPedido},'${tipoFactura}','${observacion}')`;
+       queryInsert += `'1970-01-01','${estado}','${ubicacion}',${usuario.codigousuario},${descuento},${totalPedido},'${tipoFactura}','${observacionValor}')`;
    }
   sequelize
     .query(queryInsert, { type: sequelize.QueryTypes.INSERT, logging: console.log })

@@ -31,6 +31,7 @@ routerfactura.get("/consultarTotalesRecibosEgresoXUsuarioXRangoFechas",Factura.c
 routerfactura.get("/consultarusuario",Factura.consultarusuario)
 routerfactura.get("/consultarTotalesDevolucionesXUsuarioXRangoFechas",Factura.consultarTotalesDevolucionesXUsuarioXRangoFechas)
 routerfactura.get("/consultarusuarioalmacen",Factura.consultarusuarioalmacen)
+routerfactura.get("/obtenerfacturapedidos", Factura.obtenerfacturapedidos);
 module.exports = {
   routerfactura,
 };

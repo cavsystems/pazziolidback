@@ -164,6 +164,7 @@ app.get("/api/selectempresa", midleware, async (req, res) => {
    response: true,
       db: db,
       config: user.config,
+      configcomprobante:user.configcomprobante,
       alias: user.alias,
       etiquetaTcredito:user.config.ETIQUETA_TCREDITO,
       etiquetaTdebito:user.config.ETIQUETA_TDEBITO ,
@@ -240,7 +241,7 @@ io.on("connection", (socket) => {
              pdfsinprecio:Number( socket.request.session.usuario.pdfsinprecio),
              etiquetaTcredito:socket.request.session.usuario.etiquetaTcredito,
              etiquetaTdebito:socket.request.session.usuario.etiquetaTdebito,
-             
+               configcomprobante:socket.request.session.usuario.configcomprobante,
             config: socket.request.session.usuario.config,
              modificarPrecio:socket.request.session.usuario.modificarPrecio,
             nombre: socket.request.session.usuario.vendedor,

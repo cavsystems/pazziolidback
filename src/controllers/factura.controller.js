@@ -1820,6 +1820,37 @@ console.log("Sesión actualizada:", req.session.usuario);
         ``
       );
     }
+
+    async obtenerfacturapedidos(req, res) {
+      const { sequelize } = crearConexionPorNombre(req.session.usuario.db);
+      const consulta = `select t.telefonoFijo as telefono ,t.celulares as celular, t.email as correo ,t.razonSocial as nombretercero,ve.nombre as nombrevendedor  ,com.nombre as prefijocomprobante,itemsf.cantidad as cantidadvendida , itemsf.precio as preciovendido  ,p.descripcion as descripcionproducto ,fa.reteIca as reteica ,fa.reteFuente as retefuente ,fa.reteFuente as retefuente
+ , fa.valorEfectivo as efectivo  ,fa.valorCredito as targetacredito , fa.valorDebito as targetadebito  , fa.valorCheque as cheque , fa.valorBono as bono , fa.valorCXC as cxc ,fa.fechaCreacion ,fa.totalExenta as totalexenta , fa.totalGravada as totalgravada,fa.fechaVencimiento ,itemsf.tasaIva as tasaiva ,itemsf.descuento as descuentoproducto,p.codigo as codigo,p.codigoContable as codigoproducto ,fa.observaciones as observaciones , fa.descuentoPieFactura as descuentopiepagina
+ , itemsf.totalItem as totalitem from factura fa inner join itemsfactura itemsf on  itemsf.codigoFactura=fa.codigo and itemsf.codigoComprobante=fa.codigoComprobante  left join productos p on p.codigo=itemsf.codigoProducto left join tercero t on t.codigo=fa.codigoTercero left join departamentos de on de.codigo=t.codigoDepartamento
+left join municipios mu on mu.codigo=t.codigoMunicipio left join vendedores ve on ve.codigo=fa.codigoVendedor inner join usuario us on us.codigo=fa.codigoUsuarioIngreso inner join comprobantes com on com.codigo=fa.codigoComprobante where fa.codigo=? and fa.codigoComprobante=? ;`;
+  
+const consutal2=`select pa.nombre as nombreparametro,par.valor from parametros pa join parametroscomprobante par on par.codigoParametro=pa.codigo join comprobantes com on com.codigo=par.codigoComprobante where com.codigo=? and lower(pa.nombre)=lower(?);`
+      const result = await sequelize.query(consulta, {
+        replacements: [
+          Number(req.query.numerofactura),
+          Number(req.query.numerocomprobante),
+        ],
+        type: sequelize.QueryTypes.SELECT,
+        logging: true,
+      });
+
+      const result2 = await sequelize.query(consutal2, {
+        replacements: [
+         Number(req.query.numerocomprobante),
+         'prefijo',
+        ],
+        type: sequelize.QueryTypes.SELECT,
+        logging: true,
+      });
+
+  
+
+      res.json({ respuesta: result, prefijo: result2[0].valor});
+    }
 }
 
 module.exports = {

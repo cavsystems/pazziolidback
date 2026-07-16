@@ -107,6 +107,9 @@ class Useraccioneauth {
                 },
               });
 
+
+
+                  
               const parametros = new Promise(async (resolve, reject) => {
                 let parametros = {};
                 try {
@@ -237,14 +240,41 @@ class Useraccioneauth {
                     ],
                   }
                 );
+
+                let parametrosporcom
                        if(resultComprobanteVenta.length>0){
-                          ;
-                          codigoComprobateventa=resultComprobanteVenta[0].codigo;
+                            const parametrosusuario = new Promise(async (resolve, reject) => {
+                let parametros = {};
+                try {
+                  const resul = await sequelize.query(
+                    "select pa.nombre as nombreparametro,par.valor from parametros pa join parametroscomprobante par on par.codigoParametro=pa.codigo join comprobantes com on com.codigo=par.codigoComprobante where com.codigo=?",
+                    {
+                      type: sequelize.QueryTypes.SELECT,
+                      replacements: [resultComprobanteVenta[0].codigo]
+                    }
+                  );
+            console.log("parametros por comprobante",resul)
+                  resul.map((item) => {
+                    parametros = { [item.nombreparametro]: item.valor, ...parametros };
+                  });
+                  resolve(parametros);
+                } catch (error) {
+                  reject({ message: "error inesperado", error: error });
+                }
+              });
+              try{
+                parametrosporcom= await parametrosusuario;
+                 codigoComprobateventa=resultComprobanteVenta[0].codigo;
                          
                           nombrecomprobateventa=resultComprobanteVenta[0].nombre;
+              }catch(error){
+                console.log("error al cargar parametros por comprobante",error)
+              }
+
+                         
                        }
 
-              
+            
            
                  let permisos=await this.obtenerPermisoUsuario(usuario[0].codigo,sequelize);
                  permisos=JSON.stringify(permisos);
@@ -289,6 +319,7 @@ class Useraccioneauth {
                   codigoVendedor: vendedoruser[0].codigo,
                   vendedor: vendedoruser[0].nombre,
                   config: parametro,
+                  configcomprobante: parametrosporcom,
                   codigoComprobanteReciboIngreso:
                     resultcodigo[0][0].codigoComprobante,
                   nombreComprobanteRI:resultcodigo[0][0].nombre,

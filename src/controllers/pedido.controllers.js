@@ -78,7 +78,8 @@ class Pedidocontrol {
         p.codigoUsuario AS codigousuario,
         p.fechaCreacion AS fecha_creacion,
         p.horaCreacion AS hora,
-
+          SUBSTRING_INDEX(p.codigofactura, ';', 1) AS codigofactura,
+           SUBSTRING_INDEX(p.codigofactura, ';', -1) AS comprobante,
         v.nombre AS nombrevendedor,
         v.identificacion AS cedula,
 
