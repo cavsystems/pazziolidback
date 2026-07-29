@@ -32,6 +32,7 @@ const {
     enviarDatafacturapediente
 
 } = require("./servicios/servicio-email");
+console.log("🚀 ~ file: app.js:21 ~ enviarDataEmail:", process.env);
 const { midleware } = require("./libs/midleware");
 const { routerfactura } = require("./routes/factura.routes");
 
