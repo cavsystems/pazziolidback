@@ -203,10 +203,7 @@ app.get("/api/verificarvariablesseccion", midleware, (req, res) => {
   return res.json({ response: true });
 });
 
-const options = {
-  key: fs.readFileSync("./miapp.local-key.pem"),
-  cert: fs.readFileSync("./miapp.local.pem"),
-};
+
 
 const server = http.createServer(app);
 const io = new Server(server, {
