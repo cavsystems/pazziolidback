@@ -114,7 +114,7 @@ app.get("/api/traerempresas", async (req, res) => {
   } catch (error) {
     ;
     console.log('Entre catch...',error)
-    console.log("🚀 ~ file: app.js:21 ~ enviarDataEmail:", process.env);
+    console.log("🚀 ~ file: app.js:21 ~ enviarDataEmaillllllllllllllllllllllllllllll:", process.env.HOST,process.env.PASSWORD);
     res.json({
       response: false,
       message: "ocurrio un error al ejecutar el procedimiento",
